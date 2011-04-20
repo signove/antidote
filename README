@@ -1,2 +1,3 @@
-Antidote is a IEEE 11073 protocol stack library. It enables communication
-with agents that follow the IEEE 11073 family of standards and high level APIs. 
+Antidote is an IEEE 11073 protocol stack library. It enables communication
+with agents that follow the IEEE 11073:20601 family of standards and high
+level APIs -- namely, medical and health devices.
