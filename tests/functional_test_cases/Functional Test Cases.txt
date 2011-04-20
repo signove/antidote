@@ -1,0 +1,425 @@
+
+ Functional Test Cases 
+
+ 1 - Association/Disassociation Module 
+ 
+  TC 1.1
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent did not send response
+  4 - Manager fire Event: Configuration Timeout
+  5 - Check if machine state return to unassociated.
+  6 - Manager disconnect
+
+  TC 1.2 (Pulse oximeter)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager disconnect
+
+  TC 1.3 (Blood pressure)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager disconnect
+
+  TC 1.4 (Body composition)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager disconnect
+
+  TC 1.5 (Pulse oximeter - disassociation by agent)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent request disassociation.
+  5 - Manager accepts.
+  6 - Enter in Unassociated state.
+
+  TC 1.6 (Blood pressure - disassociation by agent)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent request disassociation.
+  5 - Manager accepts.
+  6 - Enter in Unassociated state.
+ 
+
+  TC 1.7 (Weighing scale - disassociation by agent)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent request disassociation.
+  5 - Manager accepts.
+  6 - Enter in Unassociated state.
+
+  TC 1.8 (Pulse oximeter - Association request again - Should not happen)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent request association again.
+  5 - Manager aborts
+  6 - Enter in Unassociated state.
+
+  TC 1.9 (Abort association)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent request to abort association.
+  5 - Enter in Unassociated state.
+
+  TC 1.10 (Association response)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  5 - Agent sent a wrong aare apdu
+  6 - Manager aborts and enter in Unassociated state.
+ 
+  TC 1.11 (Normal disassociation by manager)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager request disassociation.
+  5 - Manager accepts.
+  6 - Enter in Disassociated state.
+
+  TC 1.12 (Normal abort by manager)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager request abort.
+  5 - Manager accepts.
+  6 - Enter in Unassociated state.
+   
+  
+2 - Configuring  
+  
+  TC 2.1 (Blood pressure - test configuration acceptance)
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration 
+  4 - Manager accepts and enter in operation state
+  5 - Agent send release request
+  6 - Manager send release response
+  7 - Manager enter in unassociated state  
+  
+  TC 2.1.1 (Blood pressure - test configuration acceptance)
+  1 - Agent request association
+  2 - Manager accepts known conf. 
+  3 - Enter in Operating state
+  4 - Agent send release request
+  5 - Manager send release response
+  6 - Manager enter in unassociated state  
+  
+  1 - Association to enter in operational state (known configuration) 
+  3 - Manager accepts configuration
+  4 - Agent send release request
+  5 - Manager send release response
+  6 - Manager enter in unassociated state  
+
+
+
+  TC 2.2 (Weighing scale - test configuration acceptance)
+  1 - Agent request association (with extended configuration)
+  2 - Manager accepts and unknown conf.
+  3 - Enter in WaitingForConfig state
+  4 - Agent send extended configuration (complete)
+  5 - Manager accepts configuration
+  6 - Manager disconnect
+  
+  TC 2.3 (Weighing scale - test configuration acceptance - timeout)
+  1 - Agent request association (with extended configuration)
+  2 - Manager accepts and unknown conf.
+  3 - Enter in WaitingForConfig state
+  4 - Agent did not send response
+  5 - Manager fire Event: Configuration Timeout
+  6 - Check if machine state return to unassociated.
+  7 - Manager disconnect
+  
+  TC 2.4 (Weighing scale - test configuration acceptance)
+  1 - Agent request association (with extended configuration)
+  2 - Manager accepts and known conf.
+  3 - Manager enter in operating state
+  4 - Manager disconnect
+  
+  TC 2.5 (Weighing scale - test configuration acceptance - standard)
+  1 - Agent request association (with standard configuration)
+  2 - Manager accepts and known conf.
+  3 - Manager enter in operating state
+  4 - Manager disconnect
+  
+  TC 2.6 (Weighing scale - test configuration acceptance - standard)
+  1 - Agent request association (with extended configuration)
+  2 - Manager accepts and unknown conf.
+  3 - Enter in WaitingForConfig state
+  4 - Agent send standard configuration
+  5 - Manager enter in operating state
+  6 - Manager disconnect
+  
+  
+  TC 2.7 (Pedometer - test configuration acceptance - extended (device))
+  1 - Agent request association (with extended configuration)
+  2 - Manager accepts and unknown conf.
+  3 - Enter in WaitingForConfig state
+  4 - Agent send extended configuration
+  5 - Manager enter in operating state
+  6 - Manager disconnect
+  
+  
+3 - Operating Module 
+  
+  TC 3.1 (Blood pressure - get all)
+  1 - Association to enter in operational state
+  2 - Manager requests "MDS GET ALL"
+  3 - Agent send response
+  4 - Manager update MDS
+  5 - Manager disconnects
+  
+  TC 3.2 (Blood pressure - scan report info var)
+  1 - Association to enter in operational state
+  2 - Manager requests "MDS GET ALL"
+  3 - Agent send response
+  4 - Manager update MDS
+  5 - Agent reports var data
+  6 - Metric values updated 
+  7 - Manager disconnects
+  
+  TC 3.3 (Blood pressure - scan report info fixed)
+  1 - Association to enter in operational state
+  2 - Manager requests "MDS GET ALL"
+  3 - Agent send response
+  4 - Manager update MDS
+  5 - Agent reports fixed data
+  6 - Metric values updated 
+  7 - Manager disconnects
+  
+  TC 3.4 (Weighing scale - MDS Get)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager request mds attributes (GET all)
+  5 - Agent responds with the values
+ 
+  TC 3.5 (Weighing Scale - data report - scan report info fixed)
+  1 - Agent requests association
+  2 - Manager accepts and unknown conf.
+  3 - Agent send extended configuration
+  4 - Manager accepts and enter in operational state
+  3 - Manager requests "MDS GET ALL"
+  4 - Agent send response
+  5 - Manager update MDS
+  6 - Agent reports fixed data
+  7 - Metric values updated 
+  8 - Manager disconnects
+
+  TC 3.6 (Weighing scale - MDS Get - timeout)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Manager request mds attributes (GET all)
+  5 - Agent did not send response
+  6 - Manager fire Event: Configuration Timeout
+  7 - Check if machine state return to unassociated.
+  8 - Manager disconnect
+  
+  TC 3.7 (Weighing scale - Spontaneous event report)
+  1 - Agent request association
+  2 - Manager accepts and known conf.
+  3 - Enter in Operating state
+  4 - Agent sends data
+  5 - Manager update MDS
+  6 - Manager send Confirmed Event Report
+  7 - Manager disconnect
+
+4 - Disassociating module
+
+  TC 4.1
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Manager requests association release
+  10 - Manager stays in 'Disassociating' state
+ 
+  TC 4.2
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Manager request abort association
+  10 - Manager enters in 'Unassociated' state
+ 
+  TC 4.3
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends association request
+  10 - Manager enters in 'Unassociated' state
+ 
+  TC 4.4
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends association response
+  10 - Manager enters in Unassociated state
+  
+  TC 4.5
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends release association request
+  10 - Manager stays in 'Disassociating' state
+
+  TC 4.6
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends release association response
+  10 - Manager enters in 'Unassociated' state
+ 
+  TC 4.7
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends abort association
+  10 - Manager enters in 'Unassociated' state
+
+  TC 4.8
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends remove invoke operation
+  10 - Manager stays in 'Disassociated' state
+
+  TC 4.9
+  1 - Manager starts in 'Disconnected' state
+  2 - Manager connects
+  3 - Manager enters in 'Unassociated' state
+  4 - Agent sends association request
+  5 - Manager accepts association request
+  6 - Manager enters in 'Operating' state
+  7 - Manager requests association release
+  8 - Manager enters in 'Disassociating' state
+  9 - Agent sends remove invoke operation response
+  10 - Manager stays in 'Unassociated' state
+
+5 - Episodic Scanner module
+
+TC 5.1
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with episodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (nbuf-grouped)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  
+  
+TC 5.2
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with episodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (nbuf-fixed)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  
+  
+TC 5.3
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with episodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (unbuf-var)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  
+  
+6 - Periodic Scanner module
+
+TC 6.1
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with periodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (buf-grouped)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  
+  
+TC 6.2
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with periodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (buf-fixed)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  
+  
+TC 6.3
+  1 - Agent request association
+  2 - Manager accepts unknown conf. and wait for configuration 
+  3 - Agent sends configuration (with periodic scanner object) 
+  4 - Manager accepts and enter in operation state
+  5 - Manager set scanner-operational-state to enabled
+  6 - Agent send new scanner-operational-state value 
+  7 - Agent send event report with the changed data (buf-var)
+  8 - Manager send confirmation 
+  9 - Agent send release request
+  10 - Manager send release response
+  11 - Manager enter in unassociated state  

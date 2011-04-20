@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/com/signove/health">
+  <interface name="com.signove.health.manager">
+    <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="srv"/>
+    <method name="Configure">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="srv_configure"/>
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="1"/>
+      <arg type="o" name="agent" direction="in"/>
+      <arg type="s" name="addr" direction="in"/>
+      <arg type="ai" name="data_types" direction="in"/>
+    </method>
+    <method name="ConfigurePassive">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="srv_configurepassive"/>
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="1"/>
+      <arg type="o" name="agent" direction="in"/>
+      <arg type="ai" name="data_types" direction="in"/>
+    </method>
+  </interface>
+</node>

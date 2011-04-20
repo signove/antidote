@@ -1,0 +1,11 @@
+antidote (1.0-2) unstable; urgency=low
+
+  * Added devel-doc package
+
+ -- Elvis Pfutzenreuter <epx@signove.com>  Mon, 20 Dec 2010 13:20:00 -0300
+
+antidote (1.0-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Adrian Lívio Vasconcelos Guedes <adrian.guedes@signove.com>  Fri, 03 Dec 2010 16:33:58 -0300

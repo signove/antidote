@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    targetNamespace="http://www.signove.com/IEEE-11073-20601"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.signove.com/IEEE-11073-20601">
+
+	<xs:include schemaLocation="api-def-types.xsd" />
+
+	<xs:element name="data-list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="entry" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="meta">
+		<xs:complexType>
+			<xs:simpleContent>
+		        <xs:extension base="xs:string">
+		            <xs:attribute name="name" type="xs:string" use="required" />
+		        </xs:extension>
+		    </xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="meta-data">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="meta" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="entry">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="meta-data" minOccurs="0" maxOccurs="1" />
+				<xs:choice>
+					<xs:element name="simple" />
+					<xs:element name="compound" />
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="simple">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="name" type="xs:string" />
+				<xs:element name="type" type="api-def-type" />
+				<xs:element name="value" type="xs:string" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="entries">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="entry" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="compound">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="name" type="xs:string" />
+				<xs:element name="entries" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>

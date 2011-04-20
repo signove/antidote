@@ -1,0 +1,591 @@
+-----------------------------------------------------------------
+Episodic Scanner - Confirmed SET (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x16 		CHOICE.length = 22
+0x00 0x14 		OCTET_STRING.length = 20
+0x00 0x00 		INVOKE-ID = 00
+0x01 0x05 		CHOICE (Remote Operation Invoke | Confirmed Set)
+0x00 0x0E 		CHOICE.length = 14
+0x00 0x37 		HANDLE = 55
+0x00 0x01 		ModificationList.count = 1
+0x00 0x08 		ModificationList.length = 08
+0x00 0x00 		ModifyOperator = 0
+0x09 0x53 		attribute_id = MDC_ATTR_OP_STAT (2387)
+0x00 0x02 		attribute_value.length = 2 
+0x00 0x01		attribute_value.value = 1
+
+-----------------------------------------------------------------
+Episodic Scanner - SET Response (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x14 		CHOICE.length = 20
+0x00 0x12 		OCTET_STRING.length = 18
+0x00 0x00 		INVOKE-ID = 00
+0x02 0x05 		CHOICE (Remote Operation Response | Confirmed Set)
+0x00 0x0C 		CHOICE.length = 12
+0x00 0x37 		HANDLE = 55
+0x00 0x01 		AttributeList.count = 1
+0x00 0x06 		AttributeList.length = 6
+0x09 0x53 		attribute_id = MDC_ATTR_OP_STAT (2387)
+0x00 0x02 		attribute_value.length = 2 
+0x00 0x01		attribute_value.value = 1
+
+
+-----------------------------------------------------------------
+Periodic Scanner - Confirmed SET (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x16 		CHOICE.length = 22
+0x00 0x14 		OCTET_STRING.length = 20
+0x00 0x00 		INVOKE-ID = 00
+0x01 0x05 		CHOICE (Remote Operation Invoke | Confirmed Set)
+0x00 0x0E 		CHOICE.length = 14
+0x00 0x28 		HANDLE = 40
+0x00 0x01 		ModificationList.count = 1
+0x00 0x08 		ModificationList.length = 08
+0x00 0x00 		ModifyOperator = 0
+0x09 0x53 		attribute_id = MDC_ATTR_OP_STAT (2387)
+0x00 0x02 		attribute_value.length = 2 
+0x00 0x01		attribute_value.value = 1
+
+-----------------------------------------------------------------
+Periodic Scanner - SET Response (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x14 		CHOICE.length = 20
+0x00 0x12 		OCTET_STRING.length = 18
+0x00 0x00 		INVOKE-ID = 00
+0x02 0x05 		CHOICE (Remote Operation Response | Confirmed Set)
+0x00 0x0C 		CHOICE.length = 12
+0x00 0x28 		HANDLE = 40
+0x00 0x01 		AttributeList.count = 1
+0x00 0x06 		AttributeList.length = 6
+0x09 0x53 		attribute_id = MDC_ATTR_OP_STAT (2387)
+0x00 0x02 		attribute_value.length = 2 
+0x00 0x01		attribute_value.value = 1
+
+-----------------------------------------------------------------
+Configuration Pulse Oximeter with Scanner (Episodic and Periodic)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x01 0x2A 		CHOICE.length = 298
+0x01 0x28 		OCTET STRING.length = 296
+0x12 0x36 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x01 		CHOICE(Remote Operation Invoke | Confirmed Event Report)
+0x01 0x22 		CHOICE.length = 290
+0x00 0x00 		obj-handle = 0 (MDS object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x1C 		event-type = MDC_NOTI_CONFIG
+0x01 0x18 		event-info.length = 280 (start of ConfigReport)
+0x40 0x00 		config-report-id
+0x00 0x05 		config-obj-list.count = 4 Measurement objects will be “announced”
+0x01 0x12 		config-obj-list.length = 274
+0x00 0x06 		obj-class = MDC_MOC_VMO_METRIC_NU
+0x00 0x01 		obj-handle = 1 (􀃆 1st Measurement is SpO2)
+0x00 0x04 		attributes.count = 4
+0x00 0x24 		attributes.length = 36
+0x09 0x2F 		attribute-id = MDC_ATTR_ID_TYPE
+0x00 0x04 		attribute-value.length = 4
+0x00 0x02 0x4B 0xB8 	MDC_PART_SCADA | MDC_PULS_OXIM_SAT_O2
+0x0A 0x46 		attribute-id = MDC_ATTR_METRIC_SPEC_SMALL
+0x00 0x02 		attribute-value.length = 2
+0x40 0xC0 		avail-stored-data, acc-manager-init, acc-agent-init, measured
+0x09 0x96 		attribute-id = MDC_ATTR_UNIT_CODE
+0x00 0x02 		attribute-value.length = 2
+0x02 0x20 		MDC_DIM_PERCENT
+0x0A 0x55 		attribute-id = MDC_ATTR_ATTRIBUTE_VAL_MAP
+0x00 0x0C 		attribute-value.length = 12
+0x00 0x02 		AttrValMap.count = 2
+0x00 0x08 		AttrValMap.length = 8
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC | value length = 2
+0x09 0x90 0x00 0x08 	MDC_ATTR_TIME_STAMP_ABS | value length = 8
+0x00 0x06 		obj-class = MDC_MOC_VMO_METRIC_NU
+0x00 0x0A 		obj-handle = 10 (􀃆2nd Measurement is pulse rate)
+0x00 0x04 		attributes.count = 4
+0x00 0x24 		attributes.length = 36
+0x09 0x2F 		attribute-id = MDC_ATTR_ID_TYPE
+0x00 0x04 		attribute-value.length = 4
+0x00 0x02 0x48 0x1A 	MDC_PART_SCADA | MDC_PULS_OXIM_PULS_RATE
+0x0A 0x46 		attribute-id = MDC_ATTR_METRIC_SPEC_SMALL
+0x00 0x02 		attribute-value.length = 2
+0x40 0xC0 		avail-stored-data, acc-manager-init, acc-agent-init, measured
+0x09 0x96 		attribute-id = MDC_ATTR_UNIT_CODE
+0x00 0x02 		attribute-value.length = 2
+0x0A 0xA0 		MDC_DIM_BEAT_PER_MIN
+0x0A 0x55 		attribute-id = MDC_ATTR_ATTRIBUTE_VAL_MAP
+0x00 0x0C 		attribute-value.length = 12
+0x00 0x02 		AttrValMap.count = 2
+0x00 0x08 		AttrValMap.length = 8
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC, 2
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, 8
+0x00 0x06 		obj-class = MDC_MOC_VMO_METRIC_NU
+0x00 0x03 		obj-handle = 3 (􀃆3rd Measurement is SpO2 – fast response)
+0x00 0x05 		attributes.count = 5
+0x00 0x30 		attributes.length = 48
+0x09 0x2F 		attribute-id = MDC_ATTR_ID_TYPE
+0x00 0x04 		attribute-value.length = 4
+0x00 0x02 0x4B 0xB8 	MDC_PART_SCADA | MDC_PULS_OXIM_SAT_O2
+0x0A 0x46 		attribute-id = MDC_ATTR_METRIC_SPEC_SMALL
+0x00 0x02 		attribute-value.length = 2
+0x40 0xC0 		avail-stored-data, acc-manager-init, acc-agent-init, measured
+0x09 0x96 		attribute-id = MDC_ATTR_UNIT_CODE
+0x00 0x02 		attribute-value.length = 2
+0x02 0x20 		MDC_DIM_PERCENT
+0x0A 0x61 		attribute-id = MDC_ATTR_SUPPLEMENTAL_TYPES
+0x00 0x08 		attribute-value.length = 8
+0x00 0x01 		SupplementalTypeList.count = 1
+0x00 0x04 		SupplementalTypeList.length = 4
+0x00 0x02 0x4C 0x34 	MDC_PART_SCADA | MDC_MODALITY_FAST
+0x0A 0x55 		attribute-id = MDC_ATTR_ATTRIBUTE_VAL_MAP
+0x00 0x0C 		attribute-value.length = 12
+0x00 0x02 		AttrValMap.count = 2
+0x00 0x08 		AttrValMap.length = 8
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC, 2
+0x09 0x90 0x00 0x08 	MDC_ATTR_TIME_STAMP_ABS, 8
+0x00 0x12 		obj-class = MDC_MOC_SCAN_CFG_EPI
+0x00 0x37 		obj-handle = 55 
+0x00 0x03 		attributes.count = 3
+0x00 0x30 		attributes.length = 48
+0x09 0x53 		attribute-id = MDC_ATTR_OP_STAT
+0x00 0x02 		attribute-value.length = 2
+0x00 0x00 		OperationalState = OS_DISABLED
+0x0A 0x53 		attribute-id = MDC_ATTR_SCAN_HANDLE_ATTR_VAL_MAP
+0x00 0x20 		attribute-value.length = 32
+0x00 0x02 		HandleAttrValMap.count = 2
+0x00 0x1C 		HandleAttrValMap.length = 28
+0x00 0x01 		HandleAttrValMapEntry.handle = 1
+0x00 0x02 		AttrValMap.count = 2
+0x00 0x08 		AttrValMap.length = 8
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x00 0x0A 		HandleAttrValMapEntry.handle = 10
+0x00 0x02 		AttrValMap.count = 2
+0x00 0x08 		AttrValMap.length = 8
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x09 0x13 		attribute-id = MDC_ATTR_CONFIRM_MODE
+0x00 0x02 		attribute-value.length = 2
+0x00 0x01		ConfirmMode = confirmed
+0x00 0x13 		obj-class = MDC_MOC_SCAN_PERI
+0x00 0x28 		obj-handle = 40 (􀃆 measurement i is a Periodic Scanner)
+0x00 0x04 		attributes.count = 4
+0x00 0x42 		attributes.length = 66
+0x09 0x53 		attribute-id = MDC_ATTR_OP_STAT
+0x00 0x02 		attribute-value.length = 2
+0x00 0x00 		disabled
+0x0A 0x54 		attribute-id = MDC_ATTR_SCAN_REP_PD_MIN
+0x00 0x04 		attribute-value.length = 4
+0x00 0x00 0x0A 0x6B 	RelativeTime of 333.33 (333.375 exact) msec
+0x09 0x13 		attribute-id = MDC_ATTR_CONFIRM_MODE
+0x00 0x02 		attribute-value.length = 2
+0x00 0x00 		unconfirmed mode
+0x0A 0x53 		attribute-id = MDC_ATTR_SCAN_HANDLE_ATTR_VAL_MAP
+0x00 0x2A 		attribute-value.length = 402
+0x00 0x04 		HandleAttrValMap.count = 4
+0x00 0x26 		HandleAttrValMap.length = 44				----------
+0x00 0x01 		HandleAttrValMap 0: SpO2 (handle 1)
+0x00 0x03 		HandleAttrValMap.count = 3
+0x00 0x0C 		HandleAttrValMap.length = 12
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC, 2
+0x09 0x47 0x00 0x02 	MDC_ATTR_MSMT_STAT,2
+0x09 0x90 0x00 0x08 	MDC_ATTR_TIME_STAMP_ABS, 8
+0x00 0x0A 		HandleAttrValMap 1: Pulse Rate (handle 10)
+0x00 0x01 		HandleAttrValMap.count = 1
+0x00 0x04 		HandleAttrValMap.length = 4
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC, 2
+0x00 0x03 		HandleAttrValMap 2: SpO2 – fast-response (handle 3)
+0x00 0x01 		HandleAttrValMap.count = 1
+0x00 0x04 		HandleAttrValMap.length = 4
+0x0A 0x4C 0x00 0x02 	MDC_ATTR_NU_VAL_OBS_BASIC, 2
+0x00 0x0A 		HandleAttrValMap 3: Pulse Rate (handle 10)
+0x00 0x01 		HandleAttrValMap.count = 1
+0x00 0x04 		HandleAttrValMap.length = 4
+
+
+-----------------------------------------------------------------
+Unbuf Scan Report Grouped (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x30  		CHOICE.length = 48
+0x00 0x2E 		OCTET_STRING.length = 46
+0x00 0x02 		INVOKE-ID = 02
+0x01 0x01 		CHOICE (Remote Operation Invoke | Confirmed Event Report)
+0x00 0x28 		CHOICE.length = 40
+0x00 0x37 		HANDLE = 55
+0xFF 0xFF 0xFF 0xFF 	event-time (not supported)
+0x0D 0x24 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_GROUPED (3364)
+0x00 0x1E 		event.length = 30
+0xF0 0x00 		data-request-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-id = 0
+0x00 0x01 		grouped-count = 1
+0x00 0x16 		grouped-length = 22
+0x00 0x14 		octet_string.length = 20
+0xF3 0xCF 		Value of the Basic-Nu-Observed-Value atribute (Metric) - Handle 1
+0x20 0x10 0x08 0x03 	Value of the Absolute-Time-Stamp attribute (Metric) - Handle 1
+0x10 0x51 0x11 0x00 	
+0xF3 0x21 		Value of the Basic-Nu-Observed-Value atribute (Metric) - Handle 10
+0x20 0x10 0x08 0x03 	Value of the Absolute-Time-Stamp attribute (Metric) - Handle 10
+0x10 0x51 0x11 0x00	
+
+-----------------------------------------------------------------
+Unbuf Scan Report MP Grouped (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x32  		CHOICE.length = 50
+0x00 0x30 		OCTET_STRING.length = 48
+0x00 0x02 		INVOKE-ID = 02
+0x01 0x01 		CHOICE (Remote Operation Invoke | Confirmed Event Report)
+0x00 0x2A 		CHOICE.length = 42
+0x00 0x37 		HANDLE = 55
+0xFF 0xFF 0xFF 0xFF 	event-time (not supported)
+0x0D 0x27 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_MP_GROUPED (3367)
+0x00 0x20 		event.length = 32
+0xF0 0x00 		data-request-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-id = 0
+0x00 0x01 		scan_per_grouped.count = 1
+0x00 0x18 		scan_per_grouped.length = 24
+0x00 0x01		personal-id = 01
+0x00 0x14 		octet_string.length = 20
+0xF3 0xCF 		Value of the Basic-Nu-Observed-Value atribute (Metric) - Handle 1
+0x20 0x10 0x08 0x03 	Value of the Absolute-Time-Stamp attribute (Metric) - Handle 1
+0x10 0x51 0x11 0x00 	
+0xF3 0x21 		Value of the Basic-Nu-Observed-Value atribute (Metric) - Handle 10
+0x20 0x10 0x08 0x03 	Value of the Absolute-Time-Stamp attribute (Metric) - Handle 10
+0x10 0x51 0x11 0x00
+
+-----------------------------------------------------------------
+Unbuf Scan Report Fixed (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x36 		CHOICE.length = 54
+0x00 0x34 		OCTET STRING.length = 52
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x01 		CHOICE(Remote Operation Invoke | Confirmed Event Report)
+0x00 0x2E 		CHOICE.length = 46
+0x00 0x37 		obj-handle = 55 (EpiScan object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x23 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_FIXED (3363)
+0x00 0x24 		event-info.length = 36
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x02 		obs-scan-fixed.count = 2
+0x00 0x1C 		obs-scan-fixed.length = 28
+0x00 0x01 		obs-scan-fixed.value[0].obj-handle = 1
+0x00 0x0A 		obs-scan-fixed.value[0].obs-val-data.length = 10
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obj-handle = 10
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obs-val-data.length = 10
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+-----------------------------------------------------------------
+Unbuf Scan Report MP Fixed (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x3C 		CHOICE.length = 60
+0x00 0x3A 		OCTET STRING.length = 58
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x01 		CHOICE(Remote Operation Invoke | Confirmed Event Report)
+0x00 0x34 		CHOICE.length = 52
+0x00 0x37 		obj-handle = 55 (EpiScan object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x26 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_MP_FIXED (3366)
+0x00 0x2A 		event-info.length = 42
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x01 		scan_per_fixed.count = 1
+0x00 0x22 		scan_per_fixed.length = 34
+0x00 0x01		personal-id = 01
+0x00 0x02 		obs-scan-fixed.count = 2
+0x00 0x1C 		obs-scan-fixed.length = 28
+0x00 0x01 		obs-scan-fixed.value[0].obj-handle = 1
+0x00 0x0A 		obs-scan-fixed.value[0].obs-val-data.length = 10
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obj-handle = 10
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obs-val-data.length = 10
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+-----------------------------------------------------------------
+Unbuf Scan Report Var (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x4A 		CHOICE.length = 74
+0x00 0x48 		OCTET STRING.length = 72
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x01 		CHOICE(Remote Operation Invoke | Confirmed Event Report)
+0x00 0x42 		CHOICE.length = 66
+0x00 0x37 		obj-handle = 55 (EpiScan object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x22 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_VAR (3362)
+0x00 0x38 		event-info.length = 56
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x02 		observation-list.count = 2
+0x00 0x30 		observation-list.length = 48
+0x00 0x01 		obj-handle = 1
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		obj-handle = 10
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+
+-----------------------------------------------------------------
+Unbuf Scan Report MP Var (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x50 		CHOICE.length = 80
+0x00 0x4E 		OCTET STRING.length = 78
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x01 		CHOICE(Remote Operation Invoke | Confirmed Event Report)
+0x00 0x48 		CHOICE.length = 72
+0x00 0x37 		obj-handle = 55 (EpiScan object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x25 		event-type = MDC_NOTI_UNBUF_SCAN_REPORT_MP_VAR (3365)
+0x00 0x3E 		event-info.length = 62
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x01 		scan_per_var.count = 1
+0x00 0x36 		scan_per_var.length = 54
+0x00 0x01		personal-id = 01
+0x00 0x02 		observation-list.count = 2
+0x00 0x30 		observation-list.length = 48
+0x00 0x01 		obj-handle = 1
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		obj-handle = 10
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+
+-----------------------------------------------------------------
+Buf Scan Report Grouped (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x2C 		CHOICE.length = 44
+0x00 0x2A 		OCTET STRING.length = 42
+0x12 0x39 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x24 		CHOICE.length = 36
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x2A 		event-type = MDC_NOTI_BUF_SCAN_REPORT_GROUPED
+0x00 0x1A 		event.length = 26
+0xF0 0x00 		data-request-id = 0xF000 (agent-initiated)
+0x00 0x01 		scan-report-no = 1
+0x00 0x01 		grouped-count = 1
+0x00 0x12 		grouped-length = 18
+0x00 0x10 		octet_string.length = 16
+0x00 0x62 		Handle 1: SpO2 98%
+0x00 0x00 		Handle 1: Measurement status
+0x20 0x08 0x07 0x03 	Absolute-Time-Stamp = 2008-07-03T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x49 		Handle 10: Pulse rate = 73 beats per minute
+0x00 0x62 		Handle 3: SpO2 fast-response = 98%
+
+-----------------------------------------------------------------
+Buf Scan Report MP Grouped (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x30  		CHOICE.length = 48
+0x00 0x2C 		OCTET_STRING.length = 44
+0x00 0x02 		INVOKE-ID = 02
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x26 		CHOICE.length = 38
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time (not supported)
+0x0D 0x2D 		event-type = MDC_NOTI_BUF_SCAN_REPORT_MP_GROUPED (3373)
+0x00 0x1C 		event.length = 28
+0xF0 0x00 		data-request-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-id = 0
+0x00 0x01 		scan_per_grouped.count = 1
+0x00 0x14 		scan_per_grouped.length = 20
+0x00 0x01		personal-id = 01
+0x00 0x10 		octet_string.length = 16
+0x00 0x62 		Handle 1: SpO2 98%
+0x00 0x00 		Handle 1: Measurement status
+0x20 0x08 0x07 0x03 	Absolute-Time-Stamp = 2008-07-03T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x49 		Handle 10: Pulse rate = 73 beats per minute
+0x00 0x62 		Handle 3: SpO2 fast-response = 98%
+
+
+-----------------------------------------------------------------
+Buf Scan Report Fixed (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x36 		CHOICE.length = 54
+0x00 0x34 		OCTET STRING.length = 52
+0x12 0x39 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x2E 		CHOICE.length = 46
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x29 		event-type = MDC_NOTI_BUF_SCAN_REPORT_FIXED (3369)
+0x00 0x24 		event-info.length = 36
+0xF0 0x00 		ScanReportInfoFixed.data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		ScanReportInfoFixed.scan-report-no = 0
+0x00 0x02 		ScanReportInfoFixed.obs-scan-fixed.count = 2
+0x00 0x1C 		ScanReportInfoFixed.obs-scan-fixed.length = 28
+0x00 0x01 		ScanReportInfoFixed.obs-scan-fixed.value[0].obj-handle = 1
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[0].obs-val-data.length = 10
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obj-handle = 10
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obs-val-data.length = 10
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+-----------------------------------------------------------------
+Buf Scan Report MP Fixed (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x3C 		CHOICE.length = 60
+0x00 0x3A 		OCTET STRING.length = 58
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x34 		CHOICE.length = 52
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x2C 		event-type = MDC_NOTI_BUF_SCAN_REPORT_MP_FIXED (3372)
+0x00 0x2A 		event-info.length = 42
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x01 		scan_per_fixed.count = 1
+0x00 0x22 		scan_per_fixed.length = 34
+0x00 0x01		personal-id = 01
+0x00 0x02 		obs-scan-fixed.count = 2
+0x00 0x1C 		obs-scan-fixed.length = 28
+0x00 0x01 		obs-scan-fixed.value[0].obj-handle = 1
+0x00 0x0A 		obs-scan-fixed.value[0].obs-val-data.length = 10
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obj-handle = 10
+0x00 0x0A 		ScanReportInfoFixed.obs-scan-fixed.value[1].obs-val-data.length = 10
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+
+
+-----------------------------------------------------------------
+Buf Scan Report Var (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x4A 		CHOICE.length = 74
+0x00 0x48 		OCTET STRING.length = 72
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x42 		CHOICE.length = 66
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x28 		event-type = MDC_NOTI_BUF_SCAN_REPORT_VAR (3368)
+0x00 0x38 		event-info.length = 56
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x02 		observation-list.count = 2
+0x00 0x30 		observation-list.length = 48
+0x00 0x01 		obj-handle = 1
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		obj-handle = 10
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+
+-----------------------------------------------------------------
+Buf Scan Report MP Var (Pulse Oximeter)
+-----------------------------------------------------------------
+
+0xE7 0x00 		APDU CHOICE Type (PrstApdu)
+0x00 0x50 		CHOICE.length = 80
+0x00 0x4E 		OCTET STRING.length = 78
+0x12 0x38 		invoke-id (differentiates this from other outstanding messages)
+0x01 0x00 		CHOICE(Remote Operation Invoke | Unconfirmed Event Report)
+0x00 0x48 		CHOICE.length = 72
+0x00 0x28 		obj-handle = 40 (scanner object)
+0xFF 0xFF 0xFF 0xFF 	event-time = 0xFFFFFFFF
+0x0D 0x2B 		event-type = MDC_NOTI_BUF_SCAN_REPORT_MP_VAR (3371)
+0x00 0x3E 		event-info.length = 62
+0xF0 0x00 		data-req-id = 0xF000 (agent-initiated)
+0x00 0x00 		scan-report-no = 0
+0x00 0x01 		scan_per_var.count = 1
+0x00 0x36 		scan_per_var.length = 54
+0x00 0x01		personal-id = 01
+0x00 0x02 		observation-list.count = 2
+0x00 0x30 		observation-list.length = 48
+0x00 0x01 		obj-handle = 1
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x62 		Basic-Nu-Observed-Value = 98 (%)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+0x00 0x0A 		obj-handle = 10
+0x00 0x02 		attributes.count = 2
+0x00 0x12 		attributes.length = 18
+0x0A 0x4C 0x00 0x02	MDC_ATTR_NU_VAL_OBS_BASIC, length = 2
+0x00 0x48 		Basic-Nu-Observed-Value = 72 (beats/min)
+0x09 0x90 0x00 0x08	MDC_ATTR_TIME_STAMP_ABS, length = 8
+0x20 0x07 0x12 0x06 	Absolute-Time-Stamp = 2007-12-06T12:10:0000
+0x12 0x10 0x00 0x00
+
+

@@ -1,0 +1,13 @@
+INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
+
+noinst_LTLIBRARIES = libspecializations.la
+
+libspecializations_la_SOURCES = blood_pressure_monitor.c \
+							   pulse_oximeter.c \
+							   weighing_scale.c
+                   
+noinst_HEADERS = blood_pressure_monitor.h \
+			     pulse_oximeter.h \
+			     weighing_scale.h
+
+                

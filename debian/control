@@ -1,0 +1,35 @@
+Source: antidote
+Priority: extra
+Maintainer: Ádrian Lívio Vasconcelos Guedes <adrian.guedes@signove.com>
+Build-Depends: debhelper (>= 7.0.50~), doxygen, libglib2.0-dev, libdbus-glib-1-dev, dbus (>= 1.4.0)
+Standards-Version: 3.8.4
+Section: libs
+Homepage: <http://oss.signove.com>
+
+Package: antidote-dev
+Section: libdevel
+Architecture: any
+Depends: antidote (= ${binary:Version})
+Description: The IEEE 11073 Protocol Library is a communication layer between agents that
+ follow the IEEE 11073 family of standards and high level APIs.
+
+Package: antidote-dev-doc
+Section: libdevel
+Architecture: any
+Description: The IEEE 11073 Protocol Library is a communication layer between agents that
+ follow the IEEE 11073 family of standards and high level APIs. This package contains
+ the API documentation in Doxygen format.
+
+Package: antidote-lib
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libglib2.0-0, libdbus-glib-1-2, dbus (>= 1.4.0)
+Description: The IEEE 11073 Protocol Library is a communication layer between agents that
+ follow the IEEE 11073 family of standards and high level APIs.
+ 
+Package: antidote
+Section: libs
+Architecture: any
+Depends: antidote-lib (= ${binary:Version})
+Description: The IEEE 11073 Protocol Library is a communication layer between agents that
+ follow the IEEE 11073 family of standards and high level APIs.

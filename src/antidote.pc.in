@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: IEEE 11073 Protocol Library
+Description: IEEE 11073 Protocol Library.
+Version: @PACKAGE_VERSION@
+Requires: dbus-1 glib-2.0 gio-2.0 dbus-glib-1
+Libs: -L${libdir} -lantidote
+Cflags: -I${includedir}/@PACKAGE@

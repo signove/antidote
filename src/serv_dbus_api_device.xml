@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/com/signove/health/device">
+  <interface name="com.signove.health.device">
+    <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="srv"/>
+    <method name="Connect">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_connect"/>
+    </method>
+    <method name="Disconnect">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_disconnect"/>
+    </method>
+    <method name="RequestDeviceAttributes">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqmdsattr"/>
+    </method>
+    <method name="RequestActivationScanner">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqactivationscanner"/>
+      <arg type="i" name="handle" direction="in"/>
+    </method>
+    <method name="RequestDeactivationScanner">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqdeactivationscanner"/>
+      <arg type="i" name="handle" direction="in"/>
+    </method>
+    <method name="RequestMeasurementDataTransmission">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqmdsattr"/>
+    </method>
+    <method name="ReleaseAssociation">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_releaseassoc"/>
+    </method>
+    <method name="AbortAssociation">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_abortassoc"/>
+    </method>
+    <method name="GetSegmentInfo">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_get_segminfo"/>
+    </method>
+    <method name="GetSegmentData">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_get_segmdata"/>
+    </method>
+    <method name="ClearSegmentData">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_clearsegmdata"/>
+    </method>
+    <method name="TestAgent">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_testagent"/>
+    </method>
+  </interface>
+</node>

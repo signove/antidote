@@ -1,0 +1,4 @@
+usr/bin/healthd
+usr/bin/ieee_manager
+usr/share/dbus-1/system-services/com.signove.health.service
+etc/dbus-1/system.d/healthd.conf

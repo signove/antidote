@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://www.signove.com/IEEE-11073-20601"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.signove.com/IEEE-11073-20601">
+
+  <xs:simpleType name="api-def-type">
+    <xs:restriction base = "xs:string">
+    
+      <xs:enumeration value = "string"/>
+      
+      <xs:enumeration value = "int32" />
+      <xs:enumeration value = "intu32" />
+      <xs:enumeration value = "int16" />
+      <xs:enumeration value = "intu16" />
+      <xs:enumeration value = "int8" />
+      <xs:enumeration value = "intu8" />
+      
+      <xs:enumeration value = "float" />
+      <xs:enumeration value = "hex" /><!-- binary in hexa representation -->
+      
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

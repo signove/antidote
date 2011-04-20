@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data-list
+    xmlns="http://www.signove.com/IEEE-11073-20601" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.signove.com/IEEE-11073-20601 ../data-list.xsd">
+
+	<!-- 
+		MDS {
+		
+			System-Type TYPE {
+					partition
+					code
+			}
+			
+			System-Model SystemModel {
+					manufacturer
+					model-number
+			}
+			
+			Dev-Configuration-Id INT-U16
+			
+			System-Id OCTET STRING
+			
+			Production-Spec SEQUENCE OF ProdSpecEntry{
+											spec-type 
+											component-id
+											prod-spec
+										}
+			}
+		}
+	 -->
+	<entry>
+		<compound>
+			<name>MDS</name>
+			<entries>
+				<entry>
+					<meta-data>
+						<meta name="attribute-id">2438</meta>
+					</meta-data>
+					<compound>
+						<name>System-Type</name>
+						<entries>
+							<entry>
+								<simple>
+									<name>code</name>
+									<type>intu16</type>
+									<value>0</value>
+								</simple>
+							</entry>
+							<entry>
+								<simple>
+									<name>partition</name>
+									<type>intu16</type>
+									<value>0</value>
+								</simple>
+							</entry>
+						</entries>
+					</compound>
+				</entry>
+				<entry>
+					<meta-data>
+						<meta name="attribute-id">2344</meta>
+					</meta-data>
+					<compound>
+						<name>System-Model</name>
+						<entries>
+							<entry>
+								<simple>
+									<name>manufacturer</name>
+									<type>string</type>
+									<value></value>
+								</simple>
+							</entry>
+							<entry>
+								<simple>
+									<name>model-number</name>
+									<type>string</type>
+									<value></value>
+								</simple>
+							</entry>
+						</entries>
+					</compound>
+				</entry>
+				<entry>
+					<meta-data>
+						<meta name="attribute-id">2436</meta>
+					</meta-data>
+					<simple>
+						<name>System-Id</name>
+						<type>hex</type>
+						<value>002209225807E86B</value>
+					</simple>
+				</entry>
+				<entry>
+					<meta-data>
+						<meta name="attribute-id">2628</meta>
+					</meta-data>
+					<simple>
+						<name>Dev-Configuration-Id</name>
+						<type>intu16</type>
+						<value>16384</value>
+					</simple>
+				</entry>
+				<entry>
+					<meta-data>
+						<meta name="attribute-id">2349</meta>
+					</meta-data>
+					<compound>
+						<name>Production-Specification</name>
+						<entries></entries>
+					</compound>
+				</entry>
+			</entries>
+		</compound>
+	</entry>
+</data-list>

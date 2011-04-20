@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.signove.health
+Exec=/usr/bin/healthd
+User=root

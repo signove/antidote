@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data-list
+    xmlns="http://www.signove.com/IEEE-11073-20601" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.signove.com/IEEE-11073-20601 ../data-list.xsd">
+	<entry>
+		<meta-data>
+			<meta name="HANDLE">1</meta>
+		</meta-data>
+		<compound>
+			<name>Numeric</name>
+			<entries>
+				<entry>
+					<meta-data>
+						<meta name="partition">2</meta>
+						<meta name="metric-id">19384</meta>
+					</meta-data>
+					<simple>
+						<name>Basic-Nu-Observed-Value</name>
+						<type>float</type>
+						<value>100.000000</value>
+					</simple>
+				</entry>
+			</entries>
+		</compound>
+	</entry>
+	<entry>
+		<meta-data>
+			<meta name="HANDLE">10</meta>
+		</meta-data>
+		<compound>
+			<name>Numeric</name>
+			<entries>
+				<entry>
+					<meta-data>
+						<meta name="partition">2</meta>
+						<meta name="metric-id">18458</meta>
+					</meta-data>
+					<simple>
+						<name>Basic-Nu-Observed-Value</name>
+						<type>float</type>
+						<value>97.000000</value>
+					</simple>
+				</entry>
+			</entries>
+		</compound>
+	</entry>
+</data-list>
