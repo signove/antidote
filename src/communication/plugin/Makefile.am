@@ -9,12 +9,10 @@ libcommplugin_la_SOURCES = plugin.c
 libcommpluginimpl_la_SOURCES = \
                    plugin_fifo.c \
                    plugin_tcp.c \
-		   		   plugin_dbus.c \
-		   		   plugin_pthread.c
+		   plugin_pthread.c
 
 noinst_HEADERS = plugin.h \
                    plugin_fifo.h \
                    plugin_tcp.h \
-		   		   plugin_dbus.h \
-		   		   plugin_pthread.h
+		   plugin_pthread.h
 

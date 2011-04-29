@@ -4,7 +4,6 @@ tests/main_test_suite
 *.gcda
 *.gcno
 .deps
-COPYING
 INSTALL
 Makefile.in
 aclocal.m4

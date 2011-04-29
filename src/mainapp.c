@@ -159,7 +159,11 @@ static int timer_count_timeout(Context *ctx)
  */
 static void dbus_mode()
 {
-	plugin_network_dbus_setup(&comm_plugin, 0);
+	// TODO add a D-Bus plugin
+	// plugin_network_dbus_setup(&comm_plugin, 0);
+	printf("Currently, D-Bus mode is not supported in this app.\n");
+	printf("Use healthd service as an example of D-Bus plug-in usage.\n");
+	exit(1);
 }
 
 /**
@@ -258,6 +262,7 @@ void plugin_network_dbus_handle_created_connection(DBusConnection *conn)
  *
  * @return NETWORK_ERROR_NONE if data is available or NETWORK_ERROR if error.
  */
+/*
 int plugin_network_dbus_wait_for_data()
 {
 	DBusMessage *msg;
@@ -272,3 +277,4 @@ int plugin_network_dbus_wait_for_data()
 	sleep(1);
 	return NETWORK_ERROR;
 }
+*/

@@ -36,7 +36,6 @@
 #include <api/json_encoder.h>
 #include <api/text_encoder.h>
 #include <manager.h>
-#include <communication/plugin/plugin_dbus.h>
 #include <communication/plugin/plugin_tcp.h>
 #include <communication/plugin/plugin_fifo.h>
 

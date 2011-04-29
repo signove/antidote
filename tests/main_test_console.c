@@ -46,7 +46,6 @@
 #include "src/api/json_encoder.h"
 #include "src/util/strbuff.h"
 #include "src/communication/service.h"
-#include "src/communication/plugin/plugin_dbus.h"
 #include "src/communication/plugin/plugin_tcp.h"
 #include "src/communication/plugin/plugin_fifo.h"
 #include "src/communication/plugin/plugin_pthread.h"
@@ -54,7 +53,9 @@
 /**
  * @TODO_REVIEW_DOC
  */
+/*
 static DBusConnection *connection = NULL;
+*/
 
 /**
  * Context ID DEFAULT
@@ -147,7 +148,8 @@ static void print_help()
 
 static void dbus_mode()
 {
-	plugin_network_dbus_setup(&comm_plugin, 0);
+	// FIXME use another D-Bus plugin
+	// plugin_network_dbus_setup(&comm_plugin, 0);
 }
 
 static void fifo_mode()
@@ -272,6 +274,7 @@ int main(int argc, char **argv)
 /**
  *  @TODO_FIXME Remove this LOOP, use connection loop instead
  */
+/*
 int plugin_network_dbus_wait_for_data()
 {
 	DBusMessage *msg;
@@ -291,6 +294,7 @@ void plugin_network_dbus_handle_created_connection(DBusConnection *conn)
 {
 	connection = conn;
 }
+*/
 
 
 

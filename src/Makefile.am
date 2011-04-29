@@ -39,7 +39,6 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_communication_HEADERS = communication/context.h                                           
 @PACKAGE@_include_plugindir = $(pkgincludedir)/communication/plugin
 @PACKAGE@_include_plugin_HEADERS = communication/plugin/plugin.h \
-                                   communication/plugin/plugin_dbus.h \
                                    communication/plugin/plugin_tcp.h \
                                    communication/plugin/plugin_fifo.h
 @PACKAGE@_include_utildir = $(pkgincludedir)/util
