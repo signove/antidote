@@ -36,14 +36,20 @@ typedef struct PluginBluezListener {
 	/**
 	 * Called when agent connects
 	 */
-	gboolean (*agent_connected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*peer_connected)(guint64 conn_handle, const char *btaddr);
 
 	/**
 	 * Called when agent disconnects
 	 */
-	gboolean (*agent_disconnected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*peer_disconnected)(guint64 conn_handle, const char *btaddr);
 } PluginBluezListener;
 
 void plugin_bluez_setup(CommunicationPlugin *plugin);
 void plugin_bluez_set_listener(PluginBluezListener *plugin);
-gboolean plugin_bluez_update_data_types(guint16 data_types[]);
+gboolean plugin_bluez_update_data_types(gboolean is_sink, guint16 data_types[]);
+gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type,
+				int reliability);
+
+#define HDP_CHANNEL_RELIABLE 1
+#define HDP_CHANNEL_STREAMING 2
+#define HDP_CHANNEL_ANY 3

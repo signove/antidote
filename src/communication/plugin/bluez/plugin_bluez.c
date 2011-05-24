@@ -76,12 +76,18 @@ typedef struct adapter_object {
 	DBusGProxy *proxy;
 } adapter_object;
 
+typedef struct app_object {
+	char *path;
+	guint16 data_type;
+	gboolean is_sink;
+} app_object;
+
+static GSList *apps = NULL;
 static GSList *adapters = NULL;
 static GSList *devices = NULL;
 static GSList *channels = NULL;
 guint64 last_handle = 0;
 
-static GSList *apps = NULL;
 static PluginBluezListener *listener = NULL;
 
 static int send_data(guint64 handle, unsigned char *data, int len);
@@ -102,7 +108,7 @@ static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy
 static void device_connected(guint64 handle, const char *device)
 {
 	if (listener) {
-		listener->agent_connected(handle, device);
+		listener->peer_connected(handle, device);
 	}
 	communication_transport_connect_indication(handle);
 }
@@ -117,7 +123,7 @@ static void device_disconnected(guint64 handle, const char *device)
 {
 	communication_transport_disconnect_indication(handle);
 	if (listener) {
-		listener->agent_disconnected(handle, device);
+		listener->peer_disconnected(handle, device);
 	}
 }
 
@@ -152,6 +158,24 @@ static device_object *get_device_object(const char *path)
 		m = i->data;
 
 		if (strcmp(m->path, path) == 0)
+			return m;
+	}
+
+	return NULL;
+}
+
+/**
+ * Fetch device struct from proxy list, by addr
+ */
+static device_object *get_device_object_by_addr(const char *bdaddr)
+{
+	GSList *i;
+	device_object *m;
+
+	for (i = devices; i; i = i->next) {
+		m = i->data;
+
+		if (strcmp(m->addr, bdaddr) == 0)
 			return m;
 	}
 
@@ -242,7 +266,7 @@ static char *get_device_addr(const char *path)
 		caddr = path;
 	}
 
-	addr = g_strdup(caddr);
+	addr = g_ascii_strdown(caddr, -1);
 
 	g_hash_table_destroy(props);
 	g_object_unref(proxy);
@@ -438,6 +462,7 @@ static void add_adapter(const char *path, DBusGProxy *proxy)
 
 /**
  * Callback for org.bluez.HealthDevice.ChannelConnected signal
+ * Reused by CreateChannel callback (channel initiation)
  */
 static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user_data)
 {
@@ -507,7 +532,7 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 	if (dev) {
 		device_connected(handle, dev->addr);
 	} else {
-		ERROR("Channel from unkown device: %s", device_path);
+		ERROR("Channel from unknown device: %s", device_path);
 		device_connected(handle, device_path);
 	}
 }
@@ -838,11 +863,27 @@ static void disconnect_adapter(const char *path)
 	remove_adapter(path);
 }
 
+/**
+ * Gets a HealthApplication path given a data type
+ */
+static const app_object *find_application_by_type(guint16 data_type)
+{
+	GSList *i;
+
+	for (i = apps; i; i = i->next) {
+		app_object *app = i->data;
+		if (app->data_type == data_type || data_type == 0) {
+			return app;
+		}
+	}
+
+	return NULL;
+}
 
 /**
  * Creates the HealthApplication's by calling BlueZ
  */
-gboolean create_health_application(guint16 data_type)
+gboolean create_health_application(gboolean is_sink, guint16 data_type)
 {
 	/* Create HealthApplication */
 
@@ -859,6 +900,7 @@ gboolean create_health_application(guint16 data_type)
 	const char *svalue;
 	const char *key;
 	char *app_path;
+	app_object *app;
 
 	msg = dbus_message_new_method_call("org.bluez", "/org/bluez",
 					   "org.bluez.HealthManager", "CreateApplication");
@@ -881,7 +923,7 @@ gboolean create_health_application(guint16 data_type)
 	dbus_message_iter_close_container(&array, &entry);
 
 	key = "Role";
-	svalue = "Sink";
+	svalue = (is_sink ? "Sink" : "Source");
 	dbus_message_iter_open_container(&array, DBUS_TYPE_DICT_ENTRY, NULL, &entry);
 	dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
 	dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "s", &variant);
@@ -932,11 +974,16 @@ gboolean create_health_application(guint16 data_type)
 		return FALSE;
 	}
 
-	apps = g_slist_prepend(apps, g_strdup(app_path));
+	app = g_new0(app_object, 1);
+	app->path = g_strdup(app_path);
+	app->data_type = data_type;
+	app->is_sink = is_sink;
+
+	apps = g_slist_prepend(apps, app);
 
 	dbus_message_unref(reply);
 
-	DEBUG("Created health application: %s", (char *) apps->data);
+	DEBUG("Created health application: %s", (char *) app->path);
 
 	return TRUE;
 }
@@ -949,7 +996,6 @@ gboolean create_health_application(guint16 data_type)
 static void destroy_health_applications()
 {
 	DBusGProxy *proxy;
-	char *app_path;
 
 	proxy = dbus_g_proxy_new_for_name(conn, "org.bluez",
 					  "/org/bluez", "org.bluez.HealthManager");
@@ -961,13 +1007,13 @@ static void destroy_health_applications()
 
 	while (apps) {
 		GError *error = NULL;
+		struct app_object *app = apps->data;
 
-		app_path = apps->data;
-		DEBUG("Destroying %s", app_path);
+		DEBUG("Destroying %s", app->path);
 
 		if (!dbus_g_proxy_call(proxy, "DestroyApplication",
 				       &error,
-				       DBUS_TYPE_G_OBJECT_PATH, app_path,
+				       DBUS_TYPE_G_OBJECT_PATH, app->path,
 				       G_TYPE_INVALID,
 				       G_TYPE_INVALID)) {
 			if (error) {
@@ -977,8 +1023,9 @@ static void destroy_health_applications()
 			}
 		}
 
-		apps = g_slist_remove(apps, app_path);
-		g_free(app_path);
+		apps = g_slist_remove(apps, app);
+		g_free(app->path);
+		g_free(app);
 	}
 
 	g_object_unref(proxy);
@@ -988,7 +1035,7 @@ static void destroy_health_applications()
 /*
  * Create health applications for data types requested by client
  */
-gboolean plugin_bluez_update_data_types(guint16 hdp_data_types[])
+gboolean plugin_bluez_update_data_types(gboolean is_sink, guint16 hdp_data_types[])
 {
 	guint16 *data_type;
 	gboolean ok = TRUE;
@@ -999,7 +1046,7 @@ gboolean plugin_bluez_update_data_types(guint16 hdp_data_types[])
 	destroy_health_applications();
 
 	for (data_type = hdp_data_types; *data_type; ++data_type) {
-		ok = ok && create_health_application(*data_type);
+		ok = ok && create_health_application(is_sink, *data_type);
 	}
 
 	return ok;
@@ -1326,6 +1373,100 @@ static int send_data(guint64 handle, unsigned char *data, int len)
 	}
 
 	return sent;
+}
+
+/**
+ * Initiated connection callback
+ */
+void plugin_bluez_connect_cb(DBusGProxy *dev_proxy, DBusGProxyCall *id,
+				gpointer user_data)
+{
+	gboolean ok;
+	GError *err = NULL;
+	char *channel_path = NULL;
+
+	ok = dbus_g_proxy_end_call(dev_proxy, id, &err,
+			DBUS_TYPE_G_OBJECT_PATH, &channel_path,
+			G_TYPE_INVALID);
+
+	if (!ok) {
+		DEBUG("connection initiation error: %s", err->message);
+		g_error_free(err);
+		return;
+	}
+
+	channel_connected(dev_proxy, channel_path, NULL);
+	g_free(channel_path);
+}
+
+
+/**
+ * Take the initiative of a connection. Actual connection establishment
+ * is reported via "peer_connected" callback, as happens with accepted
+ * (passive) connections.
+ *
+ * @param *btaddr
+ * @return success in initating connection procedure
+ *         (not necessarily connection will happen)
+ */
+gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type, int reliability)
+{
+	const char *channel_type;
+	const app_object *app;
+	gboolean ok = FALSE;
+	char *addr = g_ascii_strdown(btaddr, -1);
+	struct device_object *dev = get_device_object_by_addr(addr);
+
+	if (!addr) {
+		DEBUG("Device %s unknown by BlueZ", btaddr);
+		goto finally;
+	}
+
+	app = find_application_by_type(data_type);
+	if (!app) {
+		DEBUG("Data type %d could not be matched to any application",
+			data_type);
+		DEBUG("Make sure you had configured the plug-in with all"
+			"possible data types you need to use");
+		goto finally;
+	}
+
+	if (app->is_sink) {
+		if (reliability != HDP_CHANNEL_ANY) {
+			reliability = HDP_CHANNEL_ANY;
+			DEBUG("HDP sinks can't choose channel type")
+			DEBUG("Defaulting channel type to Any");
+		}
+	} else {
+		if (reliability == HDP_CHANNEL_ANY) {
+			reliability = HDP_CHANNEL_RELIABLE;
+			DEBUG("HDP sources must define channel type, cannot use Any")
+			DEBUG("Defaulting channel type to Reliable");
+		}
+	}
+
+	if (reliability == HDP_CHANNEL_RELIABLE) {
+		channel_type = "Reliable";
+	} else if (reliability == HDP_CHANNEL_STREAMING) {
+		channel_type = "Streaming";
+	} else if (reliability == HDP_CHANNEL_ANY) {
+		channel_type = "Any";
+	} else {
+		DEBUG("Invalid channel type, defaulting to Reliable");
+		// safest choice
+		channel_type = "Reliable";
+	}
+
+	if (dbus_g_proxy_begin_call(dev->proxy, "CreateChannel",
+			plugin_bluez_connect_cb, NULL, NULL,
+			DBUS_TYPE_G_OBJECT_PATH, app->path,
+			G_TYPE_STRING, channel_type,
+			G_TYPE_INVALID))
+		ok = TRUE;
+
+finally:
+	g_free(addr);
+	return ok;
 }
 
 /** @} */

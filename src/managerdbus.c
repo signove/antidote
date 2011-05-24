@@ -310,7 +310,7 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 	get_agent_proxy();
 	dbus_g_method_return(call);
 
-	plugin_bluez_update_data_types(hdp_data_types);
+	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 
 	g_free(hdp_data_types);
 
@@ -1037,8 +1037,8 @@ int main()
 
 	/* Configure communications plugin */
 	plugin_bluez_setup(&plugin);
-	bluez_listener.agent_connected = call_agent_connected;
-	bluez_listener.agent_disconnected = call_agent_disconnected;
+	bluez_listener.peer_connected = call_agent_connected;
+	bluez_listener.peer_disconnected = call_agent_disconnected;
 	plugin_bluez_set_listener(&bluez_listener);
 
 	//Other availables plugins

@@ -36,5 +36,7 @@
 
 int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts, ...);
 
+// TODO means to init a connection (for an agent)
+
 
 #endif /* PLUGIN_GLIB_SOCKET_H_ */
