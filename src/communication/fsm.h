@@ -63,12 +63,19 @@ typedef enum {
 	// IND - Transport layer indications
 	fsm_evt_ind_transport_connection = 0,
 	fsm_evt_ind_transport_disconnect,
+	fsm_evt_ind_timeout,
+	fsm_evt_ind_timeout_max_retry_not_reached,
+	fsm_evt_ind_timeout_max_retry_reached,
 
 	// REQ - Manager requests
 	fsm_evt_req_assoc_rel,
 	fsm_evt_req_assoc_abort,
 	fsm_evt_req_agent_supplied_unsupported_configuration,
 	fsm_evt_req_agent_supplied_supported_configuration,
+
+	// REQ - Agent requests
+	fsm_evt_req_send_config_report,
+	fsm_evt_req_assoc,
 
 	// Rx - Received APDU
 
@@ -84,7 +91,6 @@ typedef enum {
 	fsm_evt_rx_rlre,
 	fsm_evt_rx_abrt,
 	fsm_evt_rx_prst,
-	fsm_evt_ind_timeout,
 
 	/**
 	 * roiv-*
@@ -94,6 +100,7 @@ typedef enum {
 	fsm_evt_rx_roiv_confirmed_event_report,
 	fsm_evt_rx_roiv_all_except_confirmed_event_report,
 	fsm_evt_rx_roiv_get,
+	fsm_evt_rx_roiv_cmip_get,
 	fsm_evt_rx_roiv_set,
 	fsm_evt_rx_roiv_confirmed_set,
 	fsm_evt_rx_roiv_action,
@@ -104,6 +111,8 @@ typedef enum {
 	 */
 	fsm_evt_rx_rors,
 	fsm_evt_rx_rors_confirmed_event_report,
+	fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp,
+	fsm_evt_rx_rors_cmip_confirmed_event_report_supp,
 	fsm_evt_rx_rors_get,
 	fsm_evt_rx_rors_confirmed_set,
 	fsm_evt_rx_rors_confirmed_action,
