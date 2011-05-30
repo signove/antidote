@@ -53,6 +53,8 @@ static char *fsm_state_strings[] = {
 	"disassociating",
 	"unassociated",
 	"associating",
+	"sending_config",
+	"waiting_approval",
 	"operating",
 	"checking_config",
 	"waiting_for_config"
@@ -197,6 +199,12 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 
 
 /**
+ * IEEE 11073 Agent State Table
+ */
+static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {};
+
+
+/**
  * Construct the state machine
  * @return finite state machine
  */
@@ -217,7 +225,7 @@ void fsm_destroy(FSM *fsm)
 }
 
 /**
- * Initialize fsm with the sates and transition rules of
+ * Initialize fsm with the states and transition rules of
  * IEEE 11073-20601 for Manager
  *
  * @param fsm
@@ -228,6 +236,21 @@ void fsm_set_manager_state_table(FSM *fsm)
 	int trasition_rule_size = sizeof(FsmTransitionRule);
 	int table_size = transition_table_size / trasition_rule_size;
 	fsm_init(fsm, fsm_state_disconnected, IEEE11073_20601_manager_state_table,
+								table_size);
+}
+
+/**
+ * Initialize fsm with the states and transition rules of
+ * IEEE 11073-20601 for Agent
+ *
+ * @param fsm
+ */
+void fsm_set_agent_state_table(FSM *fsm)
+{
+	int transition_table_size = sizeof(IEEE11073_20601_agent_state_table);
+	int trasition_rule_size = sizeof(FsmTransitionRule);
+	int table_size = transition_table_size / trasition_rule_size;
+	fsm_init(fsm, fsm_state_disconnected, IEEE11073_20601_agent_state_table,
 								table_size);
 }
 

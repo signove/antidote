@@ -49,6 +49,8 @@ typedef enum {
 	fsm_state_disassociating,
 	fsm_state_unassociated,
 	fsm_state_associating,
+	fsm_state_config_sending,
+	fsm_state_config_waiting_approval,
 	fsm_state_operating,
 	fsm_state_checking_config,
 	fsm_state_waiting_for_config,
@@ -201,6 +203,7 @@ FSM *fsm_instance();
 void fsm_destroy(FSM *fsm);
 
 void fsm_set_manager_state_table(FSM *fsm);
+void fsm_set_agent_state_table(FSM *fsm);
 
 void fsm_init(FSM *fsm, fsm_states entry_point_state, FsmTransitionRule *transition_table, int table_size);
 
