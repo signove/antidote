@@ -50,7 +50,7 @@ typedef enum {
 	fsm_state_unassociated,
 	fsm_state_associating,
 	fsm_state_config_sending,
-	fsm_state_config_waiting_approval,
+	fsm_state_waiting_approval,
 	fsm_state_operating,
 	fsm_state_checking_config,
 	fsm_state_waiting_for_config,
