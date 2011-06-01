@@ -49,7 +49,7 @@ pkgconfig_DATA = antidote.pc
 bin_PROGRAMS = ieee_manager ieee_agent healthd
 
 # Minimal sample app to use the IEEE protocol facade
-ieee_manager_SOURCES = mainapp.c
+ieee_manager_SOURCES = sample_manager.c
 
 ieee_manager_LDADD = \
              communication/plugin/libcommpluginimpl.la \
@@ -63,7 +63,7 @@ ieee_agent_LDADD = \
              libantidote.la
 
 #healthd: D-BUS Service for IEEE protocol facade              
-healthd_SOURCES = managerdbus.c
+healthd_SOURCES = healthd_service.c
 healthd_CFLAGS = @DBUS_CFLAGS@ @GLIB_CFLAGS@  @GIO_CFLAGS@
 
 healthd_LDADD = \

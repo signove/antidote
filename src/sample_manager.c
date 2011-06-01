@@ -1,6 +1,6 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /**
- * \file mainapp.c
+ * \file sample_manager.c
  * \brief Main application implementation.
  *
  * Copyright (C) 2010 Signove Tecnologia Corporation.

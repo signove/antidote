@@ -1,6 +1,6 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /**
- * \file managerdbus.c
+ * \file healthd_service.c
  * \brief Bluez server source.
 *
  * Copyright (C) 2010 Signove Tecnologia Corporation.

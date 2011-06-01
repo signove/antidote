@@ -1,5 +1,5 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
-/** mainapp.c
+/** main_test_console.c
  *
  * Copyright (C) 2010 Signove Tecnologia Corporation.
  * All rights reserved.
