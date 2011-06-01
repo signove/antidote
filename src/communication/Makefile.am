@@ -8,6 +8,7 @@ libcom_la_SOURCES = association.c \
                    communication.c \
                    configuring.c \
                    disassociating.c \
+		   agent_ops.c \
                    extconfigurations.c \
                    fsm.c \
                    service.c \
@@ -20,6 +21,7 @@ noinst_HEADERS = association.h \
                  configuring.h \
                  disassociating.h \
                  extconfigurations.h \
+		 agent_ops.h \
                  fsm.h \
                  service.h \
                  operating.h \

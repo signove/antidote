@@ -46,6 +46,7 @@
 #include "src/communication/disassociating.h"
 #include "src/communication/configuring.h"
 #include "src/communication/operating.h"
+#include "src/communication/agent_ops.h"
 #include "src/util/log.h"
 
 static char *fsm_state_strings[] = {
