@@ -14,7 +14,8 @@ libcom_la_SOURCES = association.c \
                    service.c \
                    operating.c \
                    stdconfigurations.c \
-                   context_manager.c 
+                   context_manager.c \
+                   context_agent.c 
 
 noinst_HEADERS = association.h \
                  communication.h \
@@ -26,4 +27,5 @@ noinst_HEADERS = association.h \
                  service.h \
                  operating.h \
                  stdconfigurations.h \
-                 context_manager.h  
+                 context_manager.h \
+                 context_agent.h  

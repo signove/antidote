@@ -4,7 +4,7 @@ INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcd
 
 # Lib
 lib_LTLIBRARIES = libantidote.la
-libantidote_la_SOURCES = manager.c
+libantidote_la_SOURCES = manager.c agent.c
 libantidote_la_LIBADD =  \
                             api/libapi.la \
                             communication/libcom.la \
@@ -26,6 +26,7 @@ pkgconfig_DATA = antidote.pc
 #Install headers
 @PACKAGE@_includedir = $(pkgincludedir)
 @PACKAGE@_include_HEADERS = manager.h \
+			    agent.h \
                             ieee11073.h
 @PACKAGE@_include_apidir = $(pkgincludedir)/api
 @PACKAGE@_include_api_HEADERS = api/api_definitions.h \
@@ -45,15 +46,21 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_util_HEADERS = util/bytelib.h
 
 #Bin Programs
-bin_PROGRAMS = ieee_manager healthd
+bin_PROGRAMS = ieee_manager ieee_agent healthd
 
-#main: Minimal sample app to use the IEEE protocol facade
+# Minimal sample app to use the IEEE protocol facade
 ieee_manager_SOURCES = mainapp.c
 
 ieee_manager_LDADD = \
              communication/plugin/libcommpluginimpl.la \
              libantidote.la
 
+# Minimal sample app to use the IEEE protocol facade (agent)
+ieee_agent_SOURCES = sample_agent.c
+
+ieee_agent_LDADD = \
+             communication/plugin/libcommpluginimpl.la \
+             libantidote.la
 
 #healthd: D-BUS Service for IEEE protocol facade              
 healthd_SOURCES = managerdbus.c
