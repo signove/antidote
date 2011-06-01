@@ -75,6 +75,7 @@ typedef enum {
 
 	// REQ - Agent requests
 	fsm_evt_req_send_config_report,
+	fsm_evt_req_send_event,
 	fsm_evt_req_assoc,
 
 	// Rx - Received APDU

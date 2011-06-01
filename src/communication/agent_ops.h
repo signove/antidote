@@ -18,5 +18,6 @@ void communication_agent_roiv_set_respond_tx(FSMContext *ctx, fsm_events evt, FS
 void communication_agent_roiv_confirmed_set_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 void communication_agent_roiv_confirmed_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
+void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 
 #endif
