@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "pulse_oximeter.h"
 #include "src/util/bytelib.h"
+#include "communication/parser/encoder_ASN1.h"
 #include "src/dim/nomenclature.h"
 #include "src/dim/mds.h"
 
@@ -241,6 +242,99 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
 	result->dev_config_id = 0x0191;
 	result->configure_action = &pulse_oximeter_get_config_ID0190;
 	return result;
+}
+
+/**
+ * Populates an event report APDU. 
+ */
+
+static void pulse_oximeter_populate_event_report(APDU* apdu, void *args[])
+{
+	DATA_apdu data;
+	EventReportArgumentSimple evt;
+	ScanReportInfoFixed scan;
+	ObservationScanFixedList scan_fixed;
+	ObservationScanFixed measure[2];
+	AbsoluteTime nu_time;
+	BasicNuObsValue nu_oximetry;
+	SimpleNuObsValue nu_beats;
+
+	// FIXME EPX FIXME real values
+	nu_time.century = 20;
+	nu_time.year = 11;
+	nu_time.month = 4;
+	nu_time.day = 15;
+	nu_time.hour = 10;
+	nu_time.minute = 15;
+	nu_time.second = 0;
+	nu_time.sec_fractions = 0;
+
+	nu_oximetry = 98;
+	nu_beats = 75.3;
+
+	apdu->choice = PRST_CHOSEN;
+	apdu->length = 54;
+	apdu->u.prst.length = 52;
+
+	// FIXME EPX FIXME
+	data.invoke_id = 0x9876;
+	data.message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
+	data.message.length = 46;
+
+	evt.obj_handle = 0;
+	evt.event_time = 0xFFFFFFFF;
+	evt.event_type = MDC_NOTI_SCAN_REPORT_FIXED;
+	evt.event_info.length = 36;
+
+	scan.data_req_id = 0xF000;
+	scan.scan_report_no = 0;
+
+	scan_fixed.count = 2;
+	scan_fixed.length = 28;
+	scan_fixed.value = measure;
+
+	measure[0].obj_handle = 1;
+	measure[0].obs_val_data.length = 10;
+	ByteStreamWriter *writer0 = byte_stream_writer_instance(measure[0].obs_val_data.length);
+
+	encode_basicnuobsvalue(writer0, &nu_oximetry);
+	encode_absolutetime(writer0, &nu_time);
+
+	measure[1].obj_handle = 10;
+	measure[1].obs_val_data.length = 10;
+	ByteStreamWriter *writer1 = byte_stream_writer_instance(measure[1].obs_val_data.length);
+
+	encode_simplenuobsvalue(writer1, &nu_beats);
+	encode_absolutetime(writer1, &nu_time);
+	
+	measure[0].obs_val_data.value = writer0->buffer;
+	measure[1].obs_val_data.value = writer1->buffer;
+
+	scan.obs_scan_fixed = scan_fixed;
+
+	ByteStreamWriter *scan_writer = byte_stream_writer_instance(evt.event_info.length);
+
+	encode_scanreportinfofixed(scan_writer, &scan);
+
+	evt.event_info.value = scan_writer->buffer;
+	data.message.u.roiv_cmipEventReport = evt;
+
+	ByteStreamWriter *data_writer = byte_stream_writer_instance(apdu->u.prst.length);
+	encode_data_apdu(data_writer, &data);
+
+	del_byte_stream_writer(writer0, 1);
+	del_byte_stream_writer(writer1, 1);
+	del_byte_stream_writer(scan_writer, 1);
+
+	apdu->u.prst.value = data_writer->buffer;
+	// FIXME EPX FIXME leak data_writer
+}
+
+extern void (*specialization_populate_event_report)(APDU *apdu, void *args[]);
+
+void pulse_oximeter_agent_config()
+{
+	specialization_populate_event_report = &pulse_oximeter_populate_event_report;
 }
 
 /** @} */

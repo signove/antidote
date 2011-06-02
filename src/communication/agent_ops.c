@@ -30,6 +30,7 @@
  */
 
 #include "fsm.h"
+#include "communication.h"
 
 void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
@@ -83,6 +84,12 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
 {
 }
 
+extern void (specialization_populate_event_report)(APDU *apdu, void *args[]);
+
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	APDU apdu;
+	// EPX FIXME EPX arguments should come from top-level app
+	specialization_populate_event_report(&apdu, 0);
+	communication_send_apdu(ctx, &apdu);
 }

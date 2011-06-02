@@ -106,6 +106,11 @@ static AgentListener *agent_listener_list = NULL;
  */
 static int agent_listener_count = 0;
 
+/**
+ * Agent method to populate an event report and send data
+ */
+void (*specialization_populate_event_report)(APDU *apdu, void *args[]);
+
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 
 
@@ -160,6 +165,7 @@ void agent_init(CommunicationPlugin plugin)
 
 	std_configurations_register_conf(
 		pulse_oximeter_create_std_config_ID0190());
+	pulse_oximeter_agent_config();
 }
 
 /**

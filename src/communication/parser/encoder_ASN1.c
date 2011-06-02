@@ -1666,6 +1666,18 @@ void encode_segmelemstaticattrentry(ByteStreamWriter *stream,
 }
 
 /**
+ * Encode BasicNuObsValue
+ *
+ * @param *stream
+ * @param *pointer
+ */
+void encode_basicnuobsvalue(ByteStreamWriter *stream,
+			       BasicNuObsValue *pointer)
+{
+	write_intu16(stream, *pointer);
+}
+
+/**
  * Encode BasicNuObsValueCmp
  *
  * @param *stream

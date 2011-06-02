@@ -146,6 +146,7 @@ void encode_settimeinvoke(ByteStreamWriter *stream, SetTimeInvoke *pointer);
 void encode_segmentinfolist(ByteStreamWriter *stream, SegmentInfoList *pointer);
 void encode_actionresultsimple(ByteStreamWriter *stream, ActionResultSimple *pointer);
 void encode_segmelemstaticattrentry(ByteStreamWriter *stream, SegmElemStaticAttrEntry *pointer);
+void encode_basicnuobsvalue(ByteStreamWriter *stream, BasicNuObsValue *pointer);
 void encode_basicnuobsvaluecmp(ByteStreamWriter *stream, BasicNuObsValueCmp *pointer);
 void encode_configobjectlist(ByteStreamWriter *stream, ConfigObjectList *pointer);
 void encode_setresultsimple(ByteStreamWriter *stream, SetResultSimple *pointer);
