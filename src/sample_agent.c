@@ -83,24 +83,30 @@ void new_data_received(Context *ctx, DataList *list)
 
 /**
  * Callback function that is called whenever a new device
- * has been available
+ * has associated
  *
  * @param ctx current context.
  * @param list the new list of elements.
  */
-void device_associated(Context *ctx, DataList *list)
+void device_associated(Context *ctx)
 {
 	fprintf(stderr, " Medical Device System Associated:\n");
+}
 
-	char *data = json_encode_data_list(list);
+/**
+ * Callback function that is called whenever a new device
+ * has connected (but not associated)
+ *
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
+void device_connected(Context *ctx)
+{
+	fprintf(stderr, " Medical Device System Connected\n");
 
-	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
-
-		fflush(stderr);
-		free(data);
-	}
+	// ok, make it proceed with association
+	// (agent has the initiative)
+	agent_associate(ctx->id);
 }
 
 /**
@@ -238,7 +244,8 @@ int main(int argc, char **argv)
 	agent_init(comm_plugin);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
-	listener.device_available = &device_associated;
+	listener.device_connected = &device_connected;
+	listener.device_associated = &device_associated;
 
 	agent_add_listener(listener);
 

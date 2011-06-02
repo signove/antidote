@@ -42,9 +42,13 @@
  */
 typedef struct AgentListener {
 	/**
+	 * Called after device is connected
+	 */
+	void (*device_connected)(Context *ctx);
+	/**
 	 * Called after device is operational
 	 */
-	void (*device_available)(Context *ctx, DataList *list);
+	void (*device_associated)(Context *ctx);
 	/**
 	 * Called after device is not operational
 	 */
@@ -56,7 +60,8 @@ typedef struct AgentListener {
 } AgentListener;
 
 #define AGENT_LISTENER_EMPTY {\
-			.device_available = NULL,\
+			.device_connected = NULL,\
+			.device_associated = NULL,\
 			.device_unavailable = NULL,\
 			.timeout = NULL\
 			}
@@ -73,6 +78,8 @@ void agent_connection_loop(ContextId context_id);
 
 int agent_add_listener(AgentListener listener);
 
-int agent_send_data(ContextId context_id);
+void agent_associate(ContextId id);
+
+void agent_send_data(ContextId id);
 
 #endif /* AGENT_H_ */

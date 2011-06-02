@@ -231,15 +231,14 @@ void agent_remove_all_listeners()
 }
 
 /**
- * Notifies 'device available'  event.
+ * Notifies 'device associated'  event.
  * This function should be visible to source layer of events.
  * This function must be called in a thread safe communication context.
  *
  * @param ctx
- * @param data_list with association information and configuration
  * @return 1 if any listener catches the notification, 0 if not
  */
-int agent_notify_evt_device_available(Context *ctx, DataList *data_list)
+int agent_notify_evt_device_associated(Context *ctx)
 {
 	int ret_val = 0;
 	int i;
@@ -247,13 +246,37 @@ int agent_notify_evt_device_available(Context *ctx, DataList *data_list)
 	for (i = 0; i < agent_listener_count; i++) {
 		AgentListener *l = &agent_listener_list[i];
 
-		if (l != NULL && l->device_available != NULL) {
-			(l->device_available)(ctx, data_list);
+		if (l != NULL && l->device_associated != NULL) {
+			(l->device_associated)(ctx);
 			ret_val = 1;
 		}
 	}
 
-	data_list_del(data_list);
+	return ret_val;
+}
+
+/**
+ * Notifies 'device connected'  event.
+ * This function should be visible to source layer of events.
+ * This function must be called in a thread safe communication context.
+ *
+ * @param ctx
+ * @return 1 if any listener catches the notification, 0 if not
+ */
+int agent_notify_evt_device_connected(Context *ctx)
+{
+	int ret_val = 0;
+	int i;
+
+	for (i = 0; i < agent_listener_count; i++) {
+		AgentListener *l = &agent_listener_list[i];
+
+		if (l != NULL && l->device_connected != NULL) {
+			(l->device_connected)(ctx);
+			ret_val = 1;
+		}
+	}
+
 	return ret_val;
 }
 
@@ -384,14 +407,38 @@ void agent_request_association_abort(ContextId id)
  */
 void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next)
 {
+	DEBUG("agent: handling transition event");
+
 	if (previous == fsm_state_operating && next != previous) {
 		DEBUG(" agent: Notify device unavailable.\n");
 		// Exiting operating state
 		agent_notify_evt_device_unavailable(ctx);
+	}
 
+	if (previous == fsm_state_disconnected &&
+					next == fsm_state_unassociated) {
+		agent_notify_evt_device_connected(ctx);
+	}
+
+	if (previous != next && next == fsm_state_operating) {
+		agent_notify_evt_device_associated(ctx);
 	}
 }
 
-// EPX FIXME EPX fire 'send data' event
+/**
+ * Provoke agent to initiate association
+ *
+ * @param ctx context
+ */
+void agent_associate(ContextId id)
+{
+	DEBUG(" agent: Move state machine to init assoc");
+	communication_fire_evt(context_get(id), fsm_evt_req_assoc, NULL);
+}
+
+void agent_send_data(ContextId id)
+{
+	// EPX FIXME EPX FIXME
+}
 
 /** @} */
