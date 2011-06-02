@@ -313,7 +313,7 @@ int communication_network_stop()
  */
 Context *communication_transport_connect_indication(ContextId id)
 {
-	Context *ctx = context_create(id);
+	Context *ctx = context_create(id, comm_plugin.type);
 
 	// thread-safe block - begin
 	comm_plugin.thread_init(ctx);

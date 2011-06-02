@@ -153,6 +153,7 @@ static void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm
 void manager_init(CommunicationPlugin plugin)
 {
 	DEBUG("Manager Initialization");
+	plugin.type = MANAGER_CONTEXT;
 	communication_set_plugin(plugin);
 
 

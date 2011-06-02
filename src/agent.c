@@ -91,7 +91,6 @@
 #include "src/api/data_encoder.h"
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
-#include "src/communication/context_agent.h"
 #include "src/communication/configuring.h"
 #include "src/communication/stdconfigurations.h"
 #include "src/specializations/pulse_oximeter.h"
@@ -151,6 +150,7 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
 void agent_init(CommunicationPlugin plugin)
 {
 	DEBUG("Agent Initialization");
+	plugin.type = AGENT_CONTEXT;
 	communication_set_plugin(plugin);
 
 	// Listen to all communication state transitions

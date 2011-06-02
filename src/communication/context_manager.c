@@ -25,6 +25,7 @@
  * $LICENSE_TEXT:END$
  *
  * \author Fabricio Silva
+ * \author Elvis Pfutzenreuter
  * \date Aug 26, 2010
  */
 
@@ -119,7 +120,7 @@ static int context_search_by_id(void *arg, void *element)
  * @param id id to be verified.
  * @return Context pointer or NULL if cannot create one.
  */
-Context *context_create(ContextId id)
+Context *context_create(ContextId id, int type)
 {
 
 	if (context_list == NULL) {
@@ -136,9 +137,16 @@ Context *context_create(ContextId id)
 		return NULL;
 	}
 
-	context->type = MANAGER_CONTEXT;
+	context->type = type;
 	context->fsm = fsm_instance();
-	fsm_set_manager_state_table(context->fsm);
+	if (type == MANAGER_CONTEXT) {
+		fsm_set_manager_state_table(context->fsm);
+	} else if (type == AGENT_CONTEXT) {
+		fsm_set_agent_state_table(context->fsm);
+	} else {
+		ERROR("Type is neither MANAGER nor AGENT - can't create context");
+		exit(1);
+	}
 
 	context->id = id;
 

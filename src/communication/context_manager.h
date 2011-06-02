@@ -39,7 +39,7 @@
  */
 typedef int (*context_handle)(Context *ctx);
 
-Context *context_create(ContextId id);
+Context *context_create(ContextId id, int type);
 void context_remove(ContextId id);
 void context_remove_all();
 Context *context_get(ContextId id);

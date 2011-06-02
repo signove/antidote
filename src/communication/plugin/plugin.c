@@ -147,8 +147,10 @@ CommunicationPlugin communication_plugin()
 		.thread_finalize = stub_thread_finalize_ptr,
 		.timer_count_timeout = stub_timer_count_timeout_ptr,
 		.timer_reset_timeout = stub_timer_reset_timeout_ptr,
-		.timer_wait_for_timeout = stub_timer_wait_for_timeout_ptr
+		.timer_wait_for_timeout = stub_timer_wait_for_timeout_ptr,
+		.type = 0,
 	};
+
 	return plugin;
 }
 

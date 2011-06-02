@@ -55,7 +55,8 @@
 			.thread_unlock = NULL,\
 			.timer_count_timeout = NULL,\
 			.timer_wait_for_timeout = NULL,\
-			.timer_reset_timeout = NULL \
+			.timer_reset_timeout = NULL, \
+			.type = 0 \
 			}
 
 typedef struct Context PluginContext;
@@ -201,6 +202,11 @@ typedef struct CommunicationPlugin {
 	 * Cancel timeout function.
 	 */
 	timer_reset_timeout_ptr timer_reset_timeout;
+
+	/**
+	 * Plug-in type (manager or agent)
+	 */
+	int type;
 
 } CommunicationPlugin;
 
