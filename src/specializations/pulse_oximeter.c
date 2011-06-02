@@ -207,6 +207,9 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	return std_object_list;
 }
 
+// EPX FIXME EPX precompose a mds-event (data apdu)
+// EPX FIXME EPX packet with updated data
+
 
 /**
  *  Creates the first standard configuration for <em>Pulse Oximeter Monitor</em> specialization (0190).

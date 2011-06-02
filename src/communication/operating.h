@@ -58,6 +58,8 @@ typedef struct EventReportResult {
  */
 void operating_process_apdu(Context *ctx, APDU *apdu);
 
+void operating_process_apdu_agent(Context *ctx, APDU *apdu);
+
 Request *operating_service_get(Context *ctx, OID_Type *attributeids_list, int attributeids_list_count, intu32 timeout, service_request_callback request_callback);
 
 void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data);

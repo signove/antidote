@@ -92,12 +92,9 @@
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
 #include "src/communication/context_agent.h"
-#include "src/communication/extconfigurations.h"
 #include "src/communication/configuring.h"
 #include "src/communication/stdconfigurations.h"
-#include "src/specializations/blood_pressure_monitor.h"
 #include "src/specializations/pulse_oximeter.h"
-#include "src/specializations/weighing_scale.h"
 #include "src/util/log.h"
 
 
@@ -156,23 +153,13 @@ void agent_init(CommunicationPlugin plugin)
 	DEBUG("Agent Initialization");
 	communication_set_plugin(plugin);
 
-
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &agent_handle_transition_evt);
 
-	// Register standard configurations for each specialization.
-	std_configurations_register_conf(
-		blood_pressure_monitor_create_std_config_ID02BC());
+	// EPX FIXME EPX agent?
+
 	std_configurations_register_conf(
 		pulse_oximeter_create_std_config_ID0190());
-	std_configurations_register_conf(
-		pulse_oximeter_create_std_config_ID0191());
-	std_configurations_register_conf(
-		weighting_scale_create_std_config_ID05DC());
-
-	// Load Configurations File
-	ext_configurations_load_configurations();
-
 }
 
 /**
@@ -188,7 +175,7 @@ void agent_finalize()
 	agent_remove_all_listeners();
 	communication_finalize();
 
-	ext_configurations_destroy();
+	// EPX FIXME EPX
 	std_configurations_destroy();
 }
 
@@ -297,34 +284,6 @@ int agent_notify_evt_device_unavailable(Context *ctx)
 
 
 /**
- * Notifies 'measurement data updated'  event.
- * This function should be visible to source layer of events.
- * This function must be called in a thread safe communication context.
- *
- * @param ctx
- * @param data_list with the measured data.
- * @return 1 if any listener catches the notification, 0 if not
- */
-int agent_notify_evt_measurement_data_updated(Context *ctx, DataList *data_list)
-{
-	int ret_val = 0;
-	int i;
-
-	for (i = 0; i < agent_listener_count; i++) {
-		AgentListener *l = &agent_listener_list[i];
-
-		if (l != NULL && l->measurement_data_updated != NULL) {
-			(l->measurement_data_updated)(ctx, data_list);
-			ret_val = 1;
-		}
-	}
-
-	data_list_del(data_list);
-	return ret_val;
-
-}
-
-/**
  * Notifies 'communication timeout'  event.
  * This function should be visible to source layer of events.
  * This function must be called in a thread safe communication context.
@@ -416,209 +375,6 @@ void agent_request_association_abort(ContextId id)
 
 
 /**
- * Sets the Operational-State attribute of the scanner
- * objects. This attribute defines if scanner is active.
- *
- * @param id the ID of current context.
- * @param handle Scanner Object Id
- * @param state new value of the Operational-State attribute
- * @param callback callback function of the request
- * @return pointer to request sent
- */
-Request *agent_set_operational_state_of_the_scanner(ContextId id,
-		HANDLE handle, OperationalState state,
-		service_request_callback callback)
-{
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		Request *req = mds_set_operational_state_of_the_scanner(ctx, handle, state, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-		return req;
-	}
-
-	return NULL;
-}
-
-/**
- * Returns attributes from medical device since last updated.
- *
- * @param id context id
- * @return data list with attribute values
- */
-DataList *agent_get_mds_attributes(ContextId id)
-{
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		MDS *mds = ctx->mds;
-
-		if (mds == NULL) {
-			ERROR("No MDS data is available");
-			return NULL;
-		}
-
-		DataList *list = data_list_new(1);
-
-		if (list == NULL) {
-			return NULL;
-		}
-
-		mds_populate_attributes(mds, &list->values[0]);
-
-		return list;
-	}
-
-	return NULL;
-}
-
-/**
- * Requests "measurement data transmission", if agent support this feature it
- * will start to send back measurement data.
- *
- * @param id context id
- * @param callback
- * @return pointer to request sent
- */
-Request *agent_request_measurement_data_transmission(ContextId id, service_request_callback callback)
-{
-
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		DataReqMode mode = DATA_REQ_START_STOP
-				   | DATA_REQ_SUPP_SCOPE_CLASS
-				   | DATA_REQ_SUPP_MODE_SINGLE_RSP;
-		OID_Type class_id = MDC_MOC_VMO_METRIC_NU;
-		Request *req = mds_service_action_data_request(ctx, mode, &class_id,
-				NULL, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-
-		return req;
-	}
-
-	return NULL;
-}
-
-/**
- * Requests all attribute values of medical device
- *
- * @param id context id
- * @param callback
- * @return pointer to request sent
- */
-Request *agent_request_get_all_mds_attributes(ContextId id, service_request_callback callback)
-{
-
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		Request *req = mds_service_get(ctx, NULL, 0, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-		return req;
-	}
-
-	return NULL;
-}
-
-/**
- * Requests segments information
- *
- * @param id context id
- * @param callback
- * @return pointer to request sent
- */
-Request *agent_request_get_segment_info(ContextId id,
-		service_request_callback callback)
-{
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		Request *req;
-		req = mds_service_get_segment_info(ctx, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-		return req;
-	}
-
-	return NULL;
-}
-
-/**
- * Requests segments data
- *
- * @param id context id
- * @param callback
- * @return pointer to request sent
- */
-Request *agent_request_get_segment_data(ContextId id,
-		service_request_callback callback)
-{
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		Request *req = mds_service_get_segment_data(ctx, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-		return req;
-	}
-
-	return NULL;
-}
-
-/**
- * Requests clear segments data
- *
- * @param id context id
- * @param callback
- * @return pointer to request sent
- */
-Request *agent_request_clear_segments(ContextId id,
-					service_request_callback callback)
-{
-	Context *ctx = context_get(id);
-
-	if (ctx != NULL) {
-
-		// thread-safe block - start
-		communication_lock(ctx);
-
-		Request *req = mds_service_clear_segments(ctx, callback);
-
-		communication_unlock(ctx);
-		// thread-safe block - end
-		return req;
-	}
-
-	return NULL;
-
-}
-
-
-/**
  * Handle low level communication state transition events and notifies
  * high level application
  *
@@ -635,5 +391,7 @@ void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states n
 
 	}
 }
+
+// EPX FIXME EPX fire 'send data' event
 
 /** @} */

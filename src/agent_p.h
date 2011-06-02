@@ -63,19 +63,4 @@ void agent_request_association_release(ContextId id);
 
 void agent_request_association_abort(ContextId id);
 
-Request *agent_request_measurement_data_transmission(ContextId id, service_request_callback callback);
-
-Request *agent_request_get_all_mds_attributes(ContextId id, service_request_callback callback);
-
-Request *agent_request_get_segment_info(ContextId id, service_request_callback callback);
-
-Request *agent_set_operational_state_of_the_scanner(ContextId id, HANDLE handle, OperationalState state,
-		service_request_callback callback);
-
-Request *agent_request_get_segment_data(ContextId id, service_request_callback callback);
-
-Request *agent_request_clear_segments(ContextId id, service_request_callback callback);
-
-Request *agent_request_get_segment_info(ContextId id, service_request_callback callback);
-
-#endif /* MAINAPP_H_ */
+#endif /* AGENT_P_H_ */

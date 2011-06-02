@@ -136,6 +136,7 @@ Context *context_create(ContextId id)
 		return NULL;
 	}
 
+	context->type = MANAGER_CONTEXT;
 	context->fsm = fsm_instance();
 	fsm_set_manager_state_table(context->fsm);
 

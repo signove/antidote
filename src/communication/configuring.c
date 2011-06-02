@@ -138,6 +138,28 @@ void configuring_waiting_state_process_apdu(Context *ctx, APDU *apdu)
 }
 
 /**
+ * Process incoming APDU's in config_sending state (Agent)
+ *
+ * @param ctx context
+ * @param apdu received APDU
+ */
+void configuring_config_sending_process_apdu(Context *ctx, APDU *apdu)
+{
+	// EPX FIXME EPX
+}
+
+/**
+ * Process incoming APDU's in waiting_approval state (Agent)
+ *
+ * @param ctx context
+ * @param apdu received APDU
+ */
+void configuring_waiting_approval_process_apdu(Context *ctx, APDU *apdu)
+{
+	// EPX FIXME EPX
+}
+
+/**
  * Process incoming APDU's in checking_for_config state
  * @param ctx context
  * @param apdu received APDU

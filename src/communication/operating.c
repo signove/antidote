@@ -116,6 +116,15 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
 }
 
 /**
+ * Process incoming APDU - Agent
+ *
+ * @param *apdu
+ */
+void operating_process_apdu_agent(Context *ctx, APDU *apdu)
+{
+}
+
+/**
  * Process roiv in APDU
  *
  * @param ctx the current context.

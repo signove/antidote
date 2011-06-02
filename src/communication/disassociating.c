@@ -96,6 +96,53 @@ void disassociating_process_apdu(Context *ctx, APDU *apdu)
 }
 
 /**
+ * Disassociating process - Agent
+ * @param ctx context
+ * @param *apdu Received apdu
+ */
+void disassociating_process_apdu_agent(Context *ctx, APDU *apdu)
+{
+	// EPX FIXME EPX
+	FSMEventData evt;
+	DATA_apdu *data_apdu = NULL;
+
+	switch (apdu->choice) {
+	case AARQ_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_aarq, NULL);
+		break;
+	case AARE_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
+		break;
+	case RLRQ_CHOSEN:
+		evt.choice = FSM_EVT_DATA_RELEASE_RESPONSE_REASON;
+		evt.u.release_response_reason = RELEASE_RESPONSE_REASON_NORMAL;
+		communication_fire_evt(ctx, fsm_evt_rx_rlrq, &evt);
+		break;
+	case RLRE_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_rlre, NULL);
+	case ABRT_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_abrt, NULL);
+		break;
+	case PRST_CHOSEN:
+		data_apdu = encode_get_data_apdu(&apdu->u.prst);
+
+		if (communication_is_roiv_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_roiv, NULL);
+		} else if (communication_is_rors_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_rors, NULL);
+		} else if (communication_is_roer_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_roer, NULL);
+		} else if (communication_is_rorj_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_rorj, NULL);
+		}
+
+		break;
+	default:
+		break;
+	}
+}
+
+/**
  *  Listen to fsm event and send Release Request APDU
  *
  * @param ctx Context state machine

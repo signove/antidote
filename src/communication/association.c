@@ -64,6 +64,8 @@ static int association_check_config_id(PhdAssociationInformation *info);
 
 static void association_process_aarq_apdu(Context *ctx, APDU *apdu);
 
+static void association_process_aare_apdu(Context *ctx, APDU *apdu);
+
 static void association_accept_data_protocol_20601(Context *ctx, DataProto *proto);
 
 static void populate_aare(APDU *apdu, PhdAssociationInformation *response_info);
@@ -82,7 +84,36 @@ void association_unassociated_process_apdu(Context *ctx, APDU *apdu)
 		break;
 	case AARE_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
+	case RLRQ_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_rlrq, NULL);
 		break;
+	case PRST_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_prst, NULL);
+		break;
+	case ABRT_CHOSEN: // ignore
+		break;
+	case RLRE_CHOSEN: // ignore
+		break;
+	default:
+		// TODO error handling
+		break;
+	}
+}
+
+/**
+ * Process incoming APDU's in unassociated state - agent
+ *
+ * @param ctx the current context.
+ * @param apdu received APDU.
+ */
+void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu)
+{
+	switch (apdu->choice) {
+	case AARQ_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_aarq, NULL);
+		break;
+	case AARE_CHOSEN:
+		association_process_aare_apdu(ctx, apdu);
 	case RLRQ_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_rlrq, NULL);
 		break;
@@ -169,6 +200,16 @@ static void association_process_aarq_apdu(Context *ctx, APDU *apdu)
 	// REJECTED_PERMANENT;
 	// REJECTED_UNKNOWN;
 
+}
+
+/**
+ * Process the association response apdu
+ *
+ * @param apdu
+ */
+static void association_process_aare_apdu(Context *ctx, APDU *apdu)
+{
+	// FIXME EPX FIXME EPX
 }
 
 /**

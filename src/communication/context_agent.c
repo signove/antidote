@@ -136,6 +136,7 @@ Context *agent_context_create(ContextId id)
 		return NULL;
 	}
 
+	context->type = AGENT_CONTEXT;
 	context->fsm = fsm_instance();
 	fsm_set_agent_state_table(context->fsm);
 

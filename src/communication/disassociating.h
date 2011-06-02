@@ -41,6 +41,8 @@
 
 void disassociating_process_apdu(Context *ctx, APDU *apdu);
 
+void disassociating_process_apdu_agent(Context *ctx, APDU *apdu);
+
 void disassociating_release_request_tx(Context *ctx, fsm_events evt,
 				       FSMEventData *data);
 

@@ -39,6 +39,8 @@
 #include <ieee11073.h>
 #include "agent.h"
 
+// EPX FIXME EPX send data calling 
+
 /**
  * /brief The main application is a command-line-based tool that simply receives
  * raw data from IEEE devices and print them.
@@ -236,7 +238,6 @@ int main(int argc, char **argv)
 	agent_init(comm_plugin);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
-	listener.measurement_data_updated = &new_data_received;
 	listener.device_available = &device_associated;
 
 	agent_add_listener(listener);

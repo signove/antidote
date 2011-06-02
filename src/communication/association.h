@@ -41,6 +41,8 @@
 
 void association_unassociated_process_apdu(Context *ctx, APDU *apdu);
 
+void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu);
+
 void association_accept_config_tx(Context *ctx, fsm_events evt,
 				  FSMEventData *data);
 

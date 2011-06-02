@@ -72,6 +72,10 @@ typedef struct timeout_callback {
  * This represents the Connection Context of IEEE Agent
  */
 struct Context {
+	/**
+         * Context is Manager or Agent
+	 */
+	int type;
 
 	/**
 	 * Unique value to identify agent connection
@@ -111,5 +115,8 @@ struct Context {
 	timeout_callback timeout_action;
 
 };
+
+#define MANAGER_CONTEXT 1
+#define AGENT_CONTEXT 2
 
 #endif /* CONTEXT_H_ */

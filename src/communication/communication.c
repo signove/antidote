@@ -448,20 +448,39 @@ void communication_fire_evt(Context *ctx, fsm_events evt, FSMEventData *data)
 	// thread-safe block - end
 }
 
-/**
- * Process the incoming APDU calling to proper procedure.
- * This method locks the communication layer thread.
- *
- * @param ctx current context
- * @param apdu APDU
- */
-void communication_process_apdu(Context *ctx, APDU *apdu)
+static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 {
-	// thread-safe block - start
-	communication_lock(ctx);
+	switch (ctx->fsm->state) {
+	case fsm_state_disconnected:
+		ERROR("Cannot process APDU in disconnected state ");
+		break;
+	case fsm_state_unassociated:
+		association_unassociated_process_apdu_agent(ctx, apdu);
+		break;
+	case fsm_state_associating:
+		// The associating state is not used by manager
+		break;
+	case fsm_state_operating:
+		operating_process_apdu_agent(ctx, apdu);
+		break;
+	case fsm_state_disassociating:
+		disassociating_process_apdu_agent(ctx, apdu);
+		break;
+	case fsm_state_config_sending:
+		configuring_config_sending_process_apdu(ctx, apdu);
+		break;
+	case fsm_state_waiting_approval:
+		configuring_waiting_approval_process_apdu(ctx, apdu);
+		break;
+	default:
+		// TODO error handling
+		ERROR(" service error: Invalid machine state ");
+		exit(1);
+	}
+}
 
-	DEBUG(" communication: state machine(%s) ", fsm_get_current_state_name(ctx->fsm));
-
+static void communication_process_apdu_manager(Context *ctx, APDU *apdu)
+{
 	switch (ctx->fsm->state) {
 	case fsm_state_disconnected:
 		ERROR("Cannot process APDU in disconnected state ");
@@ -488,6 +507,27 @@ void communication_process_apdu(Context *ctx, APDU *apdu)
 		// TODO error handling
 		ERROR(" service error: Invalid machine state ");
 		exit(1);
+	}
+}
+
+/**
+ * Process the incoming APDU calling to proper procedure.
+ * This method locks the communication layer thread.
+ *
+ * @param ctx current context
+ * @param apdu APDU
+ */
+void communication_process_apdu(Context *ctx, APDU *apdu)
+{
+	// thread-safe block - start
+	communication_lock(ctx);
+
+	DEBUG(" communication: state machine(%s) ", fsm_get_current_state_name(ctx->fsm));
+
+	if (ctx->type == AGENT_CONTEXT) {
+		communication_process_apdu_agent(ctx, apdu);
+	} else {
+		communication_process_apdu_manager(ctx, apdu);
 	}
 
 	communication_unlock(ctx);

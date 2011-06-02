@@ -42,10 +42,6 @@
  */
 typedef struct AgentListener {
 	/**
-	 *  Called when Medical Measurement is received and stored
-	 */
-	void (*measurement_data_updated)(Context *ctx, DataList *list);
-	/**
 	 * Called after device is operational
 	 */
 	void (*device_available)(Context *ctx, DataList *list);
@@ -60,7 +56,6 @@ typedef struct AgentListener {
 } AgentListener;
 
 #define AGENT_LISTENER_EMPTY {\
-			.measurement_data_updated = NULL,\
 			.device_available = NULL,\
 			.device_unavailable = NULL,\
 			.timeout = NULL\
@@ -78,6 +73,6 @@ void agent_connection_loop(ContextId context_id);
 
 int agent_add_listener(AgentListener listener);
 
-DataList *agent_get_mds_attributes(ContextId id);
+int agent_send_data(ContextId context_id);
 
 #endif /* AGENT_H_ */
