@@ -465,4 +465,17 @@ void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 	communication_count_timeout(ctx, &communication_timeout, CONFIGURING_TO);
 }
 
+/**
+ * Sends configuration apdu (agent)
+ *
+ * @param ctx context
+ * @param evt
+ * @param event_data
+ */
+void configuring_send_config_tx(Context *ctx, fsm_events evt,
+					FSMEventData *event_data)
+{
+	// EPX FIXME EPX
+}
+
 /** @} */

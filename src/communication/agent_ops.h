@@ -34,9 +34,6 @@
 
 #include "fsm.h"
 
-void communication_agent_config1_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
-void communication_agent_config2_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
-void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 void communication_agent_rors_cmip_get_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 void communication_agent_roer_no_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
 void communication_agent_roiv_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);

@@ -46,6 +46,10 @@ void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu);
 void association_accept_config_tx(Context *ctx, fsm_events evt,
 				  FSMEventData *data);
 
+void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
+
+void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data);
+
 void association_unaccept_config_tx(Context *ctx, fsm_events evt,
 				    FSMEventData *data);
 

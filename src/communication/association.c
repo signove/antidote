@@ -437,4 +437,14 @@ static void populate_aare(APDU *apdu, PhdAssociationInformation *response_info)
 	response_info->optionList.length = 0;
 }
 
+void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+{
+	// EPX FIXME EPX
+}
+
+void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+{
+	// EPX FIXME EPX
+}
+
 /** @} */

@@ -62,6 +62,9 @@ void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 void configuring_perform_configuration(Context *ctx, fsm_events evt,
 					FSMEventData *event_data);
 
+void configuring_send_config_tx(Context *ctx, fsm_events evt,
+					FSMEventData *event_data);
+
 /** @} */
 #endif /* CONFIGURING_H_ */
 
