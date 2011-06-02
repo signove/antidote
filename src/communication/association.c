@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "src/manager_p.h"
+#include "src/agent_p.h"
 #include "src/communication/stdconfigurations.h"
 #include "src/communication/extconfigurations.h"
 #include "src/communication/association.h"
@@ -210,6 +211,20 @@ static void association_process_aarq_apdu(Context *ctx, APDU *apdu)
 static void association_process_aare_apdu(Context *ctx, APDU *apdu)
 {
 	// FIXME EPX FIXME EPX
+
+	DEBUG(" associating: processing aare ");
+
+	if (!apdu)
+		return;
+
+	if (apdu->u.aare.result == ACCEPTED) {
+		communication_fire_evt(ctx, fsm_evt_rx_aare_accepted_known, NULL);
+	} else if (apdu->u.aare.result == ACCEPTED_UNKNOWN_CONFIG) {
+		communication_fire_evt(ctx, fsm_evt_rx_aare_accepted_unknown, NULL);
+	} else {
+		DEBUG("associating: aare rejection code %d", apdu->u.aare.result);
+		communication_fire_evt(ctx, fsm_evt_rx_aare_rejected, NULL);
+	}
 }
 
 /**
@@ -437,14 +452,90 @@ static void populate_aare(APDU *apdu, PhdAssociationInformation *response_info)
 	response_info->optionList.length = 0;
 }
 
+static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
+				DataProto *proto);
+
 void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	// EPX FIXME EPX
+
+	APDU config_apdu;
+	PhdAssociationInformation config_info;
+	DataProto proto;
+
+	populate_aarq(&config_apdu, &config_info, &proto);
+
+	// Encode APDU
+	ByteStreamWriter *encoded_value =
+		byte_stream_writer_instance(proto.data_proto_info.length);
+		encode_phdassociationinformation(encoded_value, &config_info);
+
+	proto.data_proto_info.value = encoded_value->buffer;
+
+	communication_send_apdu(ctx, &config_apdu);
+
+	del_byte_stream_writer(encoded_value, 1);
 }
+
+static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
+				DataProto *proto)
+{
+	apdu->choice = AARQ_CHOSEN;
+	apdu->length = 50;
+
+	apdu->u.aarq.assoc_version = ASSOC_VERSION1;
+	apdu->u.aarq.data_proto_list.count = 1;
+	apdu->u.aarq.data_proto_list.length = 42;
+	apdu->u.aarq.data_proto_list.value = proto;
+
+	proto->data_proto_id = DATA_PROTO_ID_20601;
+	proto->data_proto_info.length = 38;
+
+	config_info->protocolVersion = ASSOC_VERSION1;
+	config_info->encodingRules = MDER;
+	config_info->nomenclatureVersion = NOM_VERSION1;
+
+	config_info->functionalUnits = 0x00000000;
+	config_info->systemType = SYS_TYPE_AGENT;
+
+	config_info->system_id.value = (intu8 *) AGENT_SYSTEM_ID_VALUE;
+	config_info->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
+
+	/* FIXME EPX this should come from somewhere else */
+	config_info->dev_config_id = 0x0190;
+
+	config_info->data_req_mode_capab.data_req_mode_flags = 0x0001;
+	config_info->data_req_mode_capab.data_req_init_agent_count = 0x01;
+	config_info->data_req_mode_capab.data_req_init_manager_count = 0x00;
+
+	config_info->optionList.count = 0;
+	config_info->optionList.length = 0;
+}
+
 
 void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	// EPX FIXME EPX
+	APDU response_apdu;
+	PhdAssociationInformation response_info;
+
+	populate_aare(&response_apdu, &response_info);
+
+	response_apdu.u.aare.result = REJECTED_PERMANENT;
+
+	// Encode APDU
+	ByteStreamWriter *encoded_value =
+		byte_stream_writer_instance(
+			response_apdu.u.aare.selected_data_proto .data_proto_info.length);
+
+	encode_phdassociationinformation(encoded_value, &response_info);
+
+	response_apdu.u.aare.selected_data_proto.data_proto_info.value =
+		encoded_value->buffer;
+
+	communication_send_apdu(ctx, &response_apdu);
+
+	del_byte_stream_writer(encoded_value, 1);
 }
 
 /** @} */

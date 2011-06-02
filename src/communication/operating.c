@@ -122,6 +122,41 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
  */
 void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 {
+	// FIXME EPX FIXME EPX
+	RejectResult reject_result;
+
+	switch (apdu->choice) {
+	case PRST_CHOSEN: {
+		break;
+	}
+	case ABRT_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_abrt, NULL);
+		break;
+	}
+	case RLRQ_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_rlrq, NULL);
+		break;
+	}
+	case RLRE_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_rlre, NULL);
+		break;
+	}
+	case AARQ_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_aarq, NULL);
+		break;
+	}
+	case AARE_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
+		break;
+	}
+	case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN: {
+		communication_fire_evt(ctx, fsm_evt_rx_rors_confirmed_event_report, NULL);
+		break;
+	}
+	default:
+		reject_result.problem = UNRECOGNIZED_APDU;
+		// TODO: communication_send_rorj(rejectResult)
+	}
 }
 
 /**

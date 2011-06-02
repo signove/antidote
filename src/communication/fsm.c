@@ -80,6 +80,9 @@ static char *fsm_event_strings[] = {
 	"fsm_evt_rx_aarq_acceptable_and_unknown_configuration",
 	"fsm_evt_rx_aarq_unacceptable_configuration",
 	"fsm_evt_rx_aare",
+	"fsm_evt_rx_aare_rejected",
+	"fsm_evt_rx_aare_accepted_known",
+	"fsm_evt_rx_aare_accepted_unknown",
 	"fsm_evt_rx_rlrq",
 	"fsm_evt_rx_rlre",
 	"fsm_evt_rx_abrt",
@@ -231,11 +234,9 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_associating,		fsm_evt_req_assoc_rel,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.6
 	{fsm_state_associating,		fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.7
 	{fsm_state_associating,		fsm_evt_rx_aarq,					fsm_state_unassociated,		&association_agent_aare_rejected_permanent_tx}, // 3.8
-	// EPX FIXME distinguish AARE between known and unknown config
-	{fsm_state_associating,		fsm_evt_rx_aare,					fsm_state_operating,		NULL}, // 3.13
-	{fsm_state_associating,		fsm_evt_rx_aare,					fsm_state_config_sending,	&configuring_send_config_tx}, // 3.14
-	// EPX FIXME distinguish AARE-rejected?
-	{fsm_state_associating,		fsm_evt_rx_aare,					fsm_state_unassociated,		NULL}, // 3.15
+	{fsm_state_associating,		fsm_evt_rx_aare_accepted_known,				fsm_state_operating,		NULL}, // 3.13
+	{fsm_state_associating,		fsm_evt_rx_aare_accepted_unknown,			fsm_state_config_sending,	&configuring_send_config_tx}, // 3.14
+	{fsm_state_associating,		fsm_evt_rx_aare_rejected,				fsm_state_unassociated,		NULL}, // 3.15
 	{fsm_state_associating,		fsm_evt_rx_rlrq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.16
 	{fsm_state_associating,		fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.17
 	{fsm_state_associating,		fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 3.18
