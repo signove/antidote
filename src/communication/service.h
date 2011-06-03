@@ -122,7 +122,7 @@ void service_del_request(Request *req);
 
 Request  *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout_callback timeout,  service_request_callback request_callback);
 
-void service_send_unconfirmed_remote_operation_request(Context *ctx, APDU *apdu);
+void service_send_unconfirmed_operation_request(Context *ctx, APDU *apdu);
 
 InvokeIDType service_get_invoke_id(Context *ctx, Request *req);
 

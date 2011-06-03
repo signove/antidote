@@ -31,6 +31,8 @@
 
 #include "fsm.h"
 #include "communication.h"
+#include "communication/service.h"
+#include "communication/parser/encoder_ASN1.h"
 
 void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
@@ -80,12 +82,26 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
 {
 }
 
-extern void (specialization_populate_event_report)(APDU *apdu, void *args[]);
+extern DATA_apdu (specialization_populate_event_report)(void *args[]);
 
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	APDU apdu;
+	DATA_apdu prst;
+
+	apdu.choice = PRST_CHOSEN;
+
 	// EPX FIXME EPX arguments should come from top-level app
-	specialization_populate_event_report(&apdu, 0);
-	communication_send_apdu(ctx, &apdu);
+	prst = specialization_populate_event_report(0);
+
+	apdu.u.prst.length = prst.message.length + 6; // 46 + 6 for oximeter
+	apdu.length = apdu.u.prst.length + 2; // 52 + 2 for oximeter
+
+	ByteStreamWriter *prst_writer = byte_stream_writer_instance(apdu.u.prst.length);
+	encode_data_apdu(prst_writer, &prst);
+	apdu.u.prst.value = prst_writer->buffer;
+
+	service_send_unconfirmed_operation_request(ctx, &apdu);
+
+	del_byte_stream_writer(prst_writer, 1);
 }

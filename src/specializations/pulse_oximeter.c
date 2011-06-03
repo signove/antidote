@@ -32,7 +32,6 @@
 #include "pulse_oximeter.h"
 #include "src/util/bytelib.h"
 #include "communication/parser/encoder_ASN1.h"
-#include "communication/service.h"
 #include "src/dim/nomenclature.h"
 #include "src/dim/mds.h"
 
@@ -249,8 +248,7 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
  * Populates an event report APDU. 
  */
 
-static void pulse_oximeter_populate_event_report(Context *ctx, APDU* apdu,
-						void *args[])
+static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 {
 	DATA_apdu data;
 	EventReportArgumentSimple evt;
@@ -274,14 +272,8 @@ static void pulse_oximeter_populate_event_report(Context *ctx, APDU* apdu,
 	nu_oximetry = 98;
 	nu_beats = 75.3;
 
-	apdu->choice = PRST_CHOSEN;
-	apdu->length = 54;
-	apdu->u.prst.length = 52;
-
-	// no need to do anything beyond getting an ID because
-	// it is unconfirmed packet. Otherwise we would need to
-	// use service_* call to send the packet.
-	data.invoke_id = service_get_new_invoke_id(ctx);
+	// will be filled afterwards by service_* function
+	data.invoke_id = 0;
 
 	data.message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
 	data.message.length = 46;
@@ -324,24 +316,22 @@ static void pulse_oximeter_populate_event_report(Context *ctx, APDU* apdu,
 	evt.event_info.value = scan_writer->buffer;
 	data.message.u.roiv_cmipEventReport = evt;
 
-	ByteStreamWriter *data_writer = byte_stream_writer_instance(apdu->u.prst.length);
-	encode_data_apdu(data_writer, &data);
+	del_byte_stream_writer(writer0, 0);
+	del_byte_stream_writer(writer1, 0);
+	del_byte_stream_writer(scan_writer, 0);
 
-	del_byte_stream_writer(writer0, 1);
-	del_byte_stream_writer(writer1, 1);
-	del_byte_stream_writer(scan_writer, 1);
+	// FIXME EPX FIXME leaks
 
-	apdu->u.prst.value = data_writer->buffer;
-	// FIXME EPX FIXME leak data_writer
+	return data;
 }
 
-extern void (*specialization_populate_event_report)(Context* ctx, APDU *apdu, void *args[]);
+extern DATA_apdu (*specialization_populate_event_report)(void *args[]);
 extern ConfigObjectList *(*specialization_get_config)();
 
 void pulse_oximeter_agent_config()
 {
 	specialization_populate_event_report = &pulse_oximeter_populate_event_report;
-	specialization_get_config = &pulse_oximeter_get_config_ID0190();
+	specialization_get_config = &pulse_oximeter_get_config_ID0190;
 }
 
 /** @} */

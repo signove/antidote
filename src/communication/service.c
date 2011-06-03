@@ -206,8 +206,7 @@ Request *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout
 /**
  * Tries to send unconfirmed Remote Operation Invoke apdu through communication layer.
  *
- * @param apdu Pointer to an APDU to be sent through communication.
- * All structures inside APDU must have been created on heap.
+ * @param apdu Pointer to an APDU to be sent through communication. Does not take ownership
  * @param ctx Current context.
  */
 void service_send_unconfirmed_operation_request(Context *ctx, APDU *apdu)
@@ -226,8 +225,6 @@ void service_send_unconfirmed_operation_request(Context *ctx, APDU *apdu)
 			communication_send_apdu(ctx, apdu);
 		} else {
 			DEBUG("Could not send uncofirmed operation because there are outstanding requests");
-			del_apdu(apdu);
-			free(apdu);
 		}
 	}
 }
