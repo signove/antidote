@@ -204,6 +204,35 @@ Request *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout
 }
 
 /**
+ * Tries to send unconfirmed Remote Operation Invoke apdu through communication layer.
+ *
+ * @param apdu Pointer to an APDU to be sent through communication.
+ * All structures inside APDU must have been created on heap.
+ * @param ctx Current context.
+ */
+void service_send_unconfirmed_operation_request(Context *ctx, APDU *apdu)
+{
+	Service *service = ctx->service;
+
+	if (apdu->choice == PRST_CHOSEN) {
+		if (service->requests_count <= 0) {
+			// TODO
+			// this is the result of a defficiency in outstanding requests
+			// storage. We use a static array of 16 Request's. Using a
+			// dynamic list would eliminate the need of mute unconfirmed
+			// requests while there are confirmed requests in flight.
+			DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+			data_apdu->invoke_id = service_get_new_invoke_id(ctx);
+			communication_send_apdu(ctx, apdu);
+		} else {
+			DEBUG("Could not send uncofirmed operation because there are outstanding requests");
+			del_apdu(apdu);
+			free(apdu);
+		}
+	}
+}
+
+/**
  * Returns current invoke id expected or in process
  *
  * @param ctx Current context.
