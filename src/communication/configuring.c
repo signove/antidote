@@ -308,13 +308,13 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 			mds_configure_operating(ctx, object_list);
 		}
 
-		event = fsm_evt_req_agent_supplied_supported_configuration;
+		event = fsm_evt_req_agent_supplied_known_configuration;
 	} else if (result == STANDARD_CONFIG_UNKNOWN) {
 		DEBUG("   -> STANDARD_CONFIG_UNKNOWN");
-		event = fsm_evt_req_agent_supplied_unsupported_configuration;
+		event = fsm_evt_req_agent_supplied_unknown_configuration;
 	} else {
 		DEBUG("   -> UNSUPPORTED_CONFIG");
-		event = fsm_evt_req_agent_supplied_unsupported_configuration;
+		event = fsm_evt_req_agent_supplied_unknown_configuration;
 	}
 
 	FSMEventData data;

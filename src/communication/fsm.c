@@ -70,8 +70,8 @@ static char *fsm_event_strings[] = {
 	"fsm_evt_ind_timeout_max_retry_reached",
 	"fsm_evt_req_assoc_rel",
 	"fsm_evt_req_assoc_abort",
-	"fsm_evt_req_agent_supplied_unsupported_configuration",
-	"fsm_evt_req_agent_supplied_supported_configuration",
+	"fsm_evt_req_agent_supplied_unknown_configuration",
+	"fsm_evt_req_agent_supplied_known_configuration",
 	"fsm_evt_req_send_config_report",
 	"fsm_evt_req_send_event",
 	"fsm_evt_req_assoc",
@@ -92,15 +92,14 @@ static char *fsm_event_strings[] = {
 	"fsm_evt_rx_roiv_confirmed_event_report",
 	"fsm_evt_rx_roiv_all_except_confirmed_event_report",
 	"fsm_evt_rx_roiv_get",
-	"fsm_evt_rx_roiv_cmip_get",
 	"fsm_evt_rx_roiv_set",
 	"fsm_evt_rx_roiv_confirmed_set",
 	"fsm_evt_rx_roiv_action",
 	"fsm_evt_rx_roiv_confirmed_action",
 	"fsm_evt_rx_rors",
 	"fsm_evt_rx_rors_confirmed_event_report",
-	"fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp",
-	"fsm_evt_rx_rors_cmip_confirmed_event_report_supp",
+	"fsm_evt_rx_rors_confirmed_event_report_unknown",
+	"fsm_evt_rx_rors_confirmed_event_report_known",
 	"fsm_evt_rx_rors_get",
 	"fsm_evt_rx_rors_confirmed_set",
 	"fsm_evt_rx_rors_confirmed_action",
@@ -170,8 +169,8 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_checking_config,	fsm_evt_rx_rors_confirmed_action,				fsm_state_checking_config,	NULL}, // 7.26
 	{fsm_state_checking_config,	fsm_evt_rx_roer,						fsm_state_checking_config,	NULL}, // 7.26
 	{fsm_state_checking_config,	fsm_evt_rx_rorj,						fsm_state_checking_config,	NULL}, // 7.26
-	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_unsupported_configuration,		fsm_state_waiting_for_config,	&configuring_configuration_response_tx}, // 7.31
-	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_supported_configuration,		fsm_state_operating,		&configuring_configuration_response_tx}, // 7.32
+	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_unknown_configuration,		fsm_state_waiting_for_config,	&configuring_configuration_response_tx}, // 7.31
+	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_known_configuration,			fsm_state_operating,		&configuring_configuration_response_tx}, // 7.32
 
 
 	{fsm_state_operating,		fsm_evt_ind_transport_disconnect,				fsm_state_disconnected,		NULL}, // 8.2
@@ -235,7 +234,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_associating,		fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.7
 	{fsm_state_associating,		fsm_evt_rx_aarq,					fsm_state_unassociated,		&association_agent_aare_rejected_permanent_tx}, // 3.8
 	{fsm_state_associating,		fsm_evt_rx_aare_accepted_known,				fsm_state_operating,		NULL}, // 3.13
-	{fsm_state_associating,		fsm_evt_rx_aare_accepted_unknown,			fsm_state_config_sending,	&configuring_send_config_tx}, // 3.14
+	{fsm_state_associating,		fsm_evt_rx_aare_accepted_unknown,			fsm_state_waiting_approval,	&configuring_send_config_tx}, // 3.14
 	{fsm_state_associating,		fsm_evt_rx_aare_rejected,				fsm_state_unassociated,		NULL}, // 3.15
 	{fsm_state_associating,		fsm_evt_rx_rlrq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.16
 	{fsm_state_associating,		fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.17
@@ -251,19 +250,18 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_config_sending,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.17
 	{fsm_state_config_sending,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 4.18
 	// EPX FIXME handle=0
-	{fsm_state_config_sending,	fsm_evt_rx_roiv_cmip_get,				fsm_state_config_sending,	&communication_agent_rors_cmip_get_tx}, // 4.22
+	{fsm_state_config_sending,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_rors_get_tx}, // 4.22
 	{fsm_state_config_sending,	fsm_evt_rx_roiv,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_event_report,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
-	{fsm_state_config_sending,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_set,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_confirmed_set,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_action,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_confirmed_action,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_rors,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
 	{fsm_state_config_sending,	fsm_evt_rx_rors_confirmed_event_report,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
-	{fsm_state_config_sending,	fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp,	fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
-	{fsm_state_config_sending,	fsm_evt_rx_rors_cmip_confirmed_event_report_supp,	fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
+	{fsm_state_config_sending,	fsm_evt_rx_rors_confirmed_event_report_unknown,		fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
+	{fsm_state_config_sending,	fsm_evt_rx_rors_confirmed_event_report_known,		fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
 	{fsm_state_config_sending,	fsm_evt_rx_rors_get,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
 	{fsm_state_config_sending,	fsm_evt_rx_rors_confirmed_set,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
 	{fsm_state_config_sending,	fsm_evt_rx_rors_confirmed_action,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.26
@@ -280,7 +278,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_waiting_approval,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.17
 	{fsm_state_waiting_approval,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 5.18
 	// EPX FIXME handle=0
-	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_cmip_get,				fsm_state_config_sending,	&communication_agent_rors_cmip_get_tx}, // 5.22
+	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_rors_get_tx}, // 5.22
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_event_report,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
@@ -289,8 +287,8 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_confirmed_set,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_action,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_confirmed_action,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
-	{fsm_state_waiting_approval,	fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp,	fsm_state_config_sending,	NULL}, // 5.27
-	{fsm_state_waiting_approval,	fsm_evt_rx_rors_cmip_confirmed_event_report_supp,	fsm_state_operating,		NULL}, // 5.29
+	{fsm_state_waiting_approval,	fsm_evt_rx_rors_confirmed_event_report_unknown,		fsm_state_config_sending,	NULL}, // 5.27
+	{fsm_state_waiting_approval,	fsm_evt_rx_rors_confirmed_event_report_known,		fsm_state_operating,		NULL}, // 5.29
 	{fsm_state_waiting_approval,	fsm_evt_rx_rors,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.30
 	{fsm_state_waiting_approval,	fsm_evt_rx_rors_confirmed_event_report,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.30
 	{fsm_state_waiting_approval,	fsm_evt_rx_rors_get,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.30
@@ -310,8 +308,6 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_operating,		fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.17
 	{fsm_state_operating,		fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 8.18
 	{fsm_state_operating,		fsm_evt_rx_roiv,					fsm_state_operating,		&communication_agent_roiv_respond_tx}, // 8.21
-	{fsm_state_operating,		fsm_evt_rx_roiv_cmip_get,				fsm_state_operating,		&communication_agent_roiv_cmip_get_respond_tx}, // 8.21
-	{fsm_state_operating,		fsm_evt_rx_roiv_event_report,				fsm_state_operating,		&communication_agent_roiv_event_report_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_operating,		&communication_agent_roiv_confirmed_error_report_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_all_except_confirmed_event_report,	fsm_state_operating,		&communication_agent_roiv_all_except_confirmed_error_report_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_get,					fsm_state_operating,		&communication_agent_roiv_get_respond_tx}, // 8.21
@@ -321,8 +317,8 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_operating,		fsm_evt_rx_roiv_action,					fsm_state_operating,		&communication_agent_roiv_action_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_rors,					fsm_state_operating,		NULL}, // 8.26
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_event_report,			fsm_state_operating,		NULL}, // 8.26
-	{fsm_state_operating,		fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp,	fsm_state_operating,		NULL}, // 8.26
-	{fsm_state_operating,		fsm_evt_rx_rors_cmip_confirmed_event_report_supp,	fsm_state_operating,		NULL}, // 8.26
+	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_event_report_unknown,		fsm_state_operating,		NULL}, // 8.26
+	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_event_report_known,		fsm_state_operating,		NULL}, // 8.26
 	{fsm_state_operating,		fsm_evt_rx_rors_get,					fsm_state_operating,		NULL}, // 8.26
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_set,				fsm_state_operating,		NULL}, // 8.26
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_action,			fsm_state_operating,		NULL}, // 8.26
@@ -340,8 +336,8 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_disassociating,	fsm_evt_rx_roiv,					fsm_state_disassociating,	NULL}, // 9.21
 	{fsm_state_disassociating,	fsm_evt_rx_rors,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
 	{fsm_state_disassociating,	fsm_evt_rx_rors_confirmed_event_report,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
-	{fsm_state_disassociating,	fsm_evt_rx_rors_cmip_confirmed_event_report_unsupp,	fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
-	{fsm_state_disassociating,	fsm_evt_rx_rors_cmip_confirmed_event_report_supp,	fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
+	{fsm_state_disassociating,	fsm_evt_rx_rors_confirmed_event_report_unknown,		fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
+	{fsm_state_disassociating,	fsm_evt_rx_rors_confirmed_event_report_known,		fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
 	{fsm_state_disassociating,	fsm_evt_rx_rors_get,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
 	{fsm_state_disassociating,	fsm_evt_rx_rors_confirmed_set,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
 	{fsm_state_disassociating,	fsm_evt_rx_rors_confirmed_action,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.26
