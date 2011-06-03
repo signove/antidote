@@ -582,6 +582,8 @@ void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 	communication_count_timeout(ctx, &communication_timeout, CONFIGURING_TO);
 }
 
+extern struct StdConfiguration *(*specialization_get_config)();
+
 /**
  * Sends configuration apdu (agent)
  *
@@ -592,7 +594,60 @@ void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 void configuring_send_config_tx(Context *ctx, fsm_events evt,
 					FSMEventData *event_data)
 {
-	// EPX FIXME EPX
+	APDU *apdu = calloc(1, sizeof(APDU));
+	PRST_apdu prst;
+	DATA_apdu data;
+	EventReportArgumentSimple evtrep;
+	ConfigReport cfgrep;
+
+	// EPX FIXME EPX cache config to avoid leak
+	struct StdConfiguration *stdcfg = specialization_get_config();
+	ConfigObjectList *cfg = stdcfg->configure_action();
+
+	data.invoke_id = 0; // filled by service_* call
+	data.message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
+
+	evtrep.obj_handle = 0;
+	evtrep.event_time = 0xFFFFFFFF;
+	evtrep.event_type = MDC_NOTI_CONFIG;
+	
+	cfgrep.config_obj_list = *cfg;
+	cfgrep.config_report_id = stdcfg->dev_config_id;
+
+	// compensate for config_report
+	evtrep.event_info.length = cfg->length + 6; // 80 + 6 = 86 for oximeter
+
+	ByteStreamWriter *cfg_writer = byte_stream_writer_instance(evtrep.event_info.length);
+	encode_configreport(cfg_writer, &cfgrep);
+	evtrep.event_info.value = cfg_writer->buffer;
+
+	data.message.u.roiv_cmipConfirmedEventReport = evtrep;
+	data.message.length = evtrep.event_info.length + 10; // 86 + 10 = 96 for oximeter
+
+	// prst = length + DATA_apdu
+	// take into account data's invoke id and choice
+	prst.length = data.message.length + 6; // 96 + 6 = 102 for oximeter
+
+	ByteStreamWriter *data_writer = byte_stream_writer_instance(prst.length);
+	encode_data_apdu(data_writer, &data);
+	prst.value = data_writer->buffer;
+
+	// EPX FIXME EPX check whether buffer leaks within service_*
+	del_byte_stream_writer(cfg_writer, 1);
+	del_byte_stream_writer(data_writer, 0);
+
+	apdu->choice = PRST_CHOSEN;
+	apdu->length = prst.length + 2; // 102 + 2 = 104 for oximeter
+	apdu->u.prst = prst;
+
+	// EPX FIXME EPX check against agent sm
+	timeout_callback tm = {.func = &communication_timeout, .timeout = 3};
+
+	// takes ownership of apdu
+	service_send_remote_operation_request(ctx, apdu, tm, NULL);
+
+	free(cfg);
+	free(stdcfg);
 }
 
 /** @} */

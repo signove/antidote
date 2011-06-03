@@ -326,12 +326,12 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 }
 
 extern DATA_apdu (*specialization_populate_event_report)(void *args[]);
-extern ConfigObjectList *(*specialization_get_config)();
+extern struct StdConfiguration *(*specialization_get_config)();
 
 void pulse_oximeter_agent_config()
 {
 	specialization_populate_event_report = &pulse_oximeter_populate_event_report;
-	specialization_get_config = &pulse_oximeter_get_config_ID0190;
+	specialization_get_config = &pulse_oximeter_create_std_config_ID0190;
 }
 
 /** @} */

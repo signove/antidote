@@ -84,22 +84,26 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
 
 extern DATA_apdu (specialization_populate_event_report)(void *args[]);
 
-void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
 {
 	APDU apdu;
-	DATA_apdu prst;
-
-	apdu.choice = PRST_CHOSEN;
+	PRST_apdu prst;
+	DATA_apdu data;
 
 	// EPX FIXME EPX arguments should come from top-level app
-	prst = specialization_populate_event_report(0);
+	data = specialization_populate_event_report(0);
 
-	apdu.u.prst.length = prst.message.length + 6; // 46 + 6 for oximeter
-	apdu.length = apdu.u.prst.length + 2; // 52 + 2 for oximeter
+	// prst = length + DATA_apdu
+	// take into account data's invoke id and choice
+	prst.length = data.message.length + 6; // 46 + 6 = 52 for oximeter
 
-	ByteStreamWriter *prst_writer = byte_stream_writer_instance(apdu.u.prst.length);
-	encode_data_apdu(prst_writer, &prst);
-	apdu.u.prst.value = prst_writer->buffer;
+	ByteStreamWriter *prst_writer = byte_stream_writer_instance(prst.length);
+	encode_data_apdu(prst_writer, &data);
+	prst.value = prst_writer->buffer;
+
+	apdu.choice = PRST_CHOSEN;
+	apdu.length = prst.length + 2; // 52 + 2 = 54 for oximeter
+	apdu.u.prst = prst;
 
 	service_send_unconfirmed_operation_request(ctx, &apdu);
 
