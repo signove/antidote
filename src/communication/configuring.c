@@ -156,16 +156,14 @@ void configuring_agent_config_sending_process_apdu(Context *ctx, APDU *apdu)
  * @param ctx
  * @param *apdu
  */
-static void comm_agent_process_confimed_event(Context *ctx, APDU *apdu,
+static void comm_agent_process_confirmed_event_report(Context *ctx, APDU *apdu,
 					EventReportResultSimple *report,
 					FSMEventData *data)
 {
-	if (report->obj_handle != MDS_OBJECT)
+	if (report->obj_handle != MDS_HANDLE)
 		goto fail;
-	if (report->event_type != MDS_NOTI_CONFIG)
+	if (report->event_type != MDC_NOTI_CONFIG)
 		goto fail;
-
-	Any event_reply_info;
 
 	ConfigReportRsp rsp;
 	ByteStreamReader *stream = byte_stream_reader_instance(report->event_reply_info.value,
@@ -176,11 +174,11 @@ static void comm_agent_process_confimed_event(Context *ctx, APDU *apdu,
 	if (rsp.config_result == ACCEPTED_CONFIG) {
 		communication_fire_evt(ctx,
 		       fsm_evt_rx_rors_confirmed_event_report_known,
-		       &data);
+		       data);
 	} else {
 		communication_fire_evt(ctx,
 		       fsm_evt_rx_rors_confirmed_event_report_unknown,
-		       &data);
+		       data);
 	}
 
 	return;
@@ -202,15 +200,10 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
-		case RORS_CMIP_EVENT_REPORT_CHOSEN:
-			data.received_apdu = apdu;
-			communication_fire_evt(ctx, fsm_evt_rx_rors_event_report,
-					       &data);
-			break;
 		case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:
 			data.received_apdu = apdu;
-			comm_agent_process_event_report(ctx, apdu,
-				&(data_apdu->rors_cmipConfirmedEventReport),
+			comm_agent_process_confirmed_event_report(ctx, apdu,
+				&(data_apdu->message.u.rors_cmipConfirmedEventReport),
  				&data);
 			break;
 		case RORS_CMIP_GET_CHOSEN:
