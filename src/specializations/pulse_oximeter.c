@@ -32,6 +32,7 @@
 #include "pulse_oximeter.h"
 #include "src/util/bytelib.h"
 #include "communication/parser/encoder_ASN1.h"
+#include "communication/service.h"
 #include "src/dim/nomenclature.h"
 #include "src/dim/mds.h"
 
@@ -248,7 +249,8 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
  * Populates an event report APDU. 
  */
 
-static void pulse_oximeter_populate_event_report(APDU* apdu, void *args[])
+static void pulse_oximeter_populate_event_report(Context *ctx, APDU* apdu,
+						void *args[])
 {
 	DATA_apdu data;
 	EventReportArgumentSimple evt;
@@ -276,8 +278,11 @@ static void pulse_oximeter_populate_event_report(APDU* apdu, void *args[])
 	apdu->length = 54;
 	apdu->u.prst.length = 52;
 
-	// FIXME EPX FIXME
-	data.invoke_id = 0x9876;
+	// no need to do anything beyond getting an ID because
+	// it is unconfirmed packet. Otherwise we would need to
+	// use service_* call to send the packet.
+	data.invoke_id = service_get_new_invoke_id(ctx);
+
 	data.message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
 	data.message.length = 46;
 
@@ -330,7 +335,7 @@ static void pulse_oximeter_populate_event_report(APDU* apdu, void *args[])
 	// FIXME EPX FIXME leak data_writer
 }
 
-extern void (*specialization_populate_event_report)(APDU *apdu, void *args[]);
+extern void (*specialization_populate_event_report)(Context* ctx, APDU *apdu, void *args[]);
 
 void pulse_oximeter_agent_config()
 {

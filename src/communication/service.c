@@ -60,11 +60,27 @@ Service *service_instance()
 }
 
 /**
+ * Sanitize Request struct
+ * @param req Request
+ */
+void clean_request(Request *req)
+{
+	req->is_valid = 0;
+	req->apdu = NULL;
+	req->timeout.func = NULL;
+	req->timeout.timeout = 0;
+	req->timeout.id = 0;
+	req->request_callback = NULL;
+}
+
+/**
  * Initializes service.
  * @param ctx Current context.
  */
 void service_init(Context *ctx)
 {
+	int i;
+
 	if (ctx->service != NULL) {
 		service_destroy(ctx->service);
 	}
@@ -74,6 +90,12 @@ void service_init(Context *ctx)
 	ctx->service->last_invoke_id = 0xF;
 	ctx->service->current_invoke_id = 0;
 	ctx->service->requests_count = 0;
+
+	// Make sure unused requests are clean
+	for (i = 0; i < 15; ++i) {
+		clean_request(&ctx->service->requests_list[i]);
+	}
+
 }
 
 /**
@@ -130,7 +152,7 @@ InvokeIDType service_get_new_invoke_id(Context *ctx)
 {
 	if (ctx != NULL) {
 		Service *service = ctx->service;
-		ctx->service->last_invoke_id = (ctx->service->last_invoke_id + 1) & 0xF;
+		service->last_invoke_id = (service->last_invoke_id + 1) & 0xF;
 		return service->last_invoke_id;
 	}
 
@@ -220,10 +242,12 @@ InvokeIDType service_get_invoke_id(Context *ctx, Request *req)
  */
 void service_del_request(Request *req)
 {
-	if (req != NULL && req->apdu != NULL) {
-		del_apdu(req->apdu);
-		free(req->apdu);
-		req->apdu = NULL;
+	if (req != NULL) {
+		if (req->apdu != NULL) {
+			del_apdu(req->apdu);
+			free(req->apdu);
+		}
+		clean_request(req);
 	}
 }
 

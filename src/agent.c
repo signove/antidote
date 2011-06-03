@@ -109,7 +109,7 @@ static int agent_listener_count = 0;
 /**
  * Agent method to populate an event report and send data
  */
-void (*specialization_populate_event_report)(APDU *apdu, void *args[]);
+void (*specialization_populate_event_report)(Context *ctx, APDU *apdu, void *args[]);
 
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 

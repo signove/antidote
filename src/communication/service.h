@@ -122,6 +122,8 @@ void service_del_request(Request *req);
 
 Request  *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout_callback timeout,  service_request_callback request_callback);
 
+InvokeIDType service_get_new_invoke_id(Context *ctx);
+
 InvokeIDType service_get_invoke_id(Context *ctx, Request *req);
 
 InvokeIDType service_get_current_invoke_id(Context *ctx);
