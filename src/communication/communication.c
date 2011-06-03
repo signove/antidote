@@ -467,10 +467,10 @@ static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 		disassociating_process_apdu_agent(ctx, apdu);
 		break;
 	case fsm_state_config_sending:
-		configuring_config_sending_process_apdu(ctx, apdu);
+		configuring_agent_config_sending_process_apdu(ctx, apdu);
 		break;
 	case fsm_state_waiting_approval:
-		configuring_waiting_approval_process_apdu(ctx, apdu);
+		configuring_agent_waiting_approval_process_apdu(ctx, apdu);
 		break;
 	default:
 		// TODO error handling

@@ -41,11 +41,11 @@
 
 void configuring_checking_state_process_apdu(Context *ctx, APDU *apdu);
 
-void configuring_config_sending_process_apdu(Context *ctx, APDU *apdu);
+void configuring_agent_config_sending_process_apdu(Context *ctx, APDU *apdu);
 
 void configuring_waiting_state_process_apdu(Context *ctx, APDU *apdu);
 
-void configuring_waiting_approval_process_apdu(Context *ctx, APDU *apdu);
+void configuring_agent_waiting_approval_process_apdu(Context *ctx, APDU *apdu);
 
 void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 		FSMEventData *data);
