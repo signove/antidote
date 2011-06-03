@@ -63,7 +63,7 @@ void testfsm_add_suite()
 void test_fsm()
 {
 	// Create connection context which include the state machine
-	Context *ctx = context_create(99);
+	Context *ctx = context_create(99, MANAGER_CONTEXT);
 
 	FSM *fsm = ctx->fsm;
 
