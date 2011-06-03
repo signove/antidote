@@ -55,9 +55,9 @@
 #include "src/util/ioutil.h"
 #include "src/util/log.h"
 
-void communication_process_roiv(Context *ctx, APDU *apdu);
+static void communication_process_roiv(Context *ctx, APDU *apdu);
 
-void communication_process_rors(Context *ctx, APDU *apdu);
+static void communication_process_rors(Context *ctx, APDU *apdu);
 
 void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner, OID_Type event_type, Any *event);
 
@@ -122,7 +122,6 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
  */
 void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 {
-	// FIXME EPX FIXME EPX
 	RejectResult reject_result;
 
 	switch (apdu->choice) {
@@ -196,7 +195,7 @@ void communication_process_roiv(Context *ctx, APDU *apdu)
  * @param ctx
  * @param *apdu
  */
-void communication_process_rors(Context *ctx, APDU *apdu)
+static void communication_process_rors(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;

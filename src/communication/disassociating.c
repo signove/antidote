@@ -102,7 +102,6 @@ void disassociating_process_apdu(Context *ctx, APDU *apdu)
  */
 void disassociating_process_apdu_agent(Context *ctx, APDU *apdu)
 {
-	// EPX FIXME EPX
 	FSMEventData evt;
 	DATA_apdu *data_apdu = NULL;
 

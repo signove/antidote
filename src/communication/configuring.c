@@ -145,8 +145,95 @@ void configuring_waiting_state_process_apdu(Context *ctx, APDU *apdu)
  */
 void configuring_agent_config_sending_process_apdu(Context *ctx, APDU *apdu)
 {
-	// EPX FIXME EPX
-	// rors confirmed evt report
+	// agent does not stay in this state for very long
+	// same handling as waiting_approval
+	configuring_agent_waiting_approval_process_apdu(ctx, apdu);
+}
+
+/**
+ * Process rors in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void comm_agent_process_confimed_event(Context *ctx, APDU *apdu,
+					EventReportResultSimple *report,
+					FSMEventData *data)
+{
+	if (report->obj_handle != MDS_OBJECT)
+		goto fail;
+	if (report->event_type != MDS_NOTI_CONFIG)
+		goto fail;
+
+	Any event_reply_info;
+
+	ConfigReportRsp rsp;
+	ByteStreamReader *stream = byte_stream_reader_instance(report->event_reply_info.value,
+						report->event_reply_info.length);
+	decode_configreportrsp(stream, &rsp);
+	free(stream);
+
+	if (rsp.config_result == ACCEPTED_CONFIG) {
+		communication_fire_evt(ctx,
+		       fsm_evt_rx_rors_confirmed_event_report_known,
+		       &data);
+	} else {
+		communication_fire_evt(ctx,
+		       fsm_evt_rx_rors_confirmed_event_report_unknown,
+		       &data);
+	}
+
+	return;
+fail:
+	communication_fire_evt(ctx, fsm_evt_rx_rors, data);
+}
+
+/**
+ * Process rors in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void communication_agent_process_rors(Context *ctx, APDU *apdu)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+	FSMEventData data;
+	RejectResult reject_result;
+
+	if (service_check_known_invoke_id(ctx, data_apdu)) {
+		switch (data_apdu->message.choice) {
+		case RORS_CMIP_EVENT_REPORT_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_rors_event_report,
+					       &data);
+			break;
+		case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:
+			data.received_apdu = apdu;
+			comm_agent_process_event_report(ctx, apdu,
+				&(data_apdu->rors_cmipConfirmedEventReport),
+ 				&data);
+			break;
+		case RORS_CMIP_GET_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_rors_get, &data);
+			break;
+		case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx,
+					       fsm_evt_rx_rors_confirmed_action, &data);
+			break;
+		case RORS_CMIP_CONFIRMED_SET_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_rors_confirmed_set,
+					       &data);
+			break;
+		default:
+			reject_result.problem = UNRECOGNIZED_OPERATION;
+			break;
+		}
+
+		service_request_retired(ctx, data_apdu);
+	}
 }
 
 /**
@@ -157,8 +244,43 @@ void configuring_agent_config_sending_process_apdu(Context *ctx, APDU *apdu)
  */
 void configuring_agent_waiting_approval_process_apdu(Context *ctx, APDU *apdu)
 {
-	// EPX FIXME EPX
-	// rors confirmed evt report
+	switch (apdu->choice) {
+	case PRST_CHOSEN: {
+		DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+
+		if (communication_is_roiv_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_roiv, NULL);
+		} else if (communication_is_roer_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_roer, NULL);
+		} else if (communication_is_rorj_type(data_apdu)) {
+			communication_fire_evt(ctx, fsm_evt_rx_rorj, NULL);
+		} else if (communication_is_rors_type(data_apdu)) {
+			communication_agent_process_rors(ctx, apdu);
+		}
+	}
+	break;
+	case AARQ_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_aarq, NULL);
+		break;
+	case AARE_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
+		break;
+	case RLRQ_CHOSEN: {
+		FSMEventData evt;
+		evt.choice = FSM_EVT_DATA_RELEASE_RESPONSE_REASON;
+		evt.u.release_response_reason = RELEASE_RESPONSE_REASON_NORMAL;
+		communication_fire_evt(ctx, fsm_evt_rx_rlrq, &evt);
+	}
+	break;
+	case RLRE_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_rlre, NULL);
+		break;
+	case ABRT_CHOSEN:
+		communication_fire_evt(ctx, fsm_evt_rx_abrt, NULL);
+		break;
+	default:
+		break;
+	}
 }
 
 /**
