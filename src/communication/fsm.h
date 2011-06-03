@@ -74,7 +74,7 @@ typedef enum {
 	fsm_evt_req_agent_supplied_known_configuration,
 
 	// REQ - Agent requests
-	fsm_evt_req_send_config_report,
+	fsm_evt_req_send_config,
 	fsm_evt_req_send_event,
 	fsm_evt_req_assoc,
 

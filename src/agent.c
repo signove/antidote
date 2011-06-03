@@ -429,6 +429,11 @@ void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states n
 	if (previous != next && next == fsm_state_operating) {
 		agent_notify_evt_device_associated(ctx);
 	}
+
+	if (next == fsm_state_config_sending) {
+		// provoke it to go to waiting_approval
+		communication_fire_evt(ctx, fsm_evt_req_send_config, NULL);
+	}
 }
 
 /**
