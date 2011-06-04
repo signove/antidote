@@ -249,8 +249,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_config_sending,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx}, // 4.16
 	{fsm_state_config_sending,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.17
 	{fsm_state_config_sending,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 4.18
-	// EPX FIXME handle=0
-	{fsm_state_config_sending,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_rors_get_tx}, // 4.22
+	{fsm_state_config_sending,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roiv_get_mds_tx}, // 4.22
 	{fsm_state_config_sending,	fsm_evt_rx_roiv,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_event_report,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 4.23
@@ -277,12 +276,10 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_waiting_approval,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx}, // 5.16
 	{fsm_state_waiting_approval,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.17
 	{fsm_state_waiting_approval,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 5.18
-	// EPX FIXME handle=0
-	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_rors_get_tx}, // 5.22
+	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roiv_get_mds_tx}, // 5.22
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_event_report,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
-	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_set,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_confirmed_set,				fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_action,					fsm_state_config_sending,	&communication_agent_roer_no_tx}, // 5.23
@@ -309,8 +306,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_operating,		fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 8.18
 	{fsm_state_operating,		fsm_evt_rx_roiv,					fsm_state_operating,		&communication_agent_roiv_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_confirmed_event_report,			fsm_state_operating,		&communication_agent_roiv_confirmed_error_report_respond_tx}, // 8.21
-	{fsm_state_operating,		fsm_evt_rx_roiv_all_except_confirmed_event_report,	fsm_state_operating,		&communication_agent_roiv_all_except_confirmed_error_report_respond_tx}, // 8.21
-	{fsm_state_operating,		fsm_evt_rx_roiv_get,					fsm_state_operating,		&communication_agent_roiv_get_respond_tx}, // 8.21
+	{fsm_state_operating,		fsm_evt_rx_roiv_get,					fsm_state_operating,		&communication_agent_roiv_get_mds_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_set,					fsm_state_operating,		&communication_agent_roiv_set_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_confirmed_set,				fsm_state_operating,		&communication_agent_roiv_confirmed_set_respond_tx}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_confirmed_action,			fsm_state_operating,		&communication_agent_roiv_confirmed_action_respond_tx}, // 8.21

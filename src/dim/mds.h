@@ -335,6 +335,8 @@ int mds_get_nomenclature_code();
 
 void mds_set_attribute(MDS *mds, AVA_Type *attribute);
 
+AVA_Type* mds_get_attributes(MDS *mds);
+
 Request *mds_set_operational_state_of_the_scanner(Context *ctx, HANDLE handle, OperationalState state,
 		service_request_callback callback);
 

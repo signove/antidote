@@ -859,6 +859,16 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
 	}
 }
 
+/**
+ * Gets all atributes of MDS Instance as an array of AVA_Type's
+ *
+ * \param mds the mds.
+ */
+AVA_Type* mds_get_attributes(MDS *mds)
+{
+	/* EPX FIXME EPX */
+	return NULL;
+}
 
 /**
  * Sets the specified attribute of an MDS instance.

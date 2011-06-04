@@ -42,10 +42,6 @@ void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events 
 {
 }
 
-void communication_agent_rors_get_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
-{
-}
-
 void communication_agent_roer_no_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 }
@@ -54,36 +50,39 @@ void communication_agent_roiv_respond_tx(FSMContext *ctx, fsm_events evt, FSMEve
 {
 }
 
-void communication_agent_roiv_get_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
-{
-}
-
 void communication_agent_roiv_event_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_confirmed_error_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_all_except_confirmed_error_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_set_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_confirmed_set_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_confirmed_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* EPX FIXME EPX */
 }
 
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
@@ -133,7 +132,7 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	MDS *mds = mds_create();
 	ctx->mds = mds;
 
-	/* FIXME EPX FIXME */
+	/* FIXME EPX FIXME mds information */
 
 	mds->dev_configuration_id = agent_specialization;
 	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
@@ -145,6 +144,45 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 
 	mds_configure_operating(ctx, cfg, 0);
 	free(cfg);
+}
+
+/**
+ * Answer ROIV GET MDS - agent
+ *
+ * @param ctx Context
+ */
+void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+{
+	/* EPX FIXME EPX */
+
+	// test handle = 0
+
+	APDU apdu;
+	apdu.choice = PRST_CHOSEN;
+
+	DATA_apdu data_apdu;
+	data_apdu.invoke_id = invoke_id;
+	data_apdu.message.choice = RORS_CMIP_GET_CHOSEN;
+
+
+	data_apdu.message.u.rors_cmipGet.obj_handle = obj_handle;
+	data_apdu.message.u.rors_cmipGet.attribute_list = 
+		// AttributeList count length value
+		// value: AVA_Type (attribute_id, Any attribute_value)
+
+	// convert MDS para AttributeList, AVA_Type
+
+	data_apdu.message.length = sizeof(data_apdu.message.u.rors_cmipGet.obj_handle)
+				+ ;
+
+	apdu.u.prst.length = sizeof(invoke_id)
+			     + sizeof(data_apdu.message.choice)
+			     + sizeof(data_apdu.message.length)
+			     + data_apdu.message.length;
+
+	apdu.length = sizeof(apdu.u.prst.length) + apdu.u.prst.length;
+	encode_set_data_apdu(&apdu.u.prst, &data_apdu);
+	communication_send_apdu(ctx, &apdu);
 }
 
 /** @} */
