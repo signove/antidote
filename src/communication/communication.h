@@ -34,7 +34,10 @@
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/context_manager.h"
 
-
+/**
+ * If process is agent role, this variable tells the config-id
+ */
+extern ConfigId agent_specialization;
 
 /**
  * ZERO Timeout implementation

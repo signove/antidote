@@ -32,7 +32,11 @@
 #include "fsm.h"
 #include "communication.h"
 #include "communication/service.h"
+#include "communication/stdconfigurations.h"
 #include "communication/parser/encoder_ASN1.h"
+#include "src/dim/mds.h"
+#include "src/util/log.h"
+#include "src/agent_p.h"
 
 void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
@@ -82,16 +86,16 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
 {
 }
 
-extern DATA_apdu (specialization_populate_event_report)(void *args[]);
-
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
 {
 	APDU apdu;
 	PRST_apdu prst;
 	DATA_apdu data;
 
-	// EPX FIXME EPX arguments should come from top-level app
-	data = specialization_populate_event_report(0);
+	struct StdConfiguration *cfg =
+		std_configurations_get_supported_standard(agent_specialization);
+
+	data = cfg->event_report(0);
 
 	// prst = length + DATA_apdu
 	// take into account data's invoke id and choice
@@ -108,4 +112,39 @@ void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEvent
 	service_send_unconfirmed_operation_request(ctx, &apdu);
 
 	del_byte_stream_writer(prst_writer, 1);
+	free(cfg);
 }
+
+/**
+ * Execute association data protocol 20601 - agent
+ *
+ * @param ctx Context
+ */
+void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+{
+	DEBUG("association_agent_mds");
+
+	if (ctx->mds != NULL) {
+		mds_destroy(ctx->mds);
+	}
+
+	ConfigObjectList *cfg = std_configurations_get_configuration_attributes(agent_specialization);
+
+	MDS *mds = mds_create();
+	ctx->mds = mds;
+
+	/* FIXME EPX FIXME */
+
+	mds->dev_configuration_id = agent_specialization;
+	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
+	// max number of simultaneous sessions
+	mds->data_req_mode_capab.data_req_init_agent_count = 1;
+	mds->data_req_mode_capab.data_req_init_manager_count = 0;
+	mds->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
+	mds->system_id.value = (intu8*) AGENT_SYSTEM_ID_VALUE;
+
+	mds_configure_operating(ctx, cfg, 0);
+	free(cfg);
+}
+
+/** @} */

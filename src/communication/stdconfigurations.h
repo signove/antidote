@@ -51,6 +51,10 @@ typedef ConfigObjectList *(*configure_action)();
  */
 typedef char *(*mds_to_string)(MDS *mds);
 
+/*
+ * Populates an event report (agent)
+ */
+typedef DATA_apdu (*agent_event_report)(void *args[]);
 
 /**
  * Represent the standard configuration described in the
@@ -67,6 +71,10 @@ struct StdConfiguration {
 	 */
 	configure_action configure_action;
 
+	/*
+	 * This function pointer fills a DATA_apdu with data event report
+	 */
+	agent_event_report event_report;
 };
 
 void std_configurations_register_conf(struct StdConfiguration *config);

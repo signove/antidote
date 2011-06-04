@@ -93,7 +93,9 @@
 #include "src/communication/communication.h"
 #include "src/communication/configuring.h"
 #include "src/communication/stdconfigurations.h"
+#include "src/specializations/blood_pressure_monitor.h"
 #include "src/specializations/pulse_oximeter.h"
+#include "src/specializations/weighing_scale.h"
 #include "src/util/log.h"
 
 
@@ -107,10 +109,9 @@ static AgentListener *agent_listener_list = NULL;
 static int agent_listener_count = 0;
 
 /**
- * Agent method to populate an event report and send data
+ * Agent specialization standard configuration id
  */
-DATA_apdu (*specialization_populate_event_report)(void *args[]);
-struct StdConfiguration *(*specialization_get_config)();
+ConfigId agent_specialization;
 
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 
@@ -156,17 +157,24 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
 void agent_init(CommunicationPlugin plugin)
 {
 	DEBUG("Agent Initialization");
+
+	agent_specialization = 0x0190; // oximeter
+
 	plugin.type = AGENT_CONTEXT;
 	communication_set_plugin(plugin);
 
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &agent_handle_transition_evt);
 
-	// EPX FIXME EPX agent?
-
+	// Register standard configurations for each specialization.
+	std_configurations_register_conf(
+		blood_pressure_monitor_create_std_config_ID02BC());
 	std_configurations_register_conf(
 		pulse_oximeter_create_std_config_ID0190());
-	pulse_oximeter_agent_config();
+	std_configurations_register_conf(
+		pulse_oximeter_create_std_config_ID0191());
+	std_configurations_register_conf(
+		weighting_scale_create_std_config_ID05DC());
 }
 
 /**

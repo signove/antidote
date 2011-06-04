@@ -138,7 +138,6 @@ void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu)
  */
 static void association_process_aarq_apdu(Context *ctx, APDU *apdu)
 {
-
 	DEBUG(" associating: processing association request ");
 
 	if (apdu != NULL && apdu->u.aarq.assoc_version == ASSOC_VERSION1) {
@@ -293,7 +292,7 @@ static void association_accept_data_protocol_20601(Context *ctx, DataProto *prot
 			}
 
 			if (config != NULL) {
-				mds_configure_operating(ctx, config);
+				mds_configure_operating(ctx, config, 1);
 				free(config);
 			}
 		} else {
@@ -501,10 +500,10 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 	config_info->system_id.value = (intu8 *) AGENT_SYSTEM_ID_VALUE;
 	config_info->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
 
-	/* FIXME EPX this should come from somewhere else */
-	config_info->dev_config_id = 0x0190;
+	config_info->dev_config_id = agent_specialization;
 
-	config_info->data_req_mode_capab.data_req_mode_flags = 0x0001;
+	config_info->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
+	// max number of simultaneous sessions
 	config_info->data_req_mode_capab.data_req_init_agent_count = 0x01;
 	config_info->data_req_mode_capab.data_req_init_manager_count = 0x00;
 

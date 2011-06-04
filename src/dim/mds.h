@@ -358,7 +358,7 @@ Request *mds_service_action_set_time(Context *ctx, SetTimeInvoke *time,  service
 
 Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attributeids_list_count, service_request_callback request_callback);
 
-void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list);
+void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list, int manager);
 
 void mds_populate_attributes(MDS *mds, DataEntry *mds_entry);
 

@@ -404,7 +404,8 @@ Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attribut
  * \param ctx context
  * \param config_obj_list
  */
-void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list)
+void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
+				int manager)
 {
 	int obj_list_size = config_obj_list->count;
 	int attr_list_size = 0;
@@ -607,8 +608,10 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list)
 
 	DataList *list = data_list_new(1);
 	mds_populate_attributes(mds, &list->values[0]);
-	manager_notify_evt_device_available(ctx, list);
 
+	if (manager) {
+		manager_notify_evt_device_available(ctx, list);
+	}
 
 	del_configobjectlist(config_obj_list);
 	config_obj_list = NULL;

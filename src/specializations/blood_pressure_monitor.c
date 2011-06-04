@@ -308,6 +308,7 @@ struct StdConfiguration *blood_pressure_monitor_create_std_config_ID02BC()
 					  sizeof(struct StdConfiguration));
 	result->dev_config_id = 0x02BC;
 	result->configure_action = &blood_pressure_monitor_get_config_ID02BC;
+	result->event_report = NULL;
 	return result;
 }
 

@@ -404,7 +404,7 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 			object_list = std_configurations_get_configuration_attributes(
 					      config_report.config_report_id);
 
-			mds_configure_operating(ctx, object_list);
+			mds_configure_operating(ctx, object_list, 1);
 			free(object_list);
 			del_configreport(&config_report);
 		} else if (ext_configurations_is_supported_standard(system_id,
@@ -414,7 +414,7 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 			object_list = ext_configurations_get_configuration_attributes(system_id,
 					config_report.config_report_id);
 
-			mds_configure_operating(ctx, object_list);
+			mds_configure_operating(ctx, object_list, 1);
 			free(object_list);
 			del_configreport(&config_report);
 		} else {
@@ -422,7 +422,7 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 			object_list = &config_report.config_obj_list;
 
 			ext_configurations_register_conf(system_id, config_report.config_report_id, object_list);
-			mds_configure_operating(ctx, object_list);
+			mds_configure_operating(ctx, object_list, 1);
 		}
 
 		event = fsm_evt_req_agent_supplied_known_configuration;
@@ -582,8 +582,6 @@ void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 	communication_count_timeout(ctx, &communication_timeout, CONFIGURING_TO);
 }
 
-extern struct StdConfiguration *(*specialization_get_config)();
-
 /**
  * Sends configuration apdu (agent)
  *
@@ -600,9 +598,9 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	EventReportArgumentSimple evtrep;
 	ConfigReport cfgrep;
 
-	// EPX FIXME EPX cache config to avoid leak
-	struct StdConfiguration *stdcfg = specialization_get_config();
-	ConfigObjectList *cfg = stdcfg->configure_action();
+	ConfigObjectList *cfg =
+		std_configurations_get_configuration_attributes(
+				      		agent_specialization);
 
 	data.invoke_id = 0; // filled by service_* call
 	data.message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
@@ -612,7 +610,7 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	evtrep.event_type = MDC_NOTI_CONFIG;
 	
 	cfgrep.config_obj_list = *cfg;
-	cfgrep.config_report_id = stdcfg->dev_config_id;
+	cfgrep.config_report_id = agent_specialization;
 
 	// compensate for config_report
 	evtrep.event_info.length = cfg->length + 6; // 80 + 6 = 86 for oximeter
@@ -647,7 +645,6 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	service_send_remote_operation_request(ctx, apdu, tm, NULL);
 
 	free(cfg);
-	free(stdcfg);
 }
 
 /** @} */

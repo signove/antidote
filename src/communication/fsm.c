@@ -214,7 +214,7 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
  */
 static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	// current			input							next				post_action
-	{fsm_state_disconnected,	fsm_evt_ind_transport_connection,			fsm_state_unassociated,		NULL}, // 1.1
+	{fsm_state_disconnected,	fsm_evt_ind_transport_connection,			fsm_state_unassociated,		&association_agent_mds}, // 1.1
 	{fsm_state_unassociated,	fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		&communication_disconnect_tx}, // 2.2
 	// EPX FIXME timeout?
 	{fsm_state_unassociated,	fsm_evt_req_assoc,					fsm_state_associating,		&association_aarq_tx}, // 2.5

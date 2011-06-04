@@ -208,46 +208,6 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	return std_object_list;
 }
 
-// EPX FIXME EPX precompose a mds-event (data apdu)
-// EPX FIXME EPX packet with updated data
-
-
-/**
- *  Creates the first standard configuration for <em>Pulse Oximeter Monitor</em> specialization (0190).
- *  For more information about <em>Pulse Oximeter Monitor</em> specialization, see IEEE 11073-10404
- *  Standard (Section 5.7, page 8).
- *
- *  \return an StdConfiguration struct that represents the first standard configuration (a StdConfiguration instance)
- *  for <em>Pulse Oximeter Monitor</em> specialization just created.
- */
-struct StdConfiguration *pulse_oximeter_create_std_config_ID0190()
-{
-	struct StdConfiguration *result = malloc(sizeof(struct StdConfiguration));
-	result->dev_config_id = 0x0190;
-	result->configure_action = &pulse_oximeter_get_config_ID0190;
-	return result;
-}
-
-/**
- *  Creates the second standard configuration for <em>Pulse Oximeter Monitor</em> specialization (0190).
- *  For more information about <em>Pulse Oximeter Monitor</em> specialization, see IEEE 11073-10404
- *  Standard (Section 5.7, page 8).
- *
- *  \return an StdConfiguration struct that represents the second standard configuration (a StdConfiguration instance)
- *  for <em>Pulse Oximeter Monitor</em> specialization just created.
- */
-struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
-{
-	struct StdConfiguration *result = malloc(sizeof(struct StdConfiguration));
-	result->dev_config_id = 0x0191;
-	result->configure_action = &pulse_oximeter_get_config_ID0190;
-	return result;
-}
-
-/**
- * Populates an event report APDU. 
- */
-
 static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 {
 	DATA_apdu data;
@@ -325,13 +285,43 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 	return data;
 }
 
-extern DATA_apdu (*specialization_populate_event_report)(void *args[]);
-extern struct StdConfiguration *(*specialization_get_config)();
 
-void pulse_oximeter_agent_config()
+/**
+ *  Creates the first standard configuration for <em>Pulse Oximeter Monitor</em> specialization (0190).
+ *  For more information about <em>Pulse Oximeter Monitor</em> specialization, see IEEE 11073-10404
+ *  Standard (Section 5.7, page 8).
+ *
+ *  \return an StdConfiguration struct that represents the first standard configuration (a StdConfiguration instance)
+ *  for <em>Pulse Oximeter Monitor</em> specialization just created.
+ */
+struct StdConfiguration *pulse_oximeter_create_std_config_ID0190()
 {
-	specialization_populate_event_report = &pulse_oximeter_populate_event_report;
-	specialization_get_config = &pulse_oximeter_create_std_config_ID0190;
+	struct StdConfiguration *result = malloc(sizeof(struct StdConfiguration));
+	result->dev_config_id = 0x0190;
+	result->configure_action = &pulse_oximeter_get_config_ID0190;
+	result->event_report = &pulse_oximeter_populate_event_report;
+	return result;
 }
+
+/**
+ *  Creates the second standard configuration for <em>Pulse Oximeter Monitor</em> specialization (0190).
+ *  For more information about <em>Pulse Oximeter Monitor</em> specialization, see IEEE 11073-10404
+ *  Standard (Section 5.7, page 8).
+ *
+ *  \return an StdConfiguration struct that represents the second standard configuration (a StdConfiguration instance)
+ *  for <em>Pulse Oximeter Monitor</em> specialization just created.
+ */
+struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
+{
+	struct StdConfiguration *result = malloc(sizeof(struct StdConfiguration));
+	result->dev_config_id = 0x0191;
+	result->configure_action = &pulse_oximeter_get_config_ID0190;
+	result->event_report = &pulse_oximeter_populate_event_report;
+	return result;
+}
+
+/**
+ * Populates an event report APDU. 
+ */
 
 /** @} */

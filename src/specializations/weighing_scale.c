@@ -168,6 +168,7 @@ struct StdConfiguration *weighting_scale_create_std_config_ID05DC()
 			sizeof(struct StdConfiguration));
 	result->dev_config_id = 0x05DC;
 	result->configure_action = &weighting_scale_get_config_ID05DC;
+	result->event_report = NULL;
 	return result;
 }
 

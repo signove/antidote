@@ -42,6 +42,4 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0190();
 
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0191();
 
-void pulse_oximeter_agent_config();
-
 #endif /* PULSE_OXIMETER_H_ */
