@@ -132,7 +132,7 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	MDS *mds = mds_create();
 	ctx->mds = mds;
 
-	/* FIXME EPX FIXME mds information */
+	/* FIXME EPX FIXME mds information from higher-level */
 
 	mds->dev_configuration_id = agent_specialization;
 	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
@@ -153,29 +153,38 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
  */
 void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
-	/* EPX FIXME EPX */
+	DATA_apdu *rx = encode_get_data_apdu(&data->received_apdu->u.prst);
+	InvokeIDType id = rx->invoke_id;
 
-	// test handle = 0
+	if (rx->message.choice != ROIV_CMIP_GET_CHOSEN) {
+		return;
+	}
+
+	if (rx->message.u.roiv_cmipGet.obj_handle != MDS_HANDLE) {
+		communication_fire_evt(ctx, fsm_evt_rx_roiv, NULL);
+		return;
+	}
 
 	APDU apdu;
 	apdu.choice = PRST_CHOSEN;
 
 	DATA_apdu data_apdu;
-	data_apdu.invoke_id = invoke_id;
+	data_apdu.invoke_id = id;
 	data_apdu.message.choice = RORS_CMIP_GET_CHOSEN;
 
+	// AVA_Type *attrs = mds_get_attributes(ctx->mds);
 
-	data_apdu.message.u.rors_cmipGet.obj_handle = obj_handle;
-	data_apdu.message.u.rors_cmipGet.attribute_list = 
+	data_apdu.message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
+	// data_apdu.message.u.rors_cmipGet.attribute_list = 
 		// AttributeList count length value
 		// value: AVA_Type (attribute_id, Any attribute_value)
 
-	// convert MDS para AttributeList, AVA_Type
+	// convert MDS para AttributeList, AVA_Type EPX FIXME EPX
 
-	data_apdu.message.length = sizeof(data_apdu.message.u.rors_cmipGet.obj_handle)
-				+ ;
+	data_apdu.message.length = sizeof(data_apdu.message.u.rors_cmipGet.obj_handle);
+				// + ;
 
-	apdu.u.prst.length = sizeof(invoke_id)
+	apdu.u.prst.length = sizeof(id)
 			     + sizeof(data_apdu.message.choice)
 			     + sizeof(data_apdu.message.length)
 			     + data_apdu.message.length;
