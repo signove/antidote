@@ -229,6 +229,30 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 	}
 }
 
+
+/**
+ * Process roiv in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void communication_agent_process_roiv(Context *ctx, APDU *apdu)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+	FSMEventData data;
+
+	switch (data_apdu->message.choice) {
+		case ROIV_CMIP_GET_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_roiv_get, &data);
+			break;
+		default:
+			communication_fire_evt(ctx, fsm_evt_rx_roiv, NULL);
+			break;
+	}
+}
+
+
 /**
  * Process incoming APDU's in waiting_approval state (Agent)
  *
@@ -242,7 +266,7 @@ void configuring_agent_waiting_approval_process_apdu(Context *ctx, APDU *apdu)
 		DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 
 		if (communication_is_roiv_type(data_apdu)) {
-			communication_fire_evt(ctx, fsm_evt_rx_roiv, NULL);
+			communication_agent_process_roiv(ctx, apdu);
 		} else if (communication_is_roer_type(data_apdu)) {
 			communication_fire_evt(ctx, fsm_evt_rx_roer, NULL);
 		} else if (communication_is_rorj_type(data_apdu)) {
