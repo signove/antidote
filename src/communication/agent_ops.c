@@ -172,14 +172,16 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	data_apdu.invoke_id = id;
 	data_apdu.message.choice = RORS_CMIP_GET_CHOSEN;
 
-	// AVA_Type *attrs = mds_get_attributes(ctx->mds);
+	AttributeList attrs;
+
+	attrs.count = 0;
+	attrs.length = sizeof(attrs.count) + sizeof(attrs.length);
+	attrs.value = mds_get_attributes(ctx->mds, &attrs.count, &attrs.length);
+	
+	// EPX FIXME EPX leaking attrs? //
 
 	data_apdu.message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
-	// data_apdu.message.u.rors_cmipGet.attribute_list = 
-		// AttributeList count length value
-		// value: AVA_Type (attribute_id, Any attribute_value)
-
-	// convert MDS para AttributeList, AVA_Type EPX FIXME EPX
+	data_apdu.message.u.rors_cmipGet.attribute_list = attrs;
 
 	data_apdu.message.length = sizeof(data_apdu.message.u.rors_cmipGet.obj_handle);
 				// + ;

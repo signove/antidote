@@ -864,7 +864,7 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
  *
  * \param mds the mds.
  */
-AVA_Type* mds_get_attributes(MDS *mds)
+AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *length)
 {
 	/* EPX FIXME EPX */
 	return NULL;
