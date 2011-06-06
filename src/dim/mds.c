@@ -864,10 +864,186 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
  *
  * \param mds the mds.
  */
-AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *length)
+AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *tot_length)
 {
-	/* EPX FIXME EPX */
-	return NULL;
+	int i;
+	*count = 17;
+	AVA_Type *ava = calloc(*count, sizeof(AVA_Type));
+	intu16 length;
+	ByteStreamWriter *stream;
+
+	*tot_length += 17 * sizeof(ava[0].attribute_id);
+	*tot_length += 17 * sizeof(ava[0].attribute_value.length);
+
+	length = 4;
+	ava[0].attribute_id = MDC_ATTR_SYS_TYPE;
+	stream = byte_stream_writer_instance(length);
+	encode_type(stream, &mds->system_type);
+	ava[0].attribute_value.value = stream->buffer;
+	ava[0].attribute_value.length = length;
+	// stream buffer lives beyond stream
+	free(stream);
+	*tot_length += length;
+
+	length = sizeof(intu16) * 2 + mds->system_model.manufacturer.length +
+					mds->system_model.model_number.length;
+	ava[1].attribute_id = MDC_ATTR_ID_MODEL;
+	stream = byte_stream_writer_instance(length);
+	encode_systemmodel(stream, &mds->system_model);
+	ava[1].attribute_value.value = stream->buffer;
+	ava[1].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	// length includes intu16 because it is variable-size
+	length = sizeof(intu16) + mds->system_id.length;
+	ava[2].attribute_id = MDC_ATTR_SYS_ID;
+	stream = byte_stream_writer_instance(length);
+	encode_octet_string(stream, &mds->system_id);
+	ava[2].attribute_value.value = stream->buffer;
+	ava[2].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2;
+	ava[3].attribute_id = MDC_ATTR_DEV_CONFIG_ID;
+	stream = byte_stream_writer_instance(length);
+	encode_configid(stream, &mds->dev_configuration_id);
+	ava[3].attribute_value.value = stream->buffer;
+	ava[3].attribute_value.length = length;
+	free(stream);
+	tot_length += length;
+
+	length = 2 + 2 + mds->attribute_value_map.count * (2 + 2);
+	ava[4].attribute_id = MDC_ATTR_ATTRIBUTE_VAL_MAP;
+	stream = byte_stream_writer_instance(length);
+	encode_attrvalmap(stream, &mds->attribute_value_map);
+	ava[4].attribute_value.value = stream->buffer;
+	ava[4].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2 + 2 + mds->production_specification.count * (2 + 2 + 2);
+
+        for (i = 0; i < mds->production_specification.count; i++) {
+		ProdSpecEntry *entry = &mds->production_specification.value[i];
+		length += entry->prod_spec.length;
+        }
+
+	ava[5].attribute_id = MDC_ATTR_ID_PROD_SPECN;
+	stream = byte_stream_writer_instance(length);
+	encode_productionspec(stream, &mds->production_specification);
+	ava[5].attribute_value.value = stream->buffer;
+	ava[5].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2 + 2 + 4 + 2 + 2 + 4;
+	ava[6].attribute_id = MDC_ATTR_MDS_TIME_INFO;
+	stream = byte_stream_writer_instance(length);
+	encode_mdstimeinfo(stream, &mds->mds_time_info);
+	ava[6].attribute_value.value = stream->buffer;
+	ava[6].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 8;
+	ava[7].attribute_id = MDC_ATTR_TIME_ABS;
+	stream = byte_stream_writer_instance(length);
+	encode_absolutetime(stream, &mds->date_and_time);
+	ava[7].attribute_value.value = stream->buffer;
+	ava[7].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 4;
+	ava[8].attribute_id = MDC_ATTR_TIME_REL;
+	stream = byte_stream_writer_instance(length);
+	write_intu32(stream, mds->relative_time);
+	ava[8].attribute_value.value = stream->buffer;
+	ava[8].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 8;
+	ava[9].attribute_id = MDC_ATTR_TIME_REL_HI_RES;
+	stream = byte_stream_writer_instance(length);
+	encode_highresrelativetime(stream, &mds->hires_relative_time);
+	ava[9].attribute_value.value = stream->buffer;
+	ava[9].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 6;
+	ava[10].attribute_id = MDC_ATTR_TIME_ABS_ADJUST;
+	stream = byte_stream_writer_instance(length);
+	encode_absolutetimeadjust(stream, &mds->date_and_time_adjustment);
+	ava[10].attribute_value.value = stream->buffer;
+	ava[10].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2;
+	ava[11].attribute_id = MDC_ATTR_POWER_STAT;
+	stream = byte_stream_writer_instance(length);
+	write_intu16(stream, mds->power_status);
+	ava[11].attribute_value.value = stream->buffer;
+	ava[11].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2;
+	ava[12].attribute_id = MDC_ATTR_VAL_BATT_CHARGE;
+	stream = byte_stream_writer_instance(length);
+	write_intu16(stream, mds->battery_level);
+	ava[12].attribute_value.value = stream->buffer;
+	ava[12].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 4 + 2;
+	ava[13].attribute_id = MDC_ATTR_TIME_BATT_REMAIN;
+	stream = byte_stream_writer_instance(length);
+	encode_batmeasure(stream, &mds->remaining_battery_time);
+	ava[13].attribute_value.value = stream->buffer;
+	ava[13].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2 + 2 + mds->reg_cert_data_list.count * ((1 + 1) + 2);
+
+        for (i = 0; i < mds->reg_cert_data_list.count; i++) {
+		RegCertData *entry = &mds->reg_cert_data_list.value[i];
+		length += entry->auth_body_data.length;
+        }
+
+	ava[14].attribute_id = MDC_ATTR_REG_CERT_DATA_LIST;
+	stream = byte_stream_writer_instance(length);
+	encode_regcertdatalist(stream, &mds->reg_cert_data_list);
+	ava[14].attribute_value.value = stream->buffer;
+	ava[14].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 2 + 2 + mds->system_type_spec_list.count * (2 + 2);
+	ava[15].attribute_id = MDC_ATTR_SYS_TYPE_SPEC_LIST;
+	stream = byte_stream_writer_instance(length);
+	encode_typeverlist(stream, &mds->system_type_spec_list);
+	ava[15].attribute_value.value = stream->buffer;
+	ava[15].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	length = 4;
+	ava[16].attribute_id = MDC_ATTR_CONFIRM_TIMEOUT;
+	stream = byte_stream_writer_instance(length);
+	write_intu32(stream, mds->confirm_timeout);
+	ava[16].attribute_value.value = stream->buffer;
+	ava[16].attribute_value.length = length;
+	free(stream);
+	*tot_length += length;
+
+	return ava;
 }
 
 /**
