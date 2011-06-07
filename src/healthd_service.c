@@ -1049,7 +1049,7 @@ int main()
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
 
-	manager_init(plugin);
+	manager_init(&plugin);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;

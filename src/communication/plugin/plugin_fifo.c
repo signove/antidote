@@ -49,7 +49,6 @@ static int write_fd = 0;
 static int fifo_timeout = 0;
 static ContextId ctx_id;
 
-
 /**
  * Initialize network layer.
  * Initialize network layer, in this case opens and initializes the file descriptors.
@@ -61,14 +60,20 @@ static int network_init()
 	DEBUG(" network:fd Initializing network layer ");
 	DEBUG(" opening file descriptors for Data I/O ");
 
-	read_fd = open("read_fifo", O_RDWR | O_NONBLOCK);
+	int type = communication_get_plugin()->type;
+
+	// exchange FIFOs between manager and agent
+	const char *rd = type == MANAGER_CONTEXT ? "read_fifo" : "write_fifo";
+	const char *wr = type == MANAGER_CONTEXT ? "write_fifo" : "read_fifo";
+
+	read_fd = open(rd, O_RDWR | O_NONBLOCK);
 
 	if (read_fd <= 0) {
 		DEBUG(" network:fd Error opening file");
 		return FIFO_ERROR;
 	}
 
-	write_fd = open("write_fifo", O_RDWR | O_NONBLOCK);
+	write_fd = open(wr, O_RDWR | O_NONBLOCK);
 
 	if (write_fd <= 0) {
 		DEBUG(" network:fd Error opening file");
@@ -220,7 +225,8 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
  * @param timeout Timeout.
  * @return FIFO_ERROR if error
  */
-int plugin_network_fifo_setup(CommunicationPlugin *plugin, ContextId id,  int timeout)
+int plugin_network_fifo_setup(CommunicationPlugin *plugin, ContextId id,
+				int timeout)
 {
 	if (read_fd != 0) {
 		DEBUG("Input file already open");

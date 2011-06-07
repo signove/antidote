@@ -53,7 +53,9 @@ extern ConfigId agent_specialization;
  */
 typedef void (*communication_state_transition_handler_function)(Context *ctx, fsm_states previous, fsm_states next);
 
-void communication_set_plugin(CommunicationPlugin plugin);
+void communication_set_plugin(CommunicationPlugin *plugin);
+
+CommunicationPlugin *communication_get_plugin();
 
 int communication_init();
 

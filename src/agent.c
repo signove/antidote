@@ -154,13 +154,13 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  *
  * @param plugin the configured plugin to define communication behaviour
  */
-void agent_init(CommunicationPlugin plugin)
+void agent_init(CommunicationPlugin *plugin)
 {
 	DEBUG("Agent Initialization");
 
 	agent_specialization = 0x0190; // oximeter
 
-	plugin.type = AGENT_CONTEXT;
+	plugin->type = AGENT_CONTEXT;
 	communication_set_plugin(plugin);
 
 	// Listen to all communication state transitions
@@ -189,8 +189,6 @@ void agent_finalize()
 
 	agent_remove_all_listeners();
 	communication_finalize();
-
-	// EPX FIXME EPX
 	std_configurations_destroy();
 }
 
@@ -458,7 +456,7 @@ void agent_associate(ContextId id)
 
 void agent_send_data(ContextId id)
 {
-	// EPX FIXME EPX FIXME
+	communication_fire_evt(context_get(id), fsm_evt_req_send_event, NULL);
 }
 
 /** @} */

@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
-	agent_init(comm_plugin);
+	agent_init(&comm_plugin);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;

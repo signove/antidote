@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 
 	plugin_pthread_setup(&comm_plugin);
 
-	manager_init(comm_plugin);
+	manager_init(&comm_plugin);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;
