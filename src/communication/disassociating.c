@@ -73,6 +73,7 @@ void disassociating_process_apdu(Context *ctx, APDU *apdu)
 		break;
 	case RLRE_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_rlre, NULL);
+		break;
 	case ABRT_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_abrt, NULL);
 		break;
@@ -119,6 +120,7 @@ void disassociating_process_apdu_agent(Context *ctx, APDU *apdu)
 		break;
 	case RLRE_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_rlre, NULL);
+		break;
 	case ABRT_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_abrt, NULL);
 		break;

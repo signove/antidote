@@ -147,6 +147,8 @@ void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 {
 	RejectResult reject_result;
 
+	DEBUG("processing apdu in operating mode - agent");
+
 	switch (apdu->choice) {
 	case PRST_CHOSEN: {
 		DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);

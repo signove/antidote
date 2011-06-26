@@ -85,6 +85,7 @@ void association_unassociated_process_apdu(Context *ctx, APDU *apdu)
 		break;
 	case AARE_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
+		break;
 	case RLRQ_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_rlrq, NULL);
 		break;
@@ -115,6 +116,7 @@ void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu)
 		break;
 	case AARE_CHOSEN:
 		association_process_aare_apdu(ctx, apdu);
+		break;
 	case RLRQ_CHOSEN:
 		communication_fire_evt(ctx, fsm_evt_rx_rlrq, NULL);
 		break;
