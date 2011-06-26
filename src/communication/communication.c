@@ -463,10 +463,11 @@ static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 		ERROR("Cannot process APDU in disconnected state ");
 		break;
 	case fsm_state_unassociated:
+		// TODO does it make sense manager to take initiative?
 		association_unassociated_process_apdu_agent(ctx, apdu);
 		break;
 	case fsm_state_associating:
-		// The associating state is not used by manager
+		association_unassociated_process_apdu_agent(ctx, apdu);
 		break;
 	case fsm_state_operating:
 		operating_process_apdu_agent(ctx, apdu);
@@ -530,7 +531,7 @@ void communication_process_apdu(Context *ctx, APDU *apdu)
 	// thread-safe block - start
 	communication_lock(ctx);
 
-	DEBUG(" communication: state machine(%s) ", fsm_get_current_state_name(ctx->fsm));
+	DEBUG(" communication: current sm(%s) ", fsm_get_current_state_name(ctx->fsm));
 
 	if (ctx->type == AGENT_CONTEXT) {
 		communication_process_apdu_agent(ctx, apdu);
