@@ -211,8 +211,6 @@ static void association_process_aarq_apdu(Context *ctx, APDU *apdu)
  */
 static void association_process_aare_apdu(Context *ctx, APDU *apdu)
 {
-	// FIXME EPX FIXME EPX
-
 	DEBUG(" associating: processing aare ");
 
 	if (!apdu)
@@ -458,8 +456,6 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 
 void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
-	// EPX FIXME EPX
-
 	APDU config_apdu;
 	PhdAssociationInformation config_info;
 	DataProto proto;
@@ -516,7 +512,6 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 
 void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
-	// EPX FIXME EPX
 	APDU response_apdu;
 	PhdAssociationInformation response_info;
 
