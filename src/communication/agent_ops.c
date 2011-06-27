@@ -34,6 +34,7 @@
 #include "communication/service.h"
 #include "communication/stdconfigurations.h"
 #include "communication/parser/encoder_ASN1.h"
+#include "src/communication/parser/struct_cleaner.h"
 #include "src/dim/mds.h"
 #include "src/util/log.h"
 #include "src/agent_p.h"
@@ -111,6 +112,10 @@ void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEvent
 	service_send_unconfirmed_operation_request(ctx, &apdu);
 
 	del_byte_stream_writer(prst_writer, 1);
+
+	// deletes data that came from cfg->event_report()
+	del_apdu(&apdu);
+
 	free(cfg);
 }
 
@@ -178,8 +183,6 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	attrs.length = sizeof(attrs.count) + sizeof(attrs.length);
 	attrs.value = mds_get_attributes(ctx->mds, &attrs.count, &attrs.length);
 	
-	// EPX FIXME EPX leaking attrs? //
-
 	data_apdu.message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
 	data_apdu.message.u.rors_cmipGet.attribute_list = attrs;
 
@@ -194,6 +197,9 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	apdu.length = sizeof(apdu.u.prst.length) + apdu.u.prst.length;
 	encode_set_data_apdu(&apdu.u.prst, &data_apdu);
 	communication_send_apdu(ctx, &apdu);
+
+	// deletes information that came from mds_get_attributes()
+	del_apdu(&apdu);
 }
 
 /** @} */

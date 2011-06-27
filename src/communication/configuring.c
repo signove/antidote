@@ -654,8 +654,8 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	encode_data_apdu(data_writer, &data);
 	prst.value = data_writer->buffer;
 
-	// EPX FIXME EPX check whether buffer leaks within service_*
 	del_byte_stream_writer(cfg_writer, 1);
+	// buffer deleted by del_apdu() afterwards
 	del_byte_stream_writer(data_writer, 0);
 
 	apdu->choice = PRST_CHOSEN;
@@ -665,7 +665,7 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	// EPX FIXME EPX check against agent sm
 	timeout_callback tm = {.func = &communication_timeout, .timeout = 3};
 
-	// takes ownership of apdu
+	// takes ownership of apdu and prst.value
 	service_send_remote_operation_request(ctx, apdu, tm, NULL);
 
 	free(cfg);

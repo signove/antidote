@@ -273,15 +273,15 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 
 	encode_scanreportinfofixed(scan_writer, &scan);
 
+	del_byte_stream_writer(writer0, 1);
+	del_byte_stream_writer(writer1, 1);
+
 	evt.event_info.value = scan_writer->buffer;
 	data.message.u.roiv_cmipEventReport = evt;
 
-	del_byte_stream_writer(writer0, 0);
-	del_byte_stream_writer(writer1, 0);
 	del_byte_stream_writer(scan_writer, 0);
 
-	// FIXME EPX FIXME leaks
-
+	// must be freed using del_apdu()
 	return data;
 }
 
