@@ -247,8 +247,6 @@ void communication_remove_all_state_transition_listeners()
  * the connection loop will be ready to be executed.
  *
  * This method should be invoked in a thread safe execution.
- *
- * @return 1 if operation succeeds, 0 otherwise
  */
 void communication_network_start()
 {
@@ -258,7 +256,7 @@ void communication_network_start()
 		if (ret_code == NETWORK_ERROR_NONE) {
 			network_status = NETWORK_STATUS_INITIALIZED;
 		} else {
-			ERROR(" Cannot initialized network plugin.");
+			ERROR(" Cannot initialize network plugin.");
 		}
 
 	} else if (network_status == NETWORK_STATUS_INITIALIZED) {

@@ -218,8 +218,8 @@ int main(int argc, char **argv)
 			" for more information.\n");
 		exit(1);
 	} else {
-		// Dbus is default mode
-		dbus_mode();
+		// FIFO is default mode
+		fifo_mode();
 	}
 
 	fprintf(stderr, "\nIEEE 11073 Sample application\n");

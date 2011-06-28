@@ -70,6 +70,7 @@ static int network_init()
 
 	if (read_fd <= 0) {
 		DEBUG(" network:fd Error opening file");
+		DEBUG("Please have read_fifo and write_fifo created.");
 		return FIFO_ERROR;
 	}
 
@@ -77,6 +78,7 @@ static int network_init()
 
 	if (write_fd <= 0) {
 		DEBUG(" network:fd Error opening file");
+		DEBUG("Please have read_fifo and write_fifo created.");
 		return FIFO_ERROR;
 	}
 

@@ -1,1 +1,8 @@
 - use HDP D-Bus plugin for ieeemanager test application
+- Improve encoding/decoding 
+	- remove need of having to know buffer size in advance
+	- improve 'Any' type to make memory management more
+		automatic (deletion of streams X deletion of
+		buffers)
+- Remove static structures (e.g. plugin, which limits a process
+  to be either agent or manager)
