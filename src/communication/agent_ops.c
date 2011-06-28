@@ -38,6 +38,7 @@
 #include "src/dim/mds.h"
 #include "src/util/log.h"
 #include "src/agent_p.h"
+#include <string.h>
 
 void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
@@ -143,7 +144,8 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	mds->data_req_mode_capab.data_req_init_agent_count = 1;
 	mds->data_req_mode_capab.data_req_init_manager_count = 0;
 	mds->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
-	mds->system_id.value = (intu8*) AGENT_SYSTEM_ID_VALUE;
+	mds->system_id.value = (intu8*) malloc(sizeof(AGENT_SYSTEM_ID_VALUE));
+	memcpy(mds->system_id.value, AGENT_SYSTEM_ID_VALUE, sizeof(AGENT_SYSTEM_ID_VALUE));
 
 	mds_configure_operating(ctx, cfg, 0);
 }
