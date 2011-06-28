@@ -41,6 +41,7 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_plugindir = $(pkgincludedir)/communication/plugin
 @PACKAGE@_include_plugin_HEADERS = communication/plugin/plugin.h \
                                    communication/plugin/plugin_tcp.h \
+                                   communication/plugin/plugin_tcp_agent.h \
                                    communication/plugin/plugin_fifo.h
 @PACKAGE@_include_utildir = $(pkgincludedir)/util
 @PACKAGE@_include_util_HEADERS = util/bytelib.h
