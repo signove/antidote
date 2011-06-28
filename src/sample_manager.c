@@ -36,6 +36,8 @@
 #include <dbus/dbus.h>
 
 #include <ieee11073.h>
+#include "communication/plugin/plugin_fifo.h"
+#include "communication/plugin/plugin_tcp.h"
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
