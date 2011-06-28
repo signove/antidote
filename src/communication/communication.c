@@ -909,7 +909,8 @@ void communication_connection_loop(Context *ctx)
 		if (ret == NETWORK_ERROR_NONE) {
 			communication_read_input_stream(ctx);
 		} else {
-			// TODO Check Error Conditions
+			// context may be invalid by now
+			return;
 		}
 	}
 }

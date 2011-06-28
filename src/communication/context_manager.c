@@ -122,7 +122,6 @@ static int context_search_by_id(void *arg, void *element)
  */
 Context *context_create(ContextId id, int type)
 {
-
 	if (context_list == NULL) {
 		context_list = llist_new();
 	}
@@ -139,6 +138,7 @@ Context *context_create(ContextId id, int type)
 
 	context->type = type;
 	context->fsm = fsm_instance();
+
 	if (type == MANAGER_CONTEXT) {
 		fsm_set_manager_state_table(context->fsm);
 	} else if (type == AGENT_CONTEXT) {

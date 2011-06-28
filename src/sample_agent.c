@@ -38,6 +38,8 @@
 #include <signal.h>
 
 #include <ieee11073.h>
+#include "communication/plugin/plugin_fifo.h"
+#include "communication/plugin/plugin_tcp_agent.h"
 #include "agent.h"
 
 /**
@@ -58,6 +60,8 @@ static ContextId CONTEXT_ID = 0;
  */
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
 
+static int alarms = 4;
+
 /**
  * SIGALRM handler
  */
@@ -66,9 +70,18 @@ void sigalrm(int dummy)
 	// This is not incredibly safe, because signal may interrupt
 	// processing, and is not a technique for a production agent,
 	// but suffices for this quick 'n dirty sample
+	
+	if (alarms > 1) {
+		agent_send_data(CONTEXT_ID);
+		alarm(3);
+	} else if (alarms == 1) {
+		agent_disassociate(CONTEXT_ID);
+		alarm(3);
+	} else {
+		agent_disconnect(CONTEXT_ID);
+	}
 
-	agent_send_data(CONTEXT_ID);
-	alarm(3);
+	--alarms;
 }
 
 /**
@@ -161,7 +174,7 @@ static void tcp_mode()
 {
 	int port = 6024;
 	CONTEXT_ID = port;
-	plugin_network_tcp_setup(&comm_plugin, 1, port);
+	plugin_network_tcp_agent_setup(&comm_plugin, port);
 }
 
 /**
@@ -169,9 +182,6 @@ static void tcp_mode()
  */
 int main(int argc, char **argv)
 {
-	unsigned int size;
-	char *input;
-
 	comm_plugin = communication_plugin();
 
 	if (argc == 2) {
@@ -204,9 +214,6 @@ int main(int argc, char **argv)
 
 	fprintf(stderr, "\nIEEE 11073 sample agent\n");
 
-	size = 100;
-	input = (char *) malloc(size);
-
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
 	agent_init(&comm_plugin);
@@ -224,7 +231,6 @@ int main(int argc, char **argv)
 
 	agent_finalize();
 
-	free(input);
 	return 0;
 }
 

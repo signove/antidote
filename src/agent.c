@@ -454,6 +454,34 @@ void agent_associate(ContextId id)
 	communication_fire_evt(context_get(id), fsm_evt_req_assoc, NULL);
 }
 
+/**
+ * Provoke agent to terminate association
+ *
+ * @param ctx context
+ */
+void agent_disassociate(ContextId id)
+{
+	DEBUG(" agent: Move state machine to disassoc");
+	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, NULL);
+}
+
+/**
+ * Provoke agent to terminate connection
+ *
+ * @param ctx context
+ */
+void agent_disconnect(ContextId id)
+{
+	DEBUG(" agent: Move state machine to terminate conn");
+	// EPX FIXME EPX
+	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, NULL);
+}
+
+/**
+ * Provoke agent to send event report with measure data
+ *
+ * @param ctx context
+ */
 void agent_send_data(ContextId id)
 {
 	communication_fire_evt(context_get(id), fsm_evt_req_send_event, NULL);
