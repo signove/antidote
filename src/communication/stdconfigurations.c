@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "src/communication/stdconfigurations.h"
+#include "src/util/log.h"
 
 /**
  * Number of the standard configurations that are supported.

@@ -208,16 +208,16 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	return std_object_list;
 }
 
-static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
+static DATA_apdu *pulse_oximeter_populate_event_report(void *args[])
 {
-	DATA_apdu data;
+	DATA_apdu *data = calloc(sizeof(DATA_apdu), 1);
 	EventReportArgumentSimple evt;
 	ScanReportInfoFixed scan;
 	ObservationScanFixedList scan_fixed;
 	ObservationScanFixed measure[2];
 	AbsoluteTime nu_time;
 	BasicNuObsValue nu_oximetry;
-	SimpleNuObsValue nu_beats;
+	BasicNuObsValue nu_beats;
 
 	// FIXME EPX FIXME real values
 	nu_time.century = 20;
@@ -229,14 +229,14 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 	nu_time.second = 0;
 	nu_time.sec_fractions = 0;
 
-	nu_oximetry = 98;
-	nu_beats = 75.3;
+	nu_oximetry = 97;
+	nu_beats = 65;
 
 	// will be filled afterwards by service_* function
-	data.invoke_id = 0;
+	data->invoke_id = 0xffff;
 
-	data.message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
-	data.message.length = 46;
+	data->message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
+	data->message.length = 46;
 
 	evt.obj_handle = 0;
 	evt.event_time = 0xFFFFFFFF;
@@ -261,7 +261,7 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 	measure[1].obs_val_data.length = 10;
 	ByteStreamWriter *writer1 = byte_stream_writer_instance(measure[1].obs_val_data.length);
 
-	encode_simplenuobsvalue(writer1, &nu_beats);
+	encode_basicnuobsvalue(writer1, &nu_beats);
 	encode_absolutetime(writer1, &nu_time);
 	
 	measure[0].obs_val_data.value = writer0->buffer;
@@ -277,11 +277,10 @@ static DATA_apdu pulse_oximeter_populate_event_report(void *args[])
 	del_byte_stream_writer(writer1, 1);
 
 	evt.event_info.value = scan_writer->buffer;
-	data.message.u.roiv_cmipEventReport = evt;
+	data->message.u.roiv_cmipEventReport = evt;
 
 	del_byte_stream_writer(scan_writer, 0);
 
-	// must be freed using del_apdu()
 	return data;
 }
 
