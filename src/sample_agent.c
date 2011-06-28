@@ -35,11 +35,10 @@
 #include <unistd.h>
 #include <unistd.h>
 #include <dbus/dbus.h>
+#include <signal.h>
 
 #include <ieee11073.h>
 #include "agent.h"
-
-// EPX FIXME EPX send data calling 
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
@@ -60,25 +59,16 @@ static ContextId CONTEXT_ID = 0;
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
 
 /**
- * Callback function that is called whenever a new data
- * has been received.
- *
- * @param ctx current context.
- * @param list the new list of elements.
+ * SIGALRM handler
  */
-void new_data_received(Context *ctx, DataList *list)
+void sigalrm(int dummy)
 {
-	fprintf(stderr, "Medical Device Data Updated:\n");
+	// This is not incredibly safe, because signal may interrupt
+	// processing, and is not a technique for a production agent,
+	// but suffices for this quick 'n dirty sample
 
-	char *data = json_encode_data_list(list);
-
-	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
-
-		fflush(stderr);
-		free(data);
-	}
+	agent_send_data(CONTEXT_ID);
+	alarm(3);
 }
 
 /**
@@ -90,7 +80,8 @@ void new_data_received(Context *ctx, DataList *list)
  */
 void device_associated(Context *ctx)
 {
-	fprintf(stderr, " Medical Device System Associated:\n");
+	fprintf(stderr, " main: Associated\n");
+	alarm(3);
 }
 
 /**
@@ -102,35 +93,12 @@ void device_associated(Context *ctx)
  */
 void device_connected(Context *ctx)
 {
-	fprintf(stderr, " Medical Device System Connected\n");
+	fprintf(stderr, "main: Connected\n");
 
 	// ok, make it proceed with association
 	// (agent has the initiative)
 	agent_associate(ctx->id);
 }
-
-/**
- * Prints device attribute values
- */
-/*
-void print_device_attributes()
-{
-	DataList *list = agent_get_mds_attributes(CONTEXT_ID);
-
-	char *data = json_encode_data_list(list);
-
-	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
-
-		fflush(stderr);
-	}
-
-	data_list_del(list);
-
-	free(data);
-}
-*/
 
 /**
  * Prints utility command-line tool help.
@@ -219,22 +187,22 @@ int main(int argc, char **argv)
 			fifo_mode();
 		} else {
 			fprintf(stderr, "ERROR: invalid option: %s\n", argv[1]);
-			fprintf(stderr, "Try `ieee_agent --help'"
-				" for more information.\n");
+			fprintf(stderr, "Try `%s --help'"
+				" for more information.\n", argv[0]);
 			exit(1);
 		}
 
 	} else if (argc > 2) {
 		fprintf(stderr, "ERROR: Invalid number of options\n");
-		fprintf(stderr, "Try `ieee_agent --help'"
-			" for more information.\n");
+		fprintf(stderr, "Try `%s --help'"
+			" for more information.\n", argv[0]);
 		exit(1);
 	} else {
 		// FIFO is default mode
 		fifo_mode();
 	}
 
-	fprintf(stderr, "\nIEEE 11073 Sample application\n");
+	fprintf(stderr, "\nIEEE 11073 sample agent\n");
 
 	size = 100;
 	input = (char *) malloc(size);
@@ -251,6 +219,7 @@ int main(int argc, char **argv)
 
 	agent_start();
 
+	signal(SIGALRM, sigalrm);
 	agent_connection_loop(CONTEXT_ID);
 
 	agent_finalize();
