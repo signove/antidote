@@ -88,35 +88,33 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
 
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
 {
-	APDU apdu;
+	APDU *apdu = calloc(sizeof(APDU), 1);
 	PRST_apdu prst;
-	DATA_apdu data;
+	DATA_apdu *data;
 
 	struct StdConfiguration *cfg =
 		std_configurations_get_supported_standard(agent_specialization);
+
+	if (!cfg) {
+		DEBUG("No std configuration for %d, bailing out", agent_specialization);
+		return;
+	}
 
 	data = cfg->event_report(0);
 
 	// prst = length + DATA_apdu
 	// take into account data's invoke id and choice
-	prst.length = data.message.length + 6; // 46 + 6 = 52 for oximeter
+	prst.length = data->message.length + 6; // 46 + 6 = 52 for oximeter
+	encode_set_data_apdu(&prst, data);
+	
+	apdu->choice = PRST_CHOSEN;
+	apdu->length = prst.length + 2; // 52 + 2 = 54 for oximeter
+	apdu->u.prst = prst;
 
-	ByteStreamWriter *prst_writer = byte_stream_writer_instance(prst.length);
-	encode_data_apdu(prst_writer, &data);
-	prst.value = prst_writer->buffer;
+	// passes ownership
+	service_send_unconfirmed_operation_request(ctx, apdu);
 
-	apdu.choice = PRST_CHOSEN;
-	apdu.length = prst.length + 2; // 52 + 2 = 54 for oximeter
-	apdu.u.prst = prst;
-
-	service_send_unconfirmed_operation_request(ctx, &apdu);
-
-	del_byte_stream_writer(prst_writer, 1);
-
-	// deletes data that came from cfg->event_report()
-	del_apdu(&apdu);
-
-	free(cfg);
+	// EPX FIXME EPX test whether event report is confirmed or unconfirmed
 }
 
 /**
