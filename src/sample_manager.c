@@ -191,13 +191,9 @@ static void tcp_mode()
  */
 int main(int argc, char **argv)
 {
-	unsigned int size;
-	char *input;
-
 	comm_plugin = communication_plugin();
 
 	if (argc == 2) {
-
 		if (strcmp(argv[1], "--help") == 0) {
 			print_help();
 			exit(0);
@@ -226,9 +222,6 @@ int main(int argc, char **argv)
 
 	fprintf(stderr, "\nIEEE 11073 Sample application\n");
 
-	size = 100;
-	input = (char *) malloc(size);
-
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
 	manager_init(&comm_plugin);
@@ -241,11 +234,13 @@ int main(int argc, char **argv)
 
 	manager_start();
 
-	manager_connection_loop(CONTEXT_ID);
+	int x = 0;
+	while (x < 3) {
+		manager_connection_loop(CONTEXT_ID);
+	}
 
 	manager_finalize();
 
-	free(input);
 	return 0;
 }
 
