@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "src/communication/plugin/plugin_fifo.h"
 #include "src/communication/communication.h"
 #include "src/util/log.h"
@@ -179,19 +180,26 @@ static int network_fifo_wait_for_data(Context *ctx)
 
 	int ret_value;
 
-	if (fifo_timeout == 0) {
-		ret_value = select(read_fd + 1, &fds, NULL, NULL, NULL);
-	} else {
-		timeout.tv_sec = fifo_timeout;
-		timeout.tv_usec = 0;
+	while (1) {
 
-		ret_value = select(read_fd + 1, &fds, NULL, NULL, &timeout);
-	}
+		if (fifo_timeout == 0) {
+			ret_value = select(read_fd + 1, &fds, NULL, NULL, NULL);
+		} else {
+			timeout.tv_sec = fifo_timeout;
+			timeout.tv_usec = 0;
 
-	if (ret_value < 0) {
-		DEBUG(" network:fd Select failed");
-	} else if (ret_value == 0) {
-		DEBUG(" network:fd Select timeout");
+			ret_value = select(read_fd + 1, &fds, NULL, NULL, &timeout);
+		}
+
+		if (ret_value < 0) {
+			if (errno == EINTR)
+				continue;
+			DEBUG(" network:fd Select failed");
+		} else if (ret_value == 0) {
+			DEBUG(" network:fd Select timeout");
+		}
+
+		break;
 	}
 
 	return ret_value;
