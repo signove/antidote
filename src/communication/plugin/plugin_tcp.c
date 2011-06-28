@@ -227,7 +227,7 @@ static int network_tcp_wait_for_data(Context *ctx)
 		return TCP_ERROR_NONE;
 	}
 
-	DEBUG("network tcp: network_wait_for_data error");
+	DEBUG("network tcp: network_wait_for_data unknown context");
 	return TCP_ERROR;
 
 }
@@ -248,9 +248,15 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 
 		if (ret == -1) {
 			sk->connected = 0;
+			communication_transport_disconnect_indication((ContextId) sk->tcp_port);
+			// kludge to reinstante fixed context id used in samples
+			communication_transport_connect_indication((ContextId) sk->tcp_port);
 			return NULL;
 		} else if (ret == 0) {
 			sk->connected = 0;
+			communication_transport_disconnect_indication((ContextId) sk->tcp_port);
+			// kludge to reinstante fixed context id used in samples
+			communication_transport_connect_indication((ContextId) sk->tcp_port);
 			return NULL;
 		} else if (ret != 4) {
 			DEBUG(" network:tcp Stream should have at least 4 bytes: %d.", ret);
