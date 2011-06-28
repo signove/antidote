@@ -146,7 +146,6 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	mds->system_id.value = (intu8*) AGENT_SYSTEM_ID_VALUE;
 
 	mds_configure_operating(ctx, cfg, 0);
-	free(cfg);
 }
 
 /**
@@ -171,9 +170,9 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	APDU apdu;
 	apdu.choice = PRST_CHOSEN;
 
-	DATA_apdu data_apdu;
-	data_apdu.invoke_id = id;
-	data_apdu.message.choice = RORS_CMIP_GET_CHOSEN;
+	DATA_apdu *data_apdu = calloc(sizeof(DATA_apdu), 1);
+	data_apdu->invoke_id = id;
+	data_apdu->message.choice = RORS_CMIP_GET_CHOSEN;
 
 	AttributeList attrs;
 
@@ -181,22 +180,23 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	attrs.length = sizeof(attrs.count) + sizeof(attrs.length);
 	attrs.value = mds_get_attributes(ctx->mds, &attrs.count, &attrs.length);
 	
-	data_apdu.message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
-	data_apdu.message.u.rors_cmipGet.attribute_list = attrs;
+	data_apdu->message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
+	data_apdu->message.u.rors_cmipGet.attribute_list = attrs;
 
-	data_apdu.message.length = sizeof(data_apdu.message.u.rors_cmipGet.obj_handle);
+	data_apdu->message.length = sizeof(data_apdu->message.u.rors_cmipGet.obj_handle);
 				// + ;
 
 	apdu.u.prst.length = sizeof(id)
-			     + sizeof(data_apdu.message.choice)
-			     + sizeof(data_apdu.message.length)
-			     + data_apdu.message.length;
+			     + sizeof(data_apdu->message.choice)
+			     + sizeof(data_apdu->message.length)
+			     + data_apdu->message.length;
 
 	apdu.length = sizeof(apdu.u.prst.length) + apdu.u.prst.length;
-	encode_set_data_apdu(&apdu.u.prst, &data_apdu);
+	encode_set_data_apdu(&apdu.u.prst, data_apdu);
 	communication_send_apdu(ctx, &apdu);
 
 	// deletes information that came from mds_get_attributes()
+	// and data_apdu
 	del_apdu(&apdu);
 }
 
