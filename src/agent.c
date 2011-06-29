@@ -158,6 +158,7 @@ void agent_init(CommunicationPlugin *plugin)
 {
 	DEBUG("Agent Initialization");
 
+	// EPX FIXME EPX get this argument from higher level
 	agent_specialization = 0x0190; // oximeter
 
 	plugin->type = AGENT_CONTEXT;

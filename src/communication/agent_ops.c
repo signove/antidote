@@ -113,9 +113,13 @@ void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEvent
 	apdu->u.prst = prst;
 
 	// passes ownership
-	service_send_unconfirmed_operation_request(ctx, apdu);
-
-	// EPX FIXME EPX test whether event report is confirmed or unconfirmed
+	if (data->message.choice == ROIV_CMIP_EVENT_REPORT_CHOSEN) {
+		service_send_unconfirmed_operation_request(ctx, apdu);
+	} else {
+		// ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN, presumably
+		timeout_callback tm = {.func = &communication_timeout, .timeout = 3};
+		service_send_remote_operation_request(ctx, apdu, tm, NULL);
+	}
 }
 
 /**
