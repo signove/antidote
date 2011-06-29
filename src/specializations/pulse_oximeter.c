@@ -235,6 +235,7 @@ static DATA_apdu *pulse_oximeter_populate_event_report(void *args[])
 	// will be filled afterwards by service_* function
 	data->invoke_id = 0xffff;
 
+	// data->message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	data->message.choice = ROIV_CMIP_EVENT_REPORT_CHOSEN;
 	data->message.length = 46;
 

@@ -57,7 +57,11 @@
 
 static void communication_process_roiv(Context *ctx, APDU *apdu);
 
+static void communication_agent_process_roiv(Context *ctx, APDU *apdu);
+
 static void communication_process_rors(Context *ctx, APDU *apdu);
+
+static void communication_agent_process_rors(Context *ctx, APDU *apdu);
 
 void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner, OID_Type event_type, Any *event);
 
@@ -80,7 +84,6 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
 
 		if (communication_is_roiv_type(data_apdu)) {
 			communication_process_roiv(ctx, apdu);
-
 		} else if (communication_is_rors_type(data_apdu)) {
 			communication_process_rors(ctx, apdu);
 		}
@@ -155,6 +158,8 @@ void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 
 		if (communication_is_roiv_type(data_apdu)) {
 			communication_agent_process_roiv(ctx, apdu);
+		} else if (communication_is_rors_type(data_apdu)) {
+			communication_agent_process_rors(ctx, apdu);
 		}
 		break;
 	}
@@ -254,6 +259,44 @@ static void communication_process_rors(Context *ctx, APDU *apdu)
 					       fsm_evt_rx_rors_confirmed_action, &data);
 			break;
 		case RORS_CMIP_CONFIRMED_SET_CHOSEN: // 8.26
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_rors_confirmed_set,
+					       &data);
+			break;
+		default:
+			reject_result.problem = UNRECOGNIZED_OPERATION;
+			// TODO: communication_send_rorj(rejectResult)
+			break;
+		}
+
+		service_request_retired(ctx, data_apdu);
+	}
+}
+
+/**
+ * Process rors in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void communication_agent_process_rors(Context *ctx, APDU *apdu)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+	FSMEventData data;
+	RejectResult reject_result;
+
+	if (service_check_known_invoke_id(ctx, data_apdu)) {
+		switch (data_apdu->message.choice) {
+		case RORS_CMIP_GET_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx, fsm_evt_rx_rors_get, &data);
+			break;
+		case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
+			data.received_apdu = apdu;
+			communication_fire_evt(ctx,
+					       fsm_evt_rx_rors_confirmed_action, &data);
+			break;
+		case RORS_CMIP_CONFIRMED_SET_CHOSEN:
 			data.received_apdu = apdu;
 			communication_fire_evt(ctx, fsm_evt_rx_rors_confirmed_set,
 					       &data);
