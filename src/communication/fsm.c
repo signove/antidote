@@ -230,7 +230,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	// EPX FIXME counting retries?
 	{fsm_state_associating,		fsm_evt_ind_timeout_max_retry_not_reached,		fsm_state_associating,		&association_aarq_tx}, // 3.3
 	{fsm_state_associating,		fsm_evt_ind_timeout_max_retry_reached,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.4
-	{fsm_state_associating,		fsm_evt_req_assoc_rel,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.6
+	{fsm_state_associating,		fsm_evt_req_assoc_rel,					fsm_state_unassociated,		&disassociating_release_request_normal_tx}, // 3.6
 	{fsm_state_associating,		fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.7
 	{fsm_state_associating,		fsm_evt_rx_aarq,					fsm_state_unassociated,		&association_agent_aare_rejected_permanent_tx}, // 3.8
 	{fsm_state_associating,		fsm_evt_rx_aare_accepted_known,				fsm_state_operating,		NULL}, // 3.13
@@ -242,7 +242,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_associating,		fsm_evt_rx_prst,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.19
 	{fsm_state_config_sending,	fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		NULL}, // 4.2
 	{fsm_state_config_sending,	fsm_evt_ind_timeout,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.4
-	{fsm_state_config_sending,	fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&configuring_association_release_request_tx}, // 4.6
+	{fsm_state_config_sending,	fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&disassociating_release_request_normal_tx}, // 4.6
 	{fsm_state_config_sending,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.7
 	{fsm_state_config_sending,	fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.8
 	{fsm_state_config_sending,	fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.12
@@ -269,7 +269,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_config_sending,	fsm_evt_req_send_config,				fsm_state_waiting_approval,	&configuring_send_config_tx}, // 4.32
 	{fsm_state_waiting_approval,	fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		NULL}, // 5.2
 	{fsm_state_waiting_approval,	fsm_evt_ind_timeout,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.4
-	{fsm_state_waiting_approval,	fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&configuring_association_release_request_tx}, // 5.6
+	{fsm_state_waiting_approval,	fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&disassociating_release_request_normal_tx}, // 5.6
 	{fsm_state_waiting_approval,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.7
 	{fsm_state_waiting_approval,	fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.8
 	{fsm_state_waiting_approval,	fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.12
@@ -295,7 +295,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_waiting_approval,	fsm_evt_rx_rorj,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.30
 	{fsm_state_operating,		fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		NULL}, // 8.2
 	{fsm_state_operating,		fsm_evt_ind_timeout,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.4
-	{fsm_state_operating,		fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&disassociating_release_request_tx}, // 8.6
+	{fsm_state_operating,		fsm_evt_req_assoc_rel,					fsm_state_disassociating,	&disassociating_release_request_normal_tx}, // 8.6
 
 	{fsm_state_operating,		fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.7
 	{fsm_state_operating,		fsm_evt_req_send_event,					fsm_state_operating,		&communication_agent_send_event_tx}, // 8.7

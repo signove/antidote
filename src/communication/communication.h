@@ -135,6 +135,8 @@ void communication_reset_timeout(Context *ctx);
 
 void communication_wait_for_timeout(Context *ctx);
 
+void req_association_release(Context *ctx);
+
 /**
  * @}
  */

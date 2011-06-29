@@ -392,12 +392,7 @@ void agent_connection_loop(ContextId context_id)
  */
 void agent_request_association_release(ContextId id)
 {
-	FSMEventData evt;
-
-	evt.choice = FSM_EVT_DATA_RELEASE_REQUEST_REASON;
-	evt.u.release_request_reason = RELEASE_REQUEST_REASON_NORMAL;
-
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, &evt);
+	req_association_release(context_get(id));
 }
 
 /**
@@ -452,17 +447,6 @@ void agent_associate(ContextId id)
 {
 	DEBUG(" agent: Move state machine to init assoc");
 	communication_fire_evt(context_get(id), fsm_evt_req_assoc, NULL);
-}
-
-/**
- * Provoke agent to terminate association
- *
- * @param ctx context
- */
-void agent_disassociate(ContextId id)
-{
-	DEBUG(" agent: Move state machine to disassoc");
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, NULL);
 }
 
 /**

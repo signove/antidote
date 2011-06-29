@@ -965,4 +965,19 @@ void communication_wait_for_timeout(Context *ctx)
 	comm_plugin->timer_wait_for_timeout(ctx);
 }
 
+/**
+ * Release association
+ *
+ * @param ctx
+ */
+void req_association_release(Context *ctx)
+{
+	FSMEventData evt;
+
+	evt.choice = FSM_EVT_DATA_RELEASE_REQUEST_REASON;
+	evt.u.release_request_reason = RELEASE_REQUEST_REASON_NORMAL;
+
+	communication_fire_evt(ctx, fsm_evt_req_assoc_rel, &evt);
+}
+
 /** @} */

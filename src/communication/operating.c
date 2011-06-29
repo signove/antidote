@@ -682,27 +682,12 @@ Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 tim
 }
 
 /**
- * Release association
- *
- * @param ctx
- */
-void operating_release(Context *ctx)
-{
-	FSMEventData evt;
-
-	evt.choice = FSM_EVT_DATA_RELEASE_REQUEST_REASON;
-	evt.u.release_request_reason = RELEASE_REQUEST_REASON_NORMAL;
-
-	communication_fire_evt(ctx, fsm_evt_req_assoc_rel, &evt);
-}
-
-/**
  * Service listener callback function
  */
 void operating_service_listener(Context *ctx, ServiceState new_state)
 {
 	if (new_state == FINALIZED) {
-		disassociating_release_request_normal_tx(ctx);
+		disassociating_release_request_normal_tx(ctx, 0, NULL);
 	}
 }
 

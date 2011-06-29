@@ -170,7 +170,8 @@ void disassociating_release_request_tx(Context *ctx, fsm_events evt,
 /**
  * send Release Request APDU with NORMAL reason
  */
-void disassociating_release_request_normal_tx(Context *ctx)
+void disassociating_release_request_normal_tx(Context *ctx, fsm_events evt,
+						FSMEventData *data)
 {
 	APDU apdu;
 	apdu.choice = RLRQ_CHOSEN;
@@ -178,7 +179,8 @@ void disassociating_release_request_normal_tx(Context *ctx)
 	apdu.u.rlrq.reason = RELEASE_REQUEST_REASON_NORMAL;
 
 	if (communication_send_apdu(ctx, &apdu)) {
-		communication_count_timeout(ctx, &communication_timeout, ASSOCIATION_TO_RELEASE);
+		communication_count_timeout(ctx, &communication_timeout,
+						ASSOCIATION_TO_RELEASE);
 	}
 }
 

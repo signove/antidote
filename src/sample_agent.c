@@ -75,7 +75,7 @@ void sigalrm(int dummy)
 		agent_send_data(CONTEXT_ID);
 		alarm(3);
 	} else if (alarms == 1) {
-		agent_disassociate(CONTEXT_ID);
+		agent_request_association_release(CONTEXT_ID);
 		alarm(3);
 	} else {
 		agent_disconnect(CONTEXT_ID);

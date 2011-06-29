@@ -80,7 +80,7 @@ int agent_add_listener(AgentListener listener);
 
 void agent_associate(ContextId id);
 
-void agent_disassociate(ContextId id);
+void agent_request_association_release(ContextId id);
 
 void agent_disconnect(ContextId id);
 
