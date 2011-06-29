@@ -43,12 +43,7 @@
  * use this field to determine whether it is communicating with the intended agent.
  *
  * See http://standards.ieee.org/regauth/index.html
- *
- * FIXME Register a valid SYSTEM ID
  */
-static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
-		0xbb, 0xdd, 0xff};
-
 void agent_remove_all_listeners();
 
 int agent_notify_evt_device_available(Context *ctx, DataList *data_list);

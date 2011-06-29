@@ -96,6 +96,7 @@
 #include "src/specializations/blood_pressure_monitor.h"
 #include "src/specializations/pulse_oximeter.h"
 #include "src/specializations/weighing_scale.h"
+#include "src/dim/mds.h"
 #include "src/util/log.h"
 
 
@@ -110,8 +111,11 @@ static int agent_listener_count = 0;
 
 /**
  * Agent specialization standard configuration id
+ * and callbacks that supply data
  */
 ConfigId agent_specialization;
+void *(*agent_event_report_cb)();
+struct mds_system_data *(*agent_mds_data_cb)();
 
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 
@@ -154,14 +158,18 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  *
  * @param plugin the configured plugin to define communication behaviour
  */
-void agent_init(CommunicationPlugin *plugin)
+void agent_init(CommunicationPlugin *plugin, int specialization,
+		void *(*event_report_cb)(),
+		struct mds_system_data *(*mds_data_cb)())
 {
 	DEBUG("Agent Initialization");
 
-	// EPX FIXME EPX get this argument from higher level
-	agent_specialization = 0x0190; // oximeter
+	agent_specialization = specialization;
+	agent_event_report_cb = event_report_cb;
+	agent_mds_data_cb = mds_data_cb;
 
 	plugin->type = AGENT_CONTEXT;
+
 	communication_set_plugin(plugin);
 
 	// Listen to all communication state transitions

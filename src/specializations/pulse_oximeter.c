@@ -208,9 +208,9 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	return std_object_list;
 }
 
-static DATA_apdu *pulse_oximeter_populate_event_report(void *args[])
+static DATA_apdu *pulse_oximeter_populate_event_report(void *edata)
 {
-	DATA_apdu *data = calloc(sizeof(DATA_apdu), 1);
+	DATA_apdu *data;
 	EventReportArgumentSimple evt;
 	ScanReportInfoFixed scan;
 	ObservationScanFixedList scan_fixed;
@@ -218,19 +218,22 @@ static DATA_apdu *pulse_oximeter_populate_event_report(void *args[])
 	AbsoluteTime nu_time;
 	BasicNuObsValue nu_oximetry;
 	BasicNuObsValue nu_beats;
+	struct oximeter_event_report_data *evtdata;
 
-	// FIXME EPX FIXME real values
-	nu_time.century = 20;
-	nu_time.year = 11;
-	nu_time.month = 4;
-	nu_time.day = 15;
-	nu_time.hour = 10;
-	nu_time.minute = 15;
-	nu_time.second = 0;
-	nu_time.sec_fractions = 0;
+	data = calloc(sizeof(DATA_apdu), 1);
+	evtdata = (struct oximeter_event_report_data*) edata;
 
-	nu_oximetry = 97;
-	nu_beats = 65;
+	nu_time.century = evtdata->century;
+	nu_time.year = evtdata->year;
+	nu_time.month = evtdata->month;
+	nu_time.day = evtdata->day;
+	nu_time.hour = evtdata->hour;
+	nu_time.minute = evtdata->minute;
+	nu_time.second = evtdata->second;
+	nu_time.sec_fractions = evtdata->sec_fractions;
+
+	nu_oximetry = evtdata->oximetry;
+	nu_beats = evtdata->beats;
 
 	// will be filled afterwards by service_* function
 	data->invoke_id = 0xffff;

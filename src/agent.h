@@ -66,7 +66,11 @@ typedef struct AgentListener {
 			.timeout = NULL\
 			}
 
-void agent_init(CommunicationPlugin *plugin);
+struct mds_system_data;
+
+void agent_init(CommunicationPlugin *plugin, int specialization,
+		void *(*event_report_cb)(),
+		struct mds_system_data *(*mds_data_cb)());
 
 void agent_finalize();
 

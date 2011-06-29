@@ -36,11 +36,16 @@
 #include <unistd.h>
 #include <dbus/dbus.h>
 #include <signal.h>
+#include <time.h>
 
 #include <ieee11073.h>
 #include "communication/plugin/plugin_fifo.h"
 #include "communication/plugin/plugin_tcp_agent.h"
+#include "specializations/pulse_oximeter.h"
 #include "agent.h"
+
+static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
+		0xbb, 0xdd, 0xff};
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
@@ -178,6 +183,43 @@ static void tcp_mode()
 }
 
 /**
+ * Generate data for oximeter event report
+ */
+static void *event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct oximeter_event_report_data* data =
+		malloc(sizeof(struct oximeter_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+
+	data->beats = 60 + random() % 20;
+	data->oximetry = 90 + random() % 10;
+	data->century = nowtm.tm_year / 100;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
+ * Generate data for MDS
+ */
+static struct mds_system_data *mds_data_cb()
+{
+	struct mds_system_data* data = malloc(sizeof(struct mds_system_data));
+	memcpy(&data->system_id, AGENT_SYSTEM_ID_VALUE, 8);
+	return data;
+}
+
+/**
  * Main function
  */
 int main(int argc, char **argv)
@@ -216,7 +258,8 @@ int main(int argc, char **argv)
 
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
-	agent_init(&comm_plugin);
+	agent_init(&comm_plugin, 0x0190 /* oximeter */,
+			event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;

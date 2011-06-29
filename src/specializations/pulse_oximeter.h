@@ -42,4 +42,17 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0190();
 
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0191();
 
+struct oximeter_event_report_data {
+	int beats;
+	int oximetry;
+	int century;
+	int year;
+	int month;
+	int day;
+	int hour;
+	int minute;
+	int second;
+	int sec_fractions;
+};
+
 #endif /* PULSE_OXIMETER_H_ */

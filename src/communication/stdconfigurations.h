@@ -54,7 +54,7 @@ typedef char *(*mds_to_string)(MDS *mds);
 /*
  * Populates an event report (agent)
  */
-typedef DATA_apdu *(*agent_event_report)(void *args[]);
+typedef DATA_apdu *(*agent_event_report)(void *data);
 
 /**
  * Represent the standard configuration described in the

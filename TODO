@@ -5,6 +5,7 @@
 		automatic (deletion of streams X deletion of
 		buffers)
 - Remove static structures (e.g. plugin, which limits a process
+	- externs, too, since they are hidden statics
   to be either agent or manager)
 - Timeout handling (manager & agent)
 	association_aarq_tx

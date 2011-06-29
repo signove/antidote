@@ -323,6 +323,13 @@ struct MDS_object {
 	} u;
 };
 
+/**
+ * MDS data offered by agent application
+ */
+struct mds_system_data {
+	intu8 system_id[8];
+};
+
 void mds_add_object(MDS *mds, struct MDS_object object);
 
 struct MDS_object *mds_get_object_by_handle(MDS *mds, HANDLE obj_handle);

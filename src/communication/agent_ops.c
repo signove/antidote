@@ -101,7 +101,9 @@ void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEvent
 		return;
 	}
 
-	data = cfg->event_report(0);
+	void *evtreport = agent_event_report_cb();
+	data = cfg->event_report(evtreport);
+	free(evtreport);
 
 	// prst = length + DATA_apdu
 	// take into account data's invoke id and choice
@@ -140,19 +142,20 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	MDS *mds = mds_create();
 	ctx->mds = mds;
 
-	/* FIXME EPX FIXME mds information from higher-level */
+	struct mds_system_data *mds_data = agent_mds_data_cb();
 
 	mds->dev_configuration_id = agent_specialization;
 	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
 	// max number of simultaneous sessions
 	mds->data_req_mode_capab.data_req_init_agent_count = 1;
 	mds->data_req_mode_capab.data_req_init_manager_count = 0;
-	mds->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
-	mds->system_id.value = (intu8*) malloc(sizeof(AGENT_SYSTEM_ID_VALUE));
-	memcpy(mds->system_id.value, AGENT_SYSTEM_ID_VALUE, sizeof(AGENT_SYSTEM_ID_VALUE));
+	mds->system_id.length = 8;
+	mds->system_id.value = (intu8*) malloc(mds->system_id.length);
+	memcpy(mds->system_id.value, &mds_data->system_id, mds->system_id.length);
 
 	mds_configure_operating(ctx, cfg, 0);
 
+	free(mds_data);
 	free(cfg);
 }
 

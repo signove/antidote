@@ -472,11 +472,14 @@ void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	communication_send_apdu(ctx, &config_apdu);
 
 	del_byte_stream_writer(encoded_value, 1);
+	free(config_info.system_id.value);
 }
 
 static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 				DataProto *proto)
 {
+	struct mds_system_data *mds_data = agent_mds_data_cb();
+
 	apdu->choice = AARQ_CHOSEN;
 	apdu->length = 50;
 
@@ -495,8 +498,10 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 	config_info->functionalUnits = 0x00000000;
 	config_info->systemType = SYS_TYPE_AGENT;
 
-	config_info->system_id.value = (intu8 *) AGENT_SYSTEM_ID_VALUE;
-	config_info->system_id.length = sizeof(AGENT_SYSTEM_ID_VALUE);
+	config_info->system_id.length = 8;
+	config_info->system_id.value = malloc(config_info->system_id.length);
+	memcpy(config_info->system_id.value, mds_data->system_id,
+					config_info->system_id.length);
 
 	config_info->dev_config_id = agent_specialization;
 
@@ -507,6 +512,8 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 
 	config_info->optionList.count = 0;
 	config_info->optionList.length = 0;
+
+	free(mds_data);
 }
 
 

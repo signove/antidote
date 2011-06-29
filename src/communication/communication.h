@@ -36,8 +36,14 @@
 
 /**
  * If process is agent role, this variable tells the config-id
+ * and callbacks supply variable data (MDS and event reports)
  */
+
+struct mds_system_data;
+
 extern ConfigId agent_specialization;
+extern void *(*agent_event_report_cb)();
+extern struct mds_system_data *(*agent_mds_data_cb)();
 
 /**
  * ZERO Timeout implementation
