@@ -606,10 +606,10 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 
 	service_init(ctx);
 
-	DataList *list = data_list_new(1);
-	mds_populate_attributes(mds, &list->values[0]);
-
 	if (manager) {
+		DataList *list = data_list_new(1);
+		mds_populate_attributes(mds, &list->values[0]);
+
 		manager_notify_evt_device_available(ctx, list);
 	}
 

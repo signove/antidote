@@ -913,17 +913,24 @@ void communication_connection_loop(Context *ctx)
 
 	set_connection_loop_active(ctx, 1); // activate loop flag
 
-
 	DEBUG(" communication:Waiting for data\n");
 
-	while (get_connection_loop_active(ctx)) {
+	// context may become invalid right after wait_for_data_input,
+	// so we need so check it every loop, based on ID.
+	ContextId id = ctx->id;
+
+	while ((ctx = context_get(id))) {
+		if (!get_connection_loop_active(ctx)) {
+			break;
+		}
+
 		int ret = communication_wait_for_data_input(ctx);
 
 		if (ret == NETWORK_ERROR_NONE) {
 			communication_read_input_stream(ctx);
 		} else {
-			// context may be invalid by now
-			return;
+			// higher layer must see the error
+			break;
 		}
 	}
 }

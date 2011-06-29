@@ -148,6 +148,8 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	memcpy(mds->system_id.value, AGENT_SYSTEM_ID_VALUE, sizeof(AGENT_SYSTEM_ID_VALUE));
 
 	mds_configure_operating(ctx, cfg, 0);
+
+	free(cfg);
 }
 
 /**

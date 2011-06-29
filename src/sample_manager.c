@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 	manager_start();
 
 	int x = 0;
-	while (x < 3) {
+	while (x++ < 3) {
 		manager_connection_loop(CONTEXT_ID);
 	}
 
