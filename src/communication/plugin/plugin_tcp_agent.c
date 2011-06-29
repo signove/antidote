@@ -130,6 +130,8 @@ static int network_init()
  */
 static int network_tcp_wait_for_data(Context *ctx)
 {
+	DEBUG("network tcp: network_wait_for_data");
+
 	if (sk < 0) {
 		DEBUG("network tcp: network_wait_for_data error");
 		return TCP_ERROR;
@@ -137,16 +139,22 @@ static int network_tcp_wait_for_data(Context *ctx)
 
 	fd_set fds;
 
-	FD_ZERO(&fds);
-	FD_SET(sk, &fds);
-
 	int ret_value;
 
 	while (1) {
+		if (sk < 0) {
+			return TCP_ERROR;
+		}
+
+		FD_ZERO(&fds);
+		FD_SET(sk, &fds);
+
 		ret_value = select(sk + 1, &fds, NULL, NULL, NULL);
 		if (ret_value < 0) {
-			if (errno == EINTR)
+			if (errno == EINTR) {
+				DEBUG(" network:fd Select failed with EINTR");
 				continue;
+			}
 			DEBUG(" network:fd Select failed");
 			return TCP_ERROR;
 		} else if (ret_value == 0) {
@@ -258,6 +266,20 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 }
 
 /**
+ * Sends an encoded apdu
+ *
+ * @param ctx
+ * @return TCP_ERROR_NONE
+ */
+static int network_disconnect(Context *ctx)
+{
+	close(sk);
+	sk = -1;
+
+	return TCP_ERROR_NONE;
+}
+
+/**
  * Finalizes network layer and deallocated data
  *
  * @return TCP_ERROR_NONE if operation succeeds
@@ -297,6 +319,7 @@ int plugin_network_tcp_agent_setup(CommunicationPlugin *plugin, int pport)
 	plugin->network_wait_for_data = network_tcp_wait_for_data;
 	plugin->network_get_apdu_stream = network_get_apdu_stream;
 	plugin->network_send_apdu_stream = network_send_apdu_stream;
+	plugin->network_disconnect = network_disconnect;
 	plugin->network_finalize = network_finalize;
 
 	return TCP_ERROR_NONE;

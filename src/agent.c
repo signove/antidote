@@ -456,9 +456,8 @@ void agent_associate(ContextId id)
  */
 void agent_disconnect(ContextId id)
 {
-	DEBUG(" agent: Move state machine to terminate conn");
-	// EPX FIXME EPX
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, NULL);
+	DEBUG(" agent: terminate conn");
+	communication_force_disconnect(context_get(id));
 }
 
 /**

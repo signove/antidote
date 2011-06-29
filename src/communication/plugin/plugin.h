@@ -48,6 +48,7 @@
 			.network_wait_for_data = NULL,\
 			.network_get_apdu_stream = NULL,\
 			.network_send_apdu_stream = NULL,\
+			.network_disconnect = NULL,\
 			.network_finalize = NULL,\
 			.thread_init = NULL,\
 			.thread_finalize = NULL,\
@@ -98,6 +99,11 @@ typedef int (*network_wait_for_data_ptr)(PluginContext *ctx);
  * Function prototype for Network support
  */
 typedef int (*network_send_apdu_stream_ptr)(PluginContext *ctx, ByteStreamWriter *stream);
+
+/**
+ * Function prototype for Network support
+ */
+typedef int (*network_disconnect_ptr)(PluginContext *ctx);
 
 /**
  * Function prototype for Time Schedule support
@@ -159,6 +165,11 @@ typedef struct CommunicationPlugin {
 	 */
 	network_send_apdu_stream_ptr network_send_apdu_stream;
 
+	/**
+	 * Closes a connection
+	 * @param 
+	 */
+	network_disconnect_ptr network_disconnect;
 
 	/**
 	 * Locks connection context

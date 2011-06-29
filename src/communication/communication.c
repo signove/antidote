@@ -157,6 +157,15 @@ int communication_finalize_thread_context(Context *ctx)
 }
 
 /**
+ * Breaks connection
+ */
+int communication_force_disconnect(Context *ctx)
+{
+	comm_plugin->network_disconnect(ctx);
+	return 1;
+}
+
+/**
  * Finalizes the communication layer and free memory.
  * This method locks the communication layer thread.
  *
