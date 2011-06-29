@@ -7,3 +7,5 @@
 - Remove static structures (e.g. plugin, which limits a process
   to be either agent or manager)
 - Timeout handling (manager & agent)
+	association_aarq_tx
+	configuring_send_config_tx timeout
