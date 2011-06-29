@@ -6,3 +6,4 @@
 		buffers)
 - Remove static structures (e.g. plugin, which limits a process
   to be either agent or manager)
+- Timeout handling (manager & agent)

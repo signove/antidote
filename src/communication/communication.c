@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "src/manager_p.h"
+#include "src/agent_p.h"
 #include "src/communication/context_manager.h"
 #include "src/communication/communication.h"
 #include "src/communication/association.h"
@@ -746,7 +747,10 @@ void communication_timeout(Context *ctx)
 
 	if (ctx != NULL) {
 		communication_fire_evt(ctx, fsm_evt_ind_timeout, NULL);
-		manager_notify_evt_timeout(ctx);
+		if (ctx->type == MANAGER_CONTEXT)
+			manager_notify_evt_timeout(ctx);
+		else if (ctx->type == AGENT_CONTEXT)
+			agent_notify_evt_timeout(ctx);
 	}
 
 	communication_unlock(ctx);

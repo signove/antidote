@@ -64,8 +64,6 @@ typedef enum {
 	fsm_evt_ind_transport_connection = 0,
 	fsm_evt_ind_transport_disconnect,
 	fsm_evt_ind_timeout,
-	fsm_evt_ind_timeout_max_retry_not_reached,
-	fsm_evt_ind_timeout_max_retry_reached,
 
 	// REQ - Manager requests
 	fsm_evt_req_assoc_rel,

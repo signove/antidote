@@ -66,8 +66,6 @@ static char *fsm_event_strings[] = {
 	"fsm_evt_ind_transport_connection",
 	"fsm_evt_ind_transport_disconnect",
 	"fsm_evt_ind_timeout",
-	"fsm_evt_ind_timeout_max_retry_not_reached",
-	"fsm_evt_ind_timeout_max_retry_reached",
 	"fsm_evt_req_assoc_rel",
 	"fsm_evt_req_assoc_abort",
 	"fsm_evt_req_agent_supplied_unknown_configuration",
@@ -216,7 +214,6 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	// current			input							next				post_action
 	{fsm_state_disconnected,	fsm_evt_ind_transport_connection,			fsm_state_unassociated,		&association_agent_mds}, // 1.1
 	{fsm_state_unassociated,	fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		&communication_disconnect_tx}, // 2.2
-	// EPX FIXME timeout?
 	{fsm_state_unassociated,	fsm_evt_req_assoc,					fsm_state_associating,		&association_aarq_tx}, // 2.5
 	{fsm_state_unassociated,	fsm_evt_req_assoc_rel,					fsm_state_unassociated,		NULL}, // 2.6
 	{fsm_state_unassociated,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 2.7
@@ -227,9 +224,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_unassociated,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 2.18
 	{fsm_state_unassociated,	fsm_evt_rx_prst,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 2.19
 	{fsm_state_associating,		fsm_evt_ind_transport_disconnect,			fsm_state_disconnected,		NULL}, // 3.2
-	// EPX FIXME counting retries?
-	{fsm_state_associating,		fsm_evt_ind_timeout_max_retry_not_reached,		fsm_state_associating,		&association_aarq_tx}, // 3.3
-	{fsm_state_associating,		fsm_evt_ind_timeout_max_retry_reached,			fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.4
+	{fsm_state_associating,		fsm_evt_ind_timeout,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.4
 	{fsm_state_associating,		fsm_evt_req_assoc_rel,					fsm_state_unassociated,		&disassociating_release_request_normal_tx}, // 3.6
 	{fsm_state_associating,		fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 3.7
 	{fsm_state_associating,		fsm_evt_rx_aarq,					fsm_state_unassociated,		&association_agent_aare_rejected_permanent_tx}, // 3.8

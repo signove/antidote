@@ -662,7 +662,6 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	apdu->length = prst.length + 2; // 102 + 2 = 104 for oximeter
 	apdu->u.prst = prst;
 
-	// EPX FIXME EPX check against agent sm
 	timeout_callback tm = {.func = &communication_timeout, .timeout = 3};
 
 	// takes ownership of apdu and prst.value
