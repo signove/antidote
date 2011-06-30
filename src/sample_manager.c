@@ -79,6 +79,9 @@ void new_data_received(Context *ctx, DataList *list)
 		fflush(stderr);
 		free(data);
 	}
+
+	// uncomment for manager-initiated disassociation testing
+	// manager_request_association_release(CONTEXT_ID);
 }
 
 void device_reqmdsattr();
