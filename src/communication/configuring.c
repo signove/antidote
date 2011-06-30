@@ -618,21 +618,23 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 {
 	APDU *apdu = calloc(1, sizeof(APDU));
 	PRST_apdu prst;
-	DATA_apdu data;
+	DATA_apdu *data = calloc(1, sizeof(DATA_apdu));
 	EventReportArgumentSimple evtrep;
 	ConfigReport cfgrep;
+
+	DEBUG("Sending configuration since manager does not know it");
 
 	ConfigObjectList *cfg =
 		std_configurations_get_configuration_attributes(
 				      		agent_specialization);
 
-	data.invoke_id = 0; // filled by service_* call
-	data.message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
+	data->invoke_id = 0; // filled by service_* call
+	data->message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 
 	evtrep.obj_handle = 0;
 	evtrep.event_time = 0xFFFFFFFF;
 	evtrep.event_type = MDC_NOTI_CONFIG;
-	
+
 	cfgrep.config_obj_list = *cfg;
 	cfgrep.config_report_id = agent_specialization;
 
@@ -642,21 +644,16 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	ByteStreamWriter *cfg_writer = byte_stream_writer_instance(evtrep.event_info.length);
 	encode_configreport(cfg_writer, &cfgrep);
 	evtrep.event_info.value = cfg_writer->buffer;
+	// APDU takes ownership of this buffer, deleted by del_apdu()
+	del_byte_stream_writer(cfg_writer, 0);
 
-	data.message.u.roiv_cmipConfirmedEventReport = evtrep;
-	data.message.length = evtrep.event_info.length + 10; // 86 + 10 = 96 for oximeter
+	data->message.u.roiv_cmipConfirmedEventReport = evtrep;
+	data->message.length = evtrep.event_info.length + 10; // 86 + 10 = 96 for oximeter
 
 	// prst = length + DATA_apdu
 	// take into account data's invoke id and choice
-	prst.length = data.message.length + 6; // 96 + 6 = 102 for oximeter
-
-	ByteStreamWriter *data_writer = byte_stream_writer_instance(prst.length);
-	encode_data_apdu(data_writer, &data);
-	prst.value = data_writer->buffer;
-
-	del_byte_stream_writer(cfg_writer, 1);
-	// buffer deleted by del_apdu() afterwards
-	del_byte_stream_writer(data_writer, 0);
+	prst.length = data->message.length + 6; // 96 + 6 = 102 for oximeter
+	encode_set_data_apdu(&prst, data);
 
 	apdu->choice = PRST_CHOSEN;
 	apdu->length = prst.length + 2; // 102 + 2 = 104 for oximeter
@@ -667,6 +664,7 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	// takes ownership of apdu and prst.value
 	service_send_remote_operation_request(ctx, apdu, tm, NULL);
 
+	del_configobjectlist(cfg);
 	free(cfg);
 }
 
