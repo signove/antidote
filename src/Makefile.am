@@ -47,7 +47,7 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_util_HEADERS = util/bytelib.h
 
 #Bin Programs
-bin_PROGRAMS = ieee_manager ieee_agent healthd
+bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd
 
 # Minimal sample app to use the IEEE protocol facade
 ieee_manager_SOURCES = sample_manager.c
@@ -62,6 +62,17 @@ ieee_agent_SOURCES = sample_agent.c
 ieee_agent_LDADD = \
              communication/plugin/libcommpluginimpl.la \
              libantidote.la
+
+# Sample agent that uses Bluetooth (BlueZ) plug-in
+sample_bt_agent_SOURCES = sample_bt_agent.c
+sample_bt_agent_CFLAGS = @GLIB_CFLAGS@
+
+sample_bt_agent_LDADD = \
+		communication/plugin/bluez/libbluezplugin.la \
+		libantidote.la \
+		@GLIB_LIBS@ \
+		@DBUS_LIBS@ \
+		@DBUS_GLIB_LIBS@
 
 #healthd: D-BUS Service for IEEE protocol facade              
 healthd_SOURCES = healthd_service.c
