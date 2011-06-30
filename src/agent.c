@@ -40,48 +40,6 @@
  * and print them. It is also possible to execute commands, such as <em>connect</em>, <em>disconnect</em>
  * and <em>exit</em>.
  *
- * \code
- *
- * int main() {
- *		unsigned int size = 100;
- *		char *input = (char *) malloc(size);
- *
- *		agent_init();
- *
- *		agent_add_listener(agent_evt_measurement_data_updated, new_data_received);
- *
- *		agent_start();
- *
- *		while (1) {
- *			fprintf(stderr, "--> ");
- *			unsigned int read_bytes = getline(&input, &size, stdin);
- *
- *			input[read_bytes-1] = '\0';
- *
- *			if (strcmp(input, "exit") == 0) {
- *				print_device_attributes();
- *				break;
- *			} else if (strcmp(input, "start") == 0) {
- *				agent_start();
- *			} else if (strcmp(input, "stop") == 0) {
- *				agent_stop();
- *			} else if (strcmp(input, "state") == 0) {
- *				char *state = communication_get_state_name();
- *				fprintf(stderr, "Current State: %s\n", state);
- *			} else if (strcmp(input, "print_mds") == 0) {
- *				print_device_attributes();
- *			} else {
- *				fprintf(stderr, "Command not recognized\n");
- *			}
- *		}
- *
- *		agent_finalize();
- *		free(input);
- *		return 0;
- * }
- *
- * \endcode
- *
  * @{
  */
 
