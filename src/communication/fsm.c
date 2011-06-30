@@ -241,7 +241,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_config_sending,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.7
 	{fsm_state_config_sending,	fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.8
 	{fsm_state_config_sending,	fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.12
-	{fsm_state_config_sending,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx}, // 4.16
+	{fsm_state_config_sending,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx_normal}, // 4.16
 	{fsm_state_config_sending,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 4.17
 	{fsm_state_config_sending,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 4.18
 	{fsm_state_config_sending,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roiv_get_mds_tx}, // 4.22
@@ -268,7 +268,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_waiting_approval,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.7
 	{fsm_state_waiting_approval,	fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.8
 	{fsm_state_waiting_approval,	fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.12
-	{fsm_state_waiting_approval,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx}, // 5.16
+	{fsm_state_waiting_approval,	fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx_normal}, // 5.16
 	{fsm_state_waiting_approval,	fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 5.17
 	{fsm_state_waiting_approval,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 5.18
 	{fsm_state_waiting_approval,	fsm_evt_rx_roiv_get,					fsm_state_config_sending,	&communication_agent_roiv_get_mds_tx}, // 5.22
@@ -296,7 +296,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_operating,		fsm_evt_req_send_event,					fsm_state_operating,		&communication_agent_send_event_tx}, // 8.7
 	{fsm_state_operating,		fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.8
 	{fsm_state_operating,		fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.12
-	{fsm_state_operating,		fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx}, // 8.16
+	{fsm_state_operating,		fsm_evt_rx_rlrq,					fsm_state_unassociated,		&disassociating_release_response_tx_normal}, // 8.16
 	{fsm_state_operating,		fsm_evt_rx_rlre,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 8.17
 	{fsm_state_operating,		fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 8.18
 	{fsm_state_operating,		fsm_evt_rx_roiv,					fsm_state_operating,		&communication_agent_roiv_respond_tx}, // 8.21
@@ -321,7 +321,7 @@ static FsmTransitionRule IEEE11073_20601_agent_state_table[] = {
 	{fsm_state_disassociating,	fsm_evt_req_assoc_abort,				fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.7
 	{fsm_state_disassociating,	fsm_evt_rx_aarq,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.8
 	{fsm_state_disassociating,	fsm_evt_rx_aare,					fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.12
-	{fsm_state_disassociating,	fsm_evt_rx_rlrq,					fsm_state_disassociating,	&disassociating_release_response_tx}, // 9.16
+	{fsm_state_disassociating,	fsm_evt_rx_rlrq,					fsm_state_disassociating,	&disassociating_release_response_tx_normal}, // 9.16
 	{fsm_state_disassociating,	fsm_evt_rx_rlre,					fsm_state_unassociated,		NULL}, // 9.17
 	{fsm_state_disassociating,	fsm_evt_rx_abrt,					fsm_state_unassociated,		NULL}, // 9.18
 	{fsm_state_disassociating,	fsm_evt_rx_roiv,					fsm_state_disassociating,	NULL}, // 9.21

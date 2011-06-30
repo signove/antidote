@@ -168,7 +168,11 @@ void disassociating_release_request_tx(Context *ctx, fsm_events evt,
 }
 
 /**
- * send Release Request APDU with NORMAL reason
+ *  Listen to fsm event and send Release Response APDU - normal release
+ *
+ * @param ctx context
+ * @param evt input event
+ * @param data (ignored; refilled with NORMAL reason)
  */
 void disassociating_release_request_normal_tx(Context *ctx, fsm_events evt,
 						FSMEventData *data)
@@ -191,11 +195,29 @@ void disassociating_release_request_normal_tx(Context *ctx, fsm_events evt,
  * @param evt input event
  * @param data should inform the release response reason
  */
+void disassociating_release_response_tx_normal(Context *ctx, fsm_events evt,
+					FSMEventData *dummy)
+{
+	FSMEventData data;
+	data.choice = FSM_EVT_DATA_RELEASE_RESPONSE_REASON;
+	data.u.release_response_reason = RELEASE_RESPONSE_REASON_NORMAL;
+
+	DEBUG("releasing association (normal)");
+
+	disassociating_release_response_tx(ctx, evt, &data);
+}
+
+/**
+ *  Listen to fsm event and send Release Response APDU
+ *
+ * @param ctx context
+ * @param evt input event
+ * @param data should inform the release response reason
+ */
 void disassociating_release_response_tx(Context *ctx, fsm_events evt,
 					FSMEventData *data)
 {
-	if (data != NULL && data->choice
-	    == FSM_EVT_DATA_RELEASE_RESPONSE_REASON) {
+	if (data != NULL && data->choice == FSM_EVT_DATA_RELEASE_RESPONSE_REASON) {
 		DEBUG(" communication: disassociating");
 		APDU apdu;
 		apdu.choice = RLRE_CHOSEN;
