@@ -162,6 +162,10 @@ int communication_finalize_thread_context(Context *ctx)
  */
 int communication_force_disconnect(Context *ctx)
 {
+	if (! ctx) {
+		return 0;
+	}
+
 	comm_plugin->network_disconnect(ctx);
 	return 1;
 }
