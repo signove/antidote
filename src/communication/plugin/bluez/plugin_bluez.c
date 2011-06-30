@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -97,7 +98,8 @@ static int finalize();
 static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy);
-
+static int force_disconnect_channel(struct Context *ctx);
+static int disconnect_channel(guint64 handle);
 
 /**
  * Callback called from BlueZ layer, when device connects (BT-wise)
@@ -134,6 +136,7 @@ void plugin_bluez_setup(CommunicationPlugin *plugin)
 	plugin->network_init = init;
 	plugin->network_get_apdu_stream = get_apdu;
 	plugin->network_send_apdu_stream = send_apdu_stream;
+	plugin->network_disconnect = force_disconnect_channel;
 	plugin->network_finalize = finalize;
 }
 
@@ -367,6 +370,7 @@ static void remove_channel(const char *path)
 		g_free(c->path);
 		g_free(c->device);
 		g_object_unref(c->proxy);
+		shutdown(c->fd, SHUT_RDWR);
 		close(c->fd);
 		c->fd = -1;
 		g_free(c);
@@ -496,14 +500,14 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 	dbus_message_unref(msg);
 
 	if (!reply) {
-		DEBUG(" network:dbus Can't create application");
+		DEBUG(" network:dbus Can't acquire FD");
 
 		if (dbus_error_is_set(&err)) {
 			ERROR("%s", err.message);
 			dbus_error_free(&err);
+			dbus_message_unref(reply);
+			return;
 		}
-
-		exit(2);
 	}
 
 	if (!dbus_message_get_args(reply, &err,
@@ -514,9 +518,9 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 		if (dbus_error_is_set(&err)) {
 			ERROR("%s", err.message);
 			dbus_error_free(&err);
+			dbus_message_unref(reply);
+			return;
 		}
-
-		exit(2);
 	}
 
 	dbus_message_unref(reply);
@@ -552,16 +556,30 @@ static void channel_deleted(DBusGProxy *proxy, const char *path, gpointer user_d
 	// channel closure == channel 'destruction'
 }
 
+/**
+ * Forces closure of a channel
+ */
+static int disconnect_channel(guint64 handle)
+{
+	channel_object *c = get_channel_by_handle(handle);
+
+	if (c) {
+		DEBUG("removing channel");
+		remove_channel(c->path);
+		return 1;
+	} else {
+		DEBUG("unknown handle/channel");
+		return 0;
+	}
+}
+
 
 /**
  * Forces closure of a channel
  */
-static void disconnect_channel(guint64 handle)
+static int force_disconnect_channel(Context *c)
 {
-	channel_object *c = get_channel_by_handle(handle);
-
-	if (c)
-		remove_channel(c->path);
+	return disconnect_channel(c->id);
 }
 
 
@@ -1349,17 +1367,24 @@ static int send_data(guint64 handle, unsigned char *data, int len)
 
 	c = get_channel_by_handle(handle);
 
-	if (!c)
+	if (!c) {
+		DEBUG("unknown channel by handle");
 		return -1;
+	}
 
-	if (c->fd < 0)
+	if (c->fd < 0) {
+		DEBUG("channel fd is not valid");
 		return -1;
+	}
 
 	sent = 0;
 
 	while (sent < len) {
 		DEBUG("Sending %d bytes of data (offset %d)", len - sent, sent);
 		just_sent = send(c->fd, data + sent, len - sent, 0);
+		if (just_sent < 0) {
+			DEBUG("Error: %s", strerror(errno));
+		}
 
 		if (just_sent == 0) {
 			close(c->fd);
@@ -1417,7 +1442,7 @@ gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type, int reliabi
 	char *addr = g_ascii_strdown(btaddr, -1);
 	struct device_object *dev = get_device_object_by_addr(addr);
 
-	if (!addr) {
+	if (!dev) {
 		DEBUG("Device %s unknown by BlueZ", btaddr);
 		goto finally;
 	}
