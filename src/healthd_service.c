@@ -1048,7 +1048,6 @@ int main()
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
-
 	manager_init(&plugin);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
