@@ -912,7 +912,7 @@ AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *tot_length)
 	ava[3].attribute_value.value = stream->buffer;
 	ava[3].attribute_value.length = length;
 	free(stream);
-	tot_length += length;
+	*tot_length += length;
 
 	length = 2 + 2 + mds->attribute_value_map.count * (2 + 2);
 	ava[4].attribute_id = MDC_ATTR_ATTRIBUTE_VAL_MAP;
