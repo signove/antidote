@@ -156,11 +156,12 @@ void manager_init(CommunicationPlugin *plugin)
 	plugin->type = MANAGER_CONTEXT;
 	communication_set_plugin(plugin);
 
-
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &manager_handle_transition_evt);
 
 	// Register standard configurations for each specialization.
+	// (comment these if you want to test acquisition of extended
+	// configurations)
 	std_configurations_register_conf(
 		blood_pressure_monitor_create_std_config_ID02BC());
 	std_configurations_register_conf(
