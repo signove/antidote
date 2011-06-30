@@ -38,6 +38,8 @@
 #include <ieee11073.h>
 #include "communication/plugin/plugin_fifo.h"
 #include "communication/plugin/plugin_tcp.h"
+#include "src/communication/service.h"
+#include "manager_p.h"
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
@@ -79,6 +81,8 @@ void new_data_received(Context *ctx, DataList *list)
 	}
 }
 
+void device_reqmdsattr();
+
 /**
  * Callback function that is called whenever a new device
  * has been available
@@ -99,16 +103,19 @@ void device_associated(Context *ctx, DataList *list)
 		fflush(stderr);
 		free(data);
 	}
+
+	device_reqmdsattr();
 }
 
 /**
  * Prints device attribute values
  */
-void print_device_attributes()
+void print_device_attributes(Context *ctx, DATA_apdu *response_apdu)
 {
 	DataList *list = manager_get_mds_attributes(CONTEXT_ID);
-
 	char *data = json_encode_data_list(list);
+
+	fprintf(stderr, "print_device_attributes\n");
 
 	if (data != NULL) {
 		fprintf(stderr, "%s", data);
@@ -118,8 +125,19 @@ void print_device_attributes()
 	}
 
 	data_list_del(list);
-
 	free(data);
+}
+
+/*
+ * Request all MDS attributes
+ *\param obj
+ *\param err
+ *
+ */
+void device_reqmdsattr()
+{
+	fprintf(stderr, "device_reqmdsattr\n");
+	manager_request_get_all_mds_attributes(CONTEXT_ID, print_device_attributes);
 }
 
 /**
