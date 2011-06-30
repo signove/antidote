@@ -178,6 +178,8 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 		return;
 	}
 
+	DEBUG("send RORS with MDS");
+
 	APDU apdu;
 	apdu.choice = PRST_CHOSEN;
 
@@ -191,11 +193,13 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	attrs.length = sizeof(attrs.count) + sizeof(attrs.length);
 	attrs.value = mds_get_attributes(ctx->mds, &attrs.count, &attrs.length);
 	
+	DEBUG("send RORS with MDS: %d attributes, length %d", attrs.count, attrs.length);
+
 	data_apdu->message.u.rors_cmipGet.obj_handle = MDS_HANDLE;
 	data_apdu->message.u.rors_cmipGet.attribute_list = attrs;
 
-	data_apdu->message.length = sizeof(data_apdu->message.u.rors_cmipGet.obj_handle);
-				// + ;
+	data_apdu->message.length = sizeof(data_apdu->message.u.rors_cmipGet.obj_handle) +
+					attrs.length;
 
 	apdu.u.prst.length = sizeof(id)
 			     + sizeof(data_apdu->message.choice)
