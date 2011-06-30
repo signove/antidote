@@ -94,7 +94,6 @@ void sigalrm(int dummy)
  * has associated
  *
  * @param ctx current context.
- * @param list the new list of elements.
  */
 void device_associated(Context *ctx)
 {
@@ -103,11 +102,22 @@ void device_associated(Context *ctx)
 }
 
 /**
+ * Callback function that is called whenever a device
+ * has disassociated
+ *
+ * @param ctx current context.
+ */
+void device_unavailable(Context *ctx)
+{
+	fprintf(stderr, " main: Disasociated\n");
+	alarms = 0;
+}
+
+/**
  * Callback function that is called whenever a new device
  * has connected (but not associated)
  *
  * @param ctx current context.
- * @param list the new list of elements.
  */
 void device_connected(Context *ctx)
 {
@@ -264,6 +274,7 @@ int main(int argc, char **argv)
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;
 	listener.device_associated = &device_associated;
+	listener.device_unavailable = &device_unavailable;
 
 	agent_add_listener(listener);
 
