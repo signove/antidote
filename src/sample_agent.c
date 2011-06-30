@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <unistd.h>
-#include <dbus/dbus.h>
 #include <signal.h>
 #include <time.h>
 
@@ -52,8 +51,6 @@ static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
  * raw data from IEEE devices and print them.
  *
  */
-
-static DBusConnection *connection = NULL;
 
 /**
  * Port used by agent to send network data
@@ -134,11 +131,10 @@ void device_connected(Context *ctx)
 static void print_help()
 {
 	printf(
-		"Utility tool to receive and print data from IEEE devices\n\n"
+		"Utility tool to simulate IEEE 11073 agent\n\n"
 		"Usage: ieee_agent [OPTION]\n"
 		"Options:\n"
 		"        --help                Print this help\n"
-		"        --dbus                Run DBUS mode\n"
 		"        --fifo                Run FIFO mode with default file descriptors\n"
 		"        --tcp                 Run TCP mode on default port\n");
 }
@@ -160,18 +156,6 @@ static void timer_reset_timeout(Context *ctx)
 static int timer_count_timeout(Context *ctx)
 {
 	return 1;
-}
-
-/**
- * Configure application to use dbus plugin
- */
-static void dbus_mode()
-{
-	// TODO add a D-Bus plugin
-	// plugin_network_dbus_setup(&comm_plugin, 0);
-	printf("Currently, D-Bus mode is not supported in this app.\n");
-	printf("Use healthd service as an example of D-Bus plug-in usage.\n");
-	exit(1);
 }
 
 /**
@@ -241,8 +225,6 @@ int main(int argc, char **argv)
 		if (strcmp(argv[1], "--help") == 0) {
 			print_help();
 			exit(0);
-		} else if (strcmp(argv[1], "--dbus") == 0) {
-			dbus_mode();
 		} else if (strcmp(argv[1], "--tcp") == 0) {
 			tcp_mode();
 		} else if (strcmp(argv[1], "--fifo") == 0) {
@@ -287,35 +269,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
-/**
- * Sets the DBus connection handle.
- *
- * @param conn the new DBus connection handle.
- */
-void plugin_network_dbus_handle_created_connection(DBusConnection *conn)
-{
-	connection = conn;
-}
-
-/**
- * Starts "main loop" and waits for signals being emitted.
- *
- * @return NETWORK_ERROR_NONE if data is available or NETWORK_ERROR if error.
- */
-/*
-int plugin_network_dbus_wait_for_data()
-{
-	DBusMessage *msg;
-	// non blocking read of the next available message
-	dbus_connection_read_write(connection, 0);
-	msg = dbus_connection_pop_message(connection);
-
-	if (NULL != msg && plugin_network_dbus_read_msg(msg)) {
-		return NETWORK_ERROR_NONE;
-	}
-
-	sleep(1);
-	return NETWORK_ERROR;
-}
-*/
