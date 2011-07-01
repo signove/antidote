@@ -1,12 +1,82 @@
-- use HDP D-Bus plugin for ieeemanager test application
-- Improve encoding/decoding 
-	- remove need of having to know buffer size in advance
-	- improve 'Any' type to make memory management more
-		automatic (deletion of streams X deletion of
-		buffers)
-- Remove static structures (e.g. plugin, which limits a process
-	- externs, too, since they are hidden statics
-  to be either agent or manager)
-- Timeout handling (manager & agent)
-	association_aarq_tx
-	configuring_send_config_tx timeout
+Roadmap/TODO
+------------
+
+ANDROID (current priority)
+
+Porting Antidote and healthd service to Android,
+and put together a simple application that
+uses the service.
+
+
+CODE REFACTORING
+
+Elimination of static and extern variables where possible.
+Communication plugin struct and agent specialization code
+are two examples of this kind (that we want to eliminate).
+
+Simplification of confirmed request resending/timeout
+reporting.
+
+State machine: evaluate the possibility of removing
+FSMEventData.
+
+ASN.1: writer stream (using in encoding) should not need
+to know final msg size in advance.
+
+ASN.1: In the other hand, when the developer *does* know
+the final octet size, current behaviour should be kept,
+so inconsistencies are detected (and should be reported
+in a very agressive way, like quitting the app). For
+example, oximeter data event report is "copied" from
+spec, and octet lengths are there, and message has a
+fixed size,  so it makes sense to use this information 
+for increased check.
+
+ASN.1: structures which have a length argument should
+calculate it dynamically upon encoding, not needing
+manual pre-calculation of octet size.
+
+ASN.1: eliminate the need of pre-encoding of certain
+structures. APDU encoding should be done at once,
+and writer/reader streams should not be necessary
+at higher-level code like communication/association.c.
+
+The need of pre-encoding normally happens because some
+APDU structures have the "Any" element, which contains
+pre-encoded data (whose actual type is opaque to
+APDU final encoder).
+
+So, this refactoring will mean removing the Any type,
+replacing it by some other structure that can contain
+a range of sub-structures, and is capable of
+introspection (i.e. knowing which sub-structure it
+contains, and how to encode/decode it).
+
+Clearer, simpler rules of ownership, in particular when
+involving APDU data. (This will be easier once the
+need of pre-encoding Any types is eliminated.)
+
+MDS: check opportunities of code refactoring in this area.
+
+Search for FIXMEs and TODOs in code and deal with them
+
+Try to reduce module coupling, with is currently very high.
+
+Try to remove 'special' state machine handling code from
+manager.c and agent.c; state machines should operate as
+autonomously as possible. Create more states to achieve
+that, if needed.
+	
+
+DOCUMENTATION
+
+Documentation of Agent role API, beyond the examples currently
+provided.
+
+Review Doxygen documentation
+
+
+UNIT TESTING
+
+Add unit testing cases for Agent. Currently, only Manager
+is covered.
