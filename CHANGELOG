@@ -1,0 +1,39 @@
+Antidote 1.1
+------------
+
+* IEEE 11073 Agent capability has been implemented.
+
+* Several architectural changes to support Agent role.
+  In particular, plugin interface has been extended.
+
+* FIFO, TCP/IP and Bluetooth/BlueZ plug-ins were extended
+  to support both Agent and Manager roles.
+
+* Oximeter specialization extended for Agent capability
+  (generation of event reports with oximeter data).
+
+* Added agent sample application: ieee_agent. This is mostly
+  for local testing with ieee_manager, and communicates over
+  TCP/IP and FIFO channels.
+
+* Added agent sample application: sample_bt_agent. This uses
+  the Bluetooth / BlueZ communication plug-in, and can connect
+  to any Bluetooth-based Manager (note that HDP profile is
+  encrypted so devices must be paired).
+
+* Some src/*.c files have been renamed to more sensible names
+  (some "historical" names did not reflect their present
+  usage).
+
+* Old Bluetooth plug-in based on bare MCAP has been removed.
+
+* ieee_agent and ieee_manager no longer have the D-Bus option
+  (which was linked to obsolete MCAP plug-in). They only
+  have FIFO and TCP/IP. Refer to sample_bt_agent and healthd
+  if you want Bluetooth-based examples for Agent and Manager,
+  respectively.
+
+* A number of random fixes, including Doxygen documentation
+  fixes.
+
+* Added a TODO to source tree with technical backlog.
