@@ -43,8 +43,8 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0190();
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0191();
 
 struct oximeter_event_report_data {
-	int beats;
-	int oximetry;
+	BasicNuObsValue beats;
+	BasicNuObsValue oximetry;
 	int century;
 	int year;
 	int month;

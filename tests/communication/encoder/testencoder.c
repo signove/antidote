@@ -388,25 +388,120 @@ void test_enconder_byte_stream_writer()
 		CU_ASSERT_EQUAL(stream_writer3->buffer[i], h243_buffer[i]);
 	}
 
-	ByteStreamWriter *stream_writer4 = byte_stream_writer_instance(12);
+	ByteStreamWriter *stream_writer4 = byte_stream_writer_instance(100);
 	CU_ASSERT_PTR_NOT_NULL(stream_writer4);
 
 	write_float(stream_writer4, 62.4);
 	write_float(stream_writer4, 25.8);
 	write_float(stream_writer4, -0.2);
+	write_float(stream_writer4, 0.03);
+	write_float(stream_writer4, 15000000.0);
+	write_float(stream_writer4, 15000000.1);
+	write_float(stream_writer4, 1500000.1);
+	write_float(stream_writer4, 1499999.99);
+	write_float(stream_writer4, NAN);
+	write_float(stream_writer4, 1e300);
+	write_float(stream_writer4, -1e300);
+
+	write_sfloat(stream_writer4, 62.4);
+	write_sfloat(stream_writer4, 25.8);
+	write_sfloat(stream_writer4, -0.2);
+	write_sfloat(stream_writer4, 0.03);
+	write_sfloat(stream_writer4, 15000.0);
+	write_sfloat(stream_writer4, 15000.1);
+	write_sfloat(stream_writer4, 1500.1);
+	write_sfloat(stream_writer4, 1499.9);
+	write_sfloat(stream_writer4, NAN);
+	write_sfloat(stream_writer4, 1e300);
+	write_sfloat(stream_writer4, -1e300);
 
 	CU_ASSERT_EQUAL(stream_writer4->buffer[0], 0xFF);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[1], 0x00);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[2], 0x02);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[3], 0x70);
+
 	CU_ASSERT_EQUAL(stream_writer4->buffer[4], 0xFF);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[5], 0x00);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[6], 0x01);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[7], 0x02);
+
 	CU_ASSERT_EQUAL(stream_writer4->buffer[8], 0xFF);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[9], 0xFF);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[10], 0xFF);
 	CU_ASSERT_EQUAL(stream_writer4->buffer[11], 0xFE);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[12], 0xFE);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[13], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[14], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[15], 0x03);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[16], 0x01);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[17], 0x16);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[18], 0xe3);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[19], 0x60);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[20], 0x01);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[21], 0x16);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[22], 0xe3);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[23], 0x60);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[24], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[25], 0x16);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[26], 0xe3);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[27], 0x60);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[28], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[29], 0x16);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[30], 0xe3);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[31], 0x60);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[32], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[33], 0x7F);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[34], 0xFF);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[35], 0xFF);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[36], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[37], 0x7F);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[38], 0xFF);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[39], 0xFE);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[40], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[41], 0x80);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[42], 0x00);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[43], 0x02);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[44], 0xF2);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[45], 0x70);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[46], 0xF1);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[47], 0x02);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[48], 0xFF);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[49], 0xFE);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[50], 0xE0);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[51], 0x03);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[52], 0x15);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[53], 0xDC);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[54], 0x15);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[55], 0xDC);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[56], 0x05);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[57], 0xDC);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[58], 0x05);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[59], 0xDC);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[60], 0x07);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[61], 0xFF);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[62], 0x07);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[63], 0xFE);
+
+	CU_ASSERT_EQUAL(stream_writer4->buffer[64], 0x08);
+	CU_ASSERT_EQUAL(stream_writer4->buffer[65], 0x02);
 
 	free(stream);
 	free(stream2);

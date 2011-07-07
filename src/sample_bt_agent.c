@@ -224,8 +224,8 @@ static void *event_report_cb()
 	time(&now);
 	localtime_r(&now, &nowtm);
 
-	data->beats = 60 + random() % 20;
-	data->oximetry = 90 + random() % 10;
+	data->beats = 60.5 + random() % 20;
+	data->oximetry = 90.5 + random() % 10;
 	data->century = nowtm.tm_year / 100;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;

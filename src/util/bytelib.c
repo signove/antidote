@@ -52,6 +52,21 @@ typedef enum {
 } ReservedFloatValues;
 const intu32 FIRST_RESERVED_VALUE = MDER_POSITIVE_INFINITY;
 
+// (2 ** 23 - 3)
+#define MDER_FLOAT_MANTISSA_MAX 0x007FFFFD
+// 2 ** 7 - 1
+#define MDER_FLOAT_EXPONENT_MAX 127
+#define MDER_FLOAT_EXPONENT_MIN -128
+// (2 ** 23 - 3) * 10 ** 127
+#define MDER_FLOAT_MAX 8.388604999999999e+133
+// -(2 ** 23 - 3) * 10 ** 127
+#define MDER_FLOAT_MIN (-MDER_FLOAT_MAX)
+// 10 ** -128
+#define MDER_FLOAT_EPSILON 1e-128
+// 10 ** upper(23 * log(2) / log(10))
+// precision for a number 1.0000xxx
+#define MDER_FLOAT_PRECISION 10000000
+
 typedef enum {
 	MDER_S_POSITIVE_INFINITY = 0x07FE,
 	MDER_S_NaN = 0x07FF,
@@ -61,9 +76,22 @@ typedef enum {
 } ReservedSFloatValues;
 const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
 
-const float reserved_float_values[5] = { 0x7f800000, 0x7fc00000, 0x7fc00000,
-				       0x7fc00000, -0x7f800000
-				       };
+// (2 ** 11 - 3)
+#define MDER_SFLOAT_MANTISSA_MAX 0x07FD
+// 2 ** 3 - 1
+#define MDER_SFLOAT_EXPONENT_MAX 7
+#define MDER_SFLOAT_EXPONENT_MIN -8
+// (2 ** 11 - 3) * 10 ** 7
+#define MDER_SFLOAT_MAX 20450000000.0
+// -(2 ** 11 - 3) * 10 ** 7
+#define MDER_SFLOAT_MIN (-MDER_SFLOAT_MAX)
+// 10 ** -8
+#define MDER_SFLOAT_EPSILON 1e-8
+// 10 ** upper(11 * log(2) / log(10))
+#define MDER_SFLOAT_PRECISION 10000
+
+
+const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
 
 /**
  * Bytelib constructor.
@@ -212,15 +240,15 @@ intu32 read_intu32(ByteStreamReader *stream, int *error)
  * @param stream The current ByteStreamReader.
  * @return float Converted float from stream.
  */
-float read_float(ByteStreamReader *stream)
+FLOAT_Type read_float(ByteStreamReader *stream)
 {
 	intu32 int_data = read_intu32(stream, NULL);
 	int32 mantissa = int_data & 0xFFFFFF;
 	int8 expoent = int_data >> 24;
-	float output = 0;
+	double output = 0;
 
-	if (mantissa >= FIRST_RESERVED_VALUE && mantissa
-	    <= MDER_NEGATIVE_INFINITY) {
+	if (mantissa >= FIRST_RESERVED_VALUE &&
+					mantissa <= MDER_NEGATIVE_INFINITY) {
 		output = reserved_float_values[mantissa - FIRST_RESERVED_VALUE];
 	} else {
 		if (mantissa >= 0x800000) {
@@ -233,7 +261,7 @@ float read_float(ByteStreamReader *stream)
 }
 
 /* round number n to d decimal points */
-inline float fround(float n, unsigned d)
+inline double fround(double n, unsigned d)
 {
 	return floor(n * pow(10., d) + .5) / pow(10., d);
 }
@@ -244,14 +272,15 @@ inline float fround(float n, unsigned d)
  * @param stream The current ByteStreamReader.
  * @return float Converted float from stream.
  */
-float read_sfloat(ByteStreamReader *stream)
+SFLOAT_Type read_sfloat(ByteStreamReader *stream)
 {
 	intu16 int_data = read_intu16(stream, NULL);
 	intu16 mantissa = int_data & 0x0FFF;
 	int8 expoent = int_data >> 12;
 
-	if (expoent >> 3 == 1)
-		expoent |= 0xF0;
+	if (expoent >= 0x0008) {
+		expoent = -((0x000F + 1) - expoent);
+	}
 
 	float output = 0;
 
@@ -260,7 +289,10 @@ float read_sfloat(ByteStreamReader *stream)
 		output = reserved_float_values[mantissa
 					       - FIRST_S_RESERVED_VALUE];
 	} else {
-		float magnitude = pow(10, expoent);
+		if (mantissa >= 0x0800) {
+			mantissa = -((0x0FFF + 1) - mantissa);
+		}
+		double magnitude = pow(10, expoent);
 		output = (mantissa * magnitude);
 	}
 
@@ -366,17 +398,152 @@ intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 }
 
 /**
+ * Writes an intu16 from data based on the float as described in MDER Annex F.8.
+ *
+ * @param stream The current ByteStreamWriter.
+ * @param data to be converted to intu32 and written into stream.
+ * @return Error code - (1) success, (0) error
+ */
+intu32 write_sfloat(ByteStreamWriter *stream, SFLOAT_Type data)
+{
+	intu16 result = MDER_S_NaN;
+
+	if (isnan(data)) {
+		goto finally;
+	} else if (data > MDER_SFLOAT_MAX) {
+		result = MDER_S_POSITIVE_INFINITY;
+		goto finally;
+	} else if (data < MDER_FLOAT_MIN) {
+		result = MDER_S_NEGATIVE_INFINITY;
+		goto finally;
+	} else if (data >= -MDER_SFLOAT_EPSILON &&
+		data <= MDER_SFLOAT_EPSILON) {
+		result = 0;
+		goto finally;
+	}
+
+	double sgn = data > 0 ? +1 : -1;
+	double mantissa = fabs(data);
+	intu8 exponent = 0; // Note: 10**x exponent, not 2**x
+
+	// scale up if number is too big
+	while (mantissa > MDER_SFLOAT_MANTISSA_MAX) {
+		mantissa /= 10.0;
+		++exponent;
+		if (exponent > MDER_SFLOAT_EXPONENT_MAX) {
+			// argh, should not happen
+			if (sgn > 0) {
+				result = MDER_S_POSITIVE_INFINITY;
+			} else {
+				result = MDER_S_NEGATIVE_INFINITY;
+			}
+			goto finally;
+		}
+	}
+
+	// scale down if number is too small
+	while (mantissa < 1) {
+		mantissa *= 10;
+		--exponent;
+		if (exponent < MDER_SFLOAT_EXPONENT_MIN) {
+			// argh, should not happen
+			result = 0;
+			goto finally;
+		}
+	}
+
+	// scale down if number needs more precision
+	double smantissa = round(mantissa * MDER_SFLOAT_PRECISION);
+	double rmantissa = round(mantissa) * MDER_SFLOAT_PRECISION;
+	double mdiff = abs(smantissa - rmantissa);
+	while (mdiff > 0.5 && exponent > MDER_SFLOAT_EXPONENT_MIN &&
+			(mantissa * 10) <= MDER_SFLOAT_MANTISSA_MAX) {
+		mantissa *= 10;
+		--exponent;
+		smantissa = round(mantissa * MDER_SFLOAT_PRECISION);
+		rmantissa = round(mantissa) * MDER_SFLOAT_PRECISION;
+		mdiff = abs(smantissa - rmantissa);
+	}
+
+	intu16 int_mantissa = (int) round(sgn * mantissa);
+	result = ((exponent & 0xF) << 12) | (int_mantissa & 0xFFF);
+
+finally:
+	return write_intu16(stream, result);
+}
+
+/**
  * Writes an intu32 from data based on the float as described in MDER Annex F.8.
  *
  * @param stream The current ByteStreamWriter.
  * @param data to be converted to intu32 and written into stream.
  * @return Error code - (1) success, (0) error
  */
-intu32 write_float(ByteStreamWriter *stream, float data)
+intu32 write_float(ByteStreamWriter *stream, FLOAT_Type data)
 {
-	intu32 mantissa = (int) round(data*10.0);
-	intu8 expoent = 0xFF;
-	intu32 result = (expoent << 24) | (mantissa & 0xFFFFFF);
+	intu32 result = MDER_NaN;
+
+	if (isnan(data)) {
+		goto finally;
+	} else if (data > MDER_FLOAT_MAX) {
+		result = MDER_POSITIVE_INFINITY;
+		goto finally;
+	} else if (data < MDER_FLOAT_MIN) {
+		result = MDER_NEGATIVE_INFINITY;
+		goto finally;
+	} else if (data >= -MDER_FLOAT_EPSILON &&
+		data <= MDER_FLOAT_EPSILON) {
+		result = 0;
+		goto finally;
+	}
+
+	double sgn = data > 0 ? +1 : -1;
+	double mantissa = fabs(data);
+	intu8 exponent = 0; // Note: 10**x exponent, not 2**x
+
+	// scale up if number is too big
+	while (mantissa > MDER_FLOAT_MANTISSA_MAX) {
+		mantissa /= 10.0;
+		++exponent;
+		if (exponent > MDER_FLOAT_EXPONENT_MAX) {
+			// argh, should not happen
+			if (sgn > 0) {
+				result = MDER_POSITIVE_INFINITY;
+			} else {
+				result = MDER_NEGATIVE_INFINITY;
+			}
+			goto finally;
+		}
+	}
+
+	// scale down if number is too small
+	while (mantissa < 1) {
+		mantissa *= 10;
+		--exponent;
+		if (exponent < MDER_FLOAT_EXPONENT_MIN) {
+			// argh, should not happen
+			result = 0;
+			goto finally;
+		}
+	}
+
+	// scale down if number needs more precision
+	double smantissa = round(mantissa * MDER_FLOAT_PRECISION);
+	double rmantissa = round(mantissa) * MDER_FLOAT_PRECISION;
+	double mdiff = abs(smantissa - rmantissa);
+	while (mdiff > 0.5 && exponent > MDER_FLOAT_EXPONENT_MIN &&
+			(mantissa * 10) <= MDER_FLOAT_MANTISSA_MAX) {
+		mantissa *= 10;
+		--exponent;
+		smantissa = round(mantissa * MDER_FLOAT_PRECISION);
+		rmantissa = round(mantissa) * MDER_FLOAT_PRECISION;
+		mdiff = abs(smantissa - rmantissa);
+	}
+
+	intu32 int_mantissa = (int) round(sgn * mantissa);
+	result = (exponent << 24) | (int_mantissa & 0xFFFFFF);
+
+finally:
 	return write_intu32(stream, result);
 }
 

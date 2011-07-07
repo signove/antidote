@@ -36,6 +36,7 @@ void test_parser_h221_apdu_parser();
 void test_parser_h233_apdu_parser();
 void test_parser_h241_apdu_parser();
 void test_parser_h244_apdu_parser();
+void test_float_parser();
 void test_sfloat_parser();
 
 #endif /* TEST_ENABLED */

@@ -83,9 +83,9 @@ intu16 read_intu16(ByteStreamReader *stream, int *error);
 
 intu32 read_intu32(ByteStreamReader *stream, int *error);
 
-float read_float(ByteStreamReader *stream);
+FLOAT_Type read_float(ByteStreamReader *stream);
 
-float read_sfloat(ByteStreamReader *stream);
+SFLOAT_Type read_sfloat(ByteStreamReader *stream);
 
 ByteStreamWriter *byte_stream_writer_instance(intu32 size);
 
@@ -97,7 +97,9 @@ intu32 write_intu16(ByteStreamWriter *stream, intu16 data);
 
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data);
 
-intu32 write_float(ByteStreamWriter *stream, float data);
+intu32 write_sfloat(ByteStreamWriter *stream, SFLOAT_Type data);
+
+intu32 write_float(ByteStreamWriter *stream, FLOAT_Type data);
 
 void del_byte_stream_writer(ByteStreamWriter *stream, int del_fields);
 void del_byte_stream_reader(ByteStreamReader *stream, int del_fields);

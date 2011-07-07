@@ -70,6 +70,8 @@ void testparser_add_suite()
 		    test_parser_h241_apdu_parser);
 	CU_add_test(suite, "test_parser_h244_apdu_parser",
 		    test_parser_h244_apdu_parser);
+	CU_add_test(suite, "test_parser_float_parser",
+		    test_float_parser);
 	CU_add_test(suite, "test_parser_sfloat_parser",
 		    test_sfloat_parser);
 
@@ -722,11 +724,21 @@ void test_parser_h244_apdu_parser(void)
 	buffer = NULL;
 }
 
+void test_float_parser()
+{
+	intu8 test_data[4] = {0xFB, 0x12, 0xd6, 0x87};
+	ByteStreamReader *stream = byte_stream_reader_instance(test_data, 4);
+	double data = read_float(stream);
+	printf("%f", data);
+	CU_ASSERT_DOUBLE_EQUAL(data, 12.34567, 0.000001);
+	free(stream);
+}
+
 void test_sfloat_parser()
 {
 	intu8 test_data[2] = {0xF3, 0xCF};
 	ByteStreamReader *stream = byte_stream_reader_instance(test_data, 2);
-	float data = read_sfloat(stream);
+	double data = read_sfloat(stream);
 	printf("%f", data);
 	CU_ASSERT_DOUBLE_EQUAL(data, 97.5, 0.0001);
 	free(stream);

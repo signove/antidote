@@ -1674,7 +1674,7 @@ void encode_segmelemstaticattrentry(ByteStreamWriter *stream,
 void encode_basicnuobsvalue(ByteStreamWriter *stream,
 			       BasicNuObsValue *pointer)
 {
-	write_intu16(stream, *pointer);
+	write_sfloat(stream, *pointer);
 }
 
 /**

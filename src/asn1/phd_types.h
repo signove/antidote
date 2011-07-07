@@ -86,8 +86,8 @@ typedef enum {
 
 typedef intu16 NomPartition;
 
-typedef float FLOAT_Type;
-typedef intu16 SFLOAT_Type;
+typedef double FLOAT_Type;
+typedef double SFLOAT_Type;
 typedef intu32 RelativeTime;
 
 typedef struct HighResRelativeTime {
@@ -1019,7 +1019,7 @@ typedef struct SimpleNuObsValueCmp {
 	SimpleNuObsValue *value; /* first element of the array */
 } SimpleNuObsValueCmp;
 
-typedef float BasicNuObsValue;
+typedef SFLOAT_Type BasicNuObsValue;
 typedef struct BasicNuObsValueCmp {
 	intu16 count;
 	intu16 length;
