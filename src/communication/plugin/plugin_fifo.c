@@ -181,6 +181,9 @@ static int network_fifo_wait_for_data(Context *ctx)
 	int ret_value;
 
 	while (1) {
+		if (read_fd <= 0) {
+			return FIFO_ERROR;
+		}
 
 		if (fifo_timeout == 0) {
 			ret_value = select(read_fd + 1, &fds, NULL, NULL, NULL);
@@ -195,14 +198,16 @@ static int network_fifo_wait_for_data(Context *ctx)
 			if (errno == EINTR)
 				continue;
 			DEBUG(" network:fd Select failed");
+			return FIFO_ERROR;
 		} else if (ret_value == 0) {
 			DEBUG(" network:fd Select timeout");
+			return FIFO_ERROR;
 		}
 
 		break;
 	}
 
-	return ret_value;
+	return FIFO_ERROR_NONE;
 }
 
 /**
@@ -225,6 +230,21 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	DEBUG(" network:fd APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);
 
+	return FIFO_ERROR_NONE;
+}
+
+/**
+ * Closes communication channel (used by agents)
+ *
+ * @param context
+ * @return FIFO_ERROR_NONE if data sent successfully and 0 otherwise
+ */
+static int network_disconnect(Context *ctx)
+{
+	close(read_fd);
+	close(write_fd);
+	read_fd = write_fd = -1;
+	communication_transport_disconnect_indication(ctx->id);
 	return FIFO_ERROR_NONE;
 }
 
@@ -256,6 +276,7 @@ int plugin_network_fifo_setup(CommunicationPlugin *plugin, ContextId id,
 	plugin->network_wait_for_data = network_fifo_wait_for_data;
 	plugin->network_get_apdu_stream = network_get_apdu_stream;
 	plugin->network_send_apdu_stream = network_send_apdu_stream;
+	plugin->network_disconnect = network_disconnect;
 	plugin->network_finalize = network_finalize;
 
 	return FIFO_ERROR_NONE;
