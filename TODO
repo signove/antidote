@@ -7,6 +7,9 @@ Porting Antidote and healthd service to Android,
 and put together a simple application that
 uses the service.
 
+Give better names to intermediate static libraries,
+following Android standard
+
 
 CODE REFACTORING
 

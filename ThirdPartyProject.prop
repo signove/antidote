@@ -1,0 +1,10 @@
+# Copyright 2010 Google Inc. All Rights Reserved.
+#Fri Jul 16 10:03:08 PDT 2010
+currentVersion=Unknown
+version=1.10
+isNative=true
+feedurl=ChangeLog
+name=antidote
+keywords=antidote
+onDevice=true
+homepage=gitorious.org/antidote
