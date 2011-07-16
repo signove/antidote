@@ -26,20 +26,21 @@ include $(BUILD_STATIC_LIBRARY)
 
 # shared lib
 
-# include $(CLEAR_VARS)
+include $(CLEAR_VARS)
 
-# LOCAL_SRC_FILES := $(common_SRC_FILES)
-# LOCAL_CFLAGS := $(common_CFLAGS)
-# LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
+LOCAL_SRC_FILES := $(common_SRC_FILES)
+LOCAL_CFLAGS := $(common_CFLAGS)
+LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
-# LOCAL_MODULE:= libantidote
-# LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE:= libantidote
+LOCAL_MODULE_TAGS := optional
+LOCAL_PRELINK_MODULE:= false
 
-# LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
-#		        libantidotecommparser \
-#			libantidotedim libantidoteutil libantidotespecializations
+LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
+		        libantidotecommparser \
+			libantidotedim libantidoteutil libantidotespecializations
 
-# include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
 
 # sample agent
 
