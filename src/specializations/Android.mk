@@ -10,6 +10,6 @@ LOCAL_SRC_FILES = blood_pressure_monitor.c \
 		   weighing_scale.c
 
 LOCAL_MODULE:= libantidotespecializations
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

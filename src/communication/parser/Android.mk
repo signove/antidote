@@ -11,6 +11,6 @@ LOCAL_SRC_FILES = \
                       encoder_ASN1.c
 
 LOCAL_MODULE:= libantidotecommparser
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

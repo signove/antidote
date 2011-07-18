@@ -12,6 +12,6 @@ LOCAL_SRC_FILES = \
 					xml_encoder.c
 
 LOCAL_MODULE:= libantidoteapi
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

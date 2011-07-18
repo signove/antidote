@@ -21,6 +21,6 @@ LOCAL_SRC_FILES = \
 			       scanner.c 
 
 LOCAL_MODULE:= libantidotedim
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

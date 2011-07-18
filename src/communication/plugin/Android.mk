@@ -8,7 +8,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. $(LOCAL_PATH)/../.. $(LOCAL_P
 LOCAL_SRC_FILES = plugin.c
 
 LOCAL_MODULE:= libantidotecommplugin
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -23,6 +23,6 @@ LOCAL_SRC_FILES = \
                    plugin_tcp_agent.c
 
 LOCAL_MODULE:= libantidotecommpluginimpl
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

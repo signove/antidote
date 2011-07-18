@@ -16,7 +16,7 @@ LOCAL_CFLAGS := $(common_CFLAGS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
 LOCAL_MODULE:= libantidote
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
 				libantidotecommparser \
@@ -33,7 +33,7 @@ LOCAL_CFLAGS := $(common_CFLAGS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
 LOCAL_MODULE:= libantidote
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 LOCAL_PRELINK_MODULE:= false
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
@@ -53,7 +53,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 LOCAL_STATIC_LIBRARIES := libantidotecommpluginimpl libantidote
 
 LOCAL_MODULE:= ieee_agent
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_EXECUTABLE)
 
@@ -68,7 +68,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 LOCAL_STATIC_LIBRARIES := libantidotecommpluginimpl libantidote
 
 LOCAL_MODULE:= ieee_manager
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_EXECUTABLE)
 

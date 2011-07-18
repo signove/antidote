@@ -19,6 +19,6 @@ LOCAL_SRC_FILES = \
                    context_manager.c
 
 LOCAL_MODULE:= libantidotecomm
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)

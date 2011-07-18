@@ -12,6 +12,6 @@ LOCAL_SRC_FILES = bytelib.c \
                     strbuff.c
 
 LOCAL_MODULE:= libantidoteutil
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := debug eng
 
 include $(BUILD_STATIC_LIBRARY)
