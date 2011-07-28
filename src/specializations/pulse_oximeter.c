@@ -208,6 +208,10 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	return std_object_list;
 }
 
+/**
+ * Populates an event report APDU. 
+ */
+
 static DATA_apdu *pulse_oximeter_populate_event_report(void *edata)
 {
 	DATA_apdu *data;
@@ -322,9 +326,5 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
 	result->event_report = &pulse_oximeter_populate_event_report;
 	return result;
 }
-
-/**
- * Populates an event report APDU. 
- */
 
 /** @} */
