@@ -72,6 +72,9 @@ Try to remove 'special' state machine handling code from
 manager.c and agent.c; state machines should operate as
 autonomously as possible. Create more states to achieve
 that, if needed.
+
+Think in a more numeric-object-centered model instead of
+communication- and event-centered like now.
 	
 
 DOCUMENTATION
