@@ -62,6 +62,10 @@
 
 static PluginBluezListener bluez_listener;
 
+/* Auto-testing mode: does not serve D-Bus health service, but
+   listens to IEEE agents and consumes data */
+static gboolean autotesting = FALSE;
+
 static gboolean call_agent_measurementdata(guint64, char *);
 static gboolean call_agent_disassociated(guint64);
 static gboolean call_agent_associated(guint64, char *);
@@ -234,7 +238,7 @@ static char *client_name = NULL;
 
 static GSList *devices = NULL;
 
-DBusGConnection *bus;
+DBusGConnection *bus = NULL;
 DBusGProxy *agent_proxy = NULL;
 
 static const char *get_device_object(const char *, guint64);
@@ -315,6 +319,15 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 	g_free(hdp_data_types);
 
 	return TRUE;
+}
+
+/**
+ * Configures data types for auto-testing
+ */
+void autotesting_configurepassive()
+{
+	guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
+	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 }
 
 /**
@@ -505,16 +518,22 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_connected");
 
 	device_path = get_device_object(btaddr, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Device connected: %s\n\n",
+							device_path);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -544,10 +563,6 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_associated");
 	DEBUG("%s", xml);
 
@@ -555,6 +570,16 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Device associated: %s\n\n",
+							device_path);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -584,16 +609,22 @@ static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_measurementdata");
 
 	device_path = get_device_object(NULL, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Measurement Data from %s\n\n%s\n\n",
+							device_path, xml);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -624,16 +655,22 @@ static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_deviceattributes");
 
 	device_path = get_device_object(NULL, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Device Attributes from %s\n\n%s\n\n",
+							device_path, xml);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -663,16 +700,22 @@ static gboolean call_agent_disassociated(guint64 conn_handle)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_disassociated");
 
 	device_path = get_device_object(NULL, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Device disassociate: %s\n\n",
+							device_path);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -699,16 +742,22 @@ static gboolean call_agent_disconnected(guint64 conn_handle, const char *btaddr)
 	DBusGProxyCall *call;
 	const char *device_path;
 
-	if (!agent_proxy) {
-		return FALSE;
-	}
-
 	DEBUG("call_agent_disconnected");
 
 	device_path = get_device_object(btaddr, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (autotesting) {
+		DEBUG("\n\n(Auto-test) Device disconnect: %s\n\n",
+							device_path);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
 		return FALSE;
 	}
 
@@ -949,9 +998,12 @@ static Serv *srvObj = NULL;
 static void app_clean_up()
 {
 	g_main_loop_unref(mainloop);
-	g_object_unref(busProxy);
-	g_object_unref(srvObj);
-	dbus_g_connection_unref(bus);
+
+	if (!autotesting) {
+		g_object_unref(busProxy);
+		g_object_unref(srvObj);
+		dbus_g_connection_unref(bus);
+	}
 }
 
 /**
@@ -976,13 +1028,28 @@ static void app_setup_signals()
  * Main function
  * @return int
  */
-int main()
+int main(int argc, char *argv[])
 {
 	GError *error = NULL;
 	guint result;
 
+	if (argc > 1) {
+		if (strcmp(argv[1], "--autotest") == 0) {
+			autotesting = TRUE;
+		}
+		if (strcmp(argv[1], "--autotesting") == 0) {
+			autotesting = TRUE;
+		}
+		if (strcmp(argv[1], "--auto") == 0) {
+			autotesting = TRUE;
+		}
+	}
+
 	app_setup_signals();
 	g_type_init();
+
+	if (autotesting)
+		goto init_plugin;
 
 	bus = dbus_g_bus_get(DBUS_BUS_SYSTEM, &error);
 
@@ -1029,6 +1096,7 @@ int main()
 	dbus_g_connection_register_g_object(bus, SRV_OBJECT_PATH,
 					    G_OBJECT(srvObj));
 
+init_plugin:
 	/* Initialize D-Bus -- BlueZ connection */
 
 	DEBUG("IEEE 11073 D-Bus service");
@@ -1057,6 +1125,9 @@ int main()
 
 	manager_add_listener(listener);
 	manager_start();
+
+	if (autotesting)
+		autotesting_configurepassive();
 
 	mainloop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_ref(mainloop);
