@@ -1299,7 +1299,7 @@ void mds_destroy(MDS *mds)
  *
  * \param unit_code the unit code to be parsed.
  *
- * \return unit code in a human readable string; NULL if cannot parse the code.
+ * \return unit code in a human readable string; "" if cannot parse the code.
  */
 char *mds_get_unit_code_string(OID_Type unit_code)
 {
@@ -1336,10 +1336,10 @@ char *mds_get_unit_code_string(OID_Type unit_code)
 		return "kg m-2";
 
 	default:
-		return NULL;
+		return "";
 	}
 
-	return NULL;
+	return "";
 }
 
 /** @} */

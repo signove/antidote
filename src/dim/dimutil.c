@@ -38,6 +38,7 @@
 #include "src/util/log.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /**
  * @addtogroup MDS MDS
@@ -82,6 +83,34 @@ static int dimutil_get_metric_partition(struct Metric *metric)
 	}
 
 	return 0;
+}
+
+/**
+ * Returns unit code for Metric object.
+ *
+ * \param metric the metric instance.
+ *
+ * \return unit code
+ */
+static int dimutil_get_unit_code(struct Metric *metric)
+{
+	if (metric != NULL) {
+		return metric->unit_code;
+	}
+
+	return 0;
+}
+
+/**
+ * Returns unit name for Metric object.
+ *
+ * \param metric the metric instance.
+ *
+ * \return unit name. Caller owns the pointer
+ */
+static char *dimutil_get_unit(struct Metric *metric)
+{
+	return strdup(mds_get_unit_code_string(dimutil_get_unit_code(metric)));
 }
 
 /**
@@ -255,6 +284,12 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 
 			data_set_meta_att(data_entry, data_strcp("metric-id"),
 					  intu16_2str(dimutil_get_metric_ids(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit-code"),
+					  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit"),
+					  dimutil_get_unit(&(numeric->metric)));
 		}
 
 		break;
@@ -281,6 +316,12 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 
 		data_set_meta_att(data_entry, data_strcp("metric-id"),
 				  intu16_2str(dimutil_get_metric_ids(&(numeric->metric))));
+
+		data_set_meta_att(data_entry, data_strcp("unit-code"),
+				  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
+
+		data_set_meta_att(data_entry, data_strcp("unit"),
+				  dimutil_get_unit(&(numeric->metric)));
 		break;
 	case MDC_ATTR_NU_CMPD_VAL_OBS_BASIC:
 		del_basicnuobsvaluecmp(
@@ -305,6 +346,12 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 
 			data_set_meta_att(data_entry, data_strcp("metric-id"),
 					  intu16_2str(numeric->nu_observed_value.metric_id));
+
+			data_set_meta_att(data_entry, data_strcp("unit-code"),
+					  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit"),
+					  dimutil_get_unit(&(numeric->metric)));
 		}
 
 		break;
