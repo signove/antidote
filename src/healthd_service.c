@@ -497,17 +497,14 @@ static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointe
 {
 
 	GError *error = NULL;
-	DEBUG("-------------------- >>>>>>>>>>>>>>");
 
-	gboolean status = dbus_g_proxy_end_call(proxy, call, &error, DBUS_TYPE_INVALID);
+	dbus_g_proxy_end_call(proxy, call, &error, DBUS_TYPE_INVALID);
 
 	if (error != NULL) {
 		DEBUG("Error calling D-Bus system bus");
 		DEBUG("%s", error->message);
 		g_error_free(error);
 	}
-
-	DEBUG("success calling: %i", status);
 }
 
 /**
@@ -558,8 +555,6 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
  */
 static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 {
-	// FIXME when does IEEE calls this back?
-
 	DBusGProxyCall *call;
 	const char *device_path;
 
@@ -695,8 +690,6 @@ static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
  */
 static gboolean call_agent_disassociated(guint64 conn_handle)
 {
-	// FIXME when does IEEE calls this back?
-
 	DBusGProxyCall *call;
 	const char *device_path;
 
