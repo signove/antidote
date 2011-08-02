@@ -45,7 +45,7 @@
 #include <dbus/dbus.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
 #include "src/util/log.h"
