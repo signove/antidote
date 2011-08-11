@@ -65,7 +65,7 @@ ieee_agent_LDADD = \
 
 # Sample agent that uses Bluetooth (BlueZ) plug-in
 sample_bt_agent_SOURCES = sample_bt_agent.c
-sample_bt_agent_CFLAGS = @GLIB_CFLAGS@
+sample_bt_agent_CFLAGS = @GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 sample_bt_agent_LDADD = \
 		communication/plugin/bluez/libbluezplugin.la \
