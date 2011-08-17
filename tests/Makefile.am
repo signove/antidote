@@ -1,5 +1,5 @@
 SUBDIRS = dim communication functional_test_cases
-INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
+INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src @DBUS_CFLAGS@
 
 
 bin_PROGRAMS = main_test_suite ieee_manager_console
