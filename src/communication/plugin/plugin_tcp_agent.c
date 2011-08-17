@@ -33,7 +33,7 @@
  */
 
 /**
- * @addtogroup Plugin
+ * @addtogroup AgentTCP
  * @{
  */
 
@@ -303,7 +303,7 @@ static int create_socket(int pport)
  * Initiate a CommunicationPlugin struct to use tcp connection.
  *
  * @param plugin CommunicationPlugin pointer
- * @param numberOfPorts number of socket ports
+ * @param pport Port of the socket
  *
  * @return TCP_ERROR if error
  */

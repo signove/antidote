@@ -33,7 +33,6 @@
 
 /**
  * @addtogroup Plugin
- * @{
  */
 
 #include "src/util/strbuff.h"
@@ -92,9 +91,12 @@ static int search_socket_by_port(void *arg, void *element)
 
 	return port == sk->tcp_port;
 }
+
 /**
- * @TODO_REVIEW_DOC
- * @pararm port
+ * Gets a Network socket
+ *
+ * @param port The port of the socket
+ * @return The network socket
  */
 static NetworkSocket *get_socket(int port)
 {
@@ -436,5 +438,3 @@ int plugin_network_tcp_setup(CommunicationPlugin *plugin, int numberOfPorts,
 
 	return TCP_ERROR_NONE;
 }
-
-/** @} */

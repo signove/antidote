@@ -1430,8 +1430,10 @@ void plugin_bluez_connect_cb(DBusGProxy *dev_proxy, DBusGProxyCall *id,
  * is reported via "peer_connected" callback, as happens with accepted
  * (passive) connections.
  *
- * @param *btaddr
- * @return success in initating connection procedure
+ * @param *btaddr The Bluetooth address
+ * @param data_type The data type
+ * @param reliability The reliability of the HDP channel
+ * @return success in initiating connection procedure
  *         (not necessarily connection will happen)
  */
 gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type, int reliability)

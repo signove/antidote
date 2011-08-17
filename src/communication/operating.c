@@ -144,7 +144,8 @@ static void communication_agent_process_roiv(Context *ctx, APDU *apdu)
 /**
  * Process incoming APDU - Agent
  *
- * @param *apdu
+ * @param ctx The context of the Apdu
+ * @param apdu The apdu to be processed
  */
 void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 {

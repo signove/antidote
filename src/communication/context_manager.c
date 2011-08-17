@@ -118,6 +118,7 @@ static int context_search_by_id(void *arg, void *element)
  * If the context ID already exists, it will be recreated.
  *
  * @param id id to be verified.
+ * @param type The context type
  * @return Context pointer or NULL if cannot create one.
  */
 Context *context_create(ContextId id, int type)

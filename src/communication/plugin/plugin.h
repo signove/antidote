@@ -167,7 +167,6 @@ typedef struct CommunicationPlugin {
 
 	/**
 	 * Closes a connection
-	 * @param 
 	 */
 	network_disconnect_ptr network_disconnect;
 

@@ -401,8 +401,9 @@ Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attribut
  *
  * After configuration steps the Manager is ready to execute operational mode
  *
- * \param ctx context
- * \param config_obj_list
+ * \param ctx context Operating Context
+ * \param config_obj_list Configuration object list
+ * \param manager Manager flag
  */
 void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 				int manager)
@@ -860,9 +861,11 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
 }
 
 /**
- * Gets all atributes of MDS Instance as an array of AVA_Type's
+ * Gets all attributes of MDS Instance as an array of AVA_Type's
  *
  * \param mds the mds.
+ * \param count The number of attributes
+ * \param tot_length The total length of the MDS
  */
 AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *tot_length)
 {

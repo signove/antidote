@@ -78,7 +78,7 @@ struct mds_system_data *(*agent_mds_data_cb)();
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 
 
-/*! \mainpage IEEE 11073-20601 Implementation
+/*!
  *
  * This API implements the IEEE 11073-20601 Standard and some device
  * specializations (IEEE 11073-104XX).
@@ -114,7 +114,10 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  *
  * This method should be invoked in a thread safe execution.
  *
- * @param plugin the configured plugin to define communication behaviour
+ * @param plugin the configured plugin to define communication behavior
+ * @param specialization Specialization of the agent
+ * @param event_report_cb The event report callback
+ * @param mds_data_cb Data callback
  */
 void agent_init(CommunicationPlugin *plugin, int specialization,
 		void *(*event_report_cb)(),
@@ -408,7 +411,7 @@ void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states n
 /**
  * Provoke agent to initiate association
  *
- * @param ctx context
+ * @param id context Id
  */
 void agent_associate(ContextId id)
 {
@@ -419,7 +422,7 @@ void agent_associate(ContextId id)
 /**
  * Provoke agent to terminate connection
  *
- * @param ctx context
+ * @param id context Id
  */
 void agent_disconnect(ContextId id)
 {
@@ -430,7 +433,7 @@ void agent_disconnect(ContextId id)
 /**
  * Provoke agent to send event report with measure data
  *
- * @param ctx context
+ * @param id context Id
  */
 void agent_send_data(ContextId id)
 {

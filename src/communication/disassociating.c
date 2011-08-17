@@ -193,7 +193,7 @@ void disassociating_release_request_normal_tx(Context *ctx, fsm_events evt,
  *
  * @param ctx context
  * @param evt input event
- * @param data should inform the release response reason
+ * @param dummy Dummy event data
  */
 void disassociating_release_response_tx_normal(Context *ctx, fsm_events evt,
 					FSMEventData *dummy)

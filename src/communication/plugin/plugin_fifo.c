@@ -28,7 +28,7 @@
  */
 
 /**
- * @addtogroup Plugin
+ * @addtogroup  Fifo Plugin
  * @{
  */
 

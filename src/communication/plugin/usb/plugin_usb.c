@@ -30,7 +30,6 @@
 
 /**
  * @addtogroup Communication
- * @{
  */
 
 #include <stdio.h>
@@ -83,8 +82,8 @@ static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy
 /**
  * Callback called from BlueZ layer, when device connects (BT-wise)
  *
- * @param handle
- * @param device
+ * @param handle Connection handler
+ * @param device Device connected
  */
 void device_connected(guint64 handle, const char *device)
 {
@@ -523,5 +522,3 @@ static int send_data(guint64 handle, unsigned char *data, int len)
 	return 0;
 }
 */
-
-/** @} */
