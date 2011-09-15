@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <glib.h>
+#include <gio/gio.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -62,13 +63,191 @@
 
 static PluginBluezListener bluez_listener;
 
-/* Auto-testing mode: does not serve D-Bus health service, but
-   listens to IEEE agents and consumes data */
-static gboolean autotesting = FALSE;
+static const int DBUS_SERVER = 0;
+static const int TCP_SERVER = 1;
+static const int AUTOTESTING = 2;
+
+static int opmode;
 
 static gboolean call_agent_measurementdata(guint64, char *);
 static gboolean call_agent_disassociated(guint64);
 static gboolean call_agent_associated(guint64, char *);
+
+
+/* TCP clients */
+
+typedef struct {
+	GSocketConnection *sk;
+	char *buf;
+} tcp_client;
+
+static const unsigned int PORT = 9005;
+static GSList *tcp_clients = NULL;
+static GSocketListener *server = NULL;
+
+static void tcp_close(tcp_client *client)
+{
+	fprintf(stderr, "TCP: freeing client %p\n", client);
+
+	g_object_unref(client->sk);
+	free(client->buf);
+	client->sk = 0;
+	client->buf = 0;
+	tcp_clients = g_slist_remove(tcp_clients, client);
+	free(client);
+}
+
+static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
+{
+	tcp_client *client = (tcp_client*) data;
+	gsize len = strlen(client->buf);
+	gsize written;
+	char *newbuf;
+	GError *err = NULL;
+	gboolean more;
+
+	if (cond != G_IO_OUT) {
+		fprintf(stderr, "TCP: write: false alarm\n");
+		return TRUE;
+	}
+
+	if (len <= 0) {
+		g_io_channel_unref(src);
+		return FALSE;
+	}
+
+	fprintf(stderr, "TCP: writing client %p\n", data);
+
+	g_io_channel_write_chars(src, client->buf, len, &written, &err);
+
+	fprintf(stderr, "TCP: client %p written %d bytes\n", data, written);
+
+	if (err) {
+		g_free(err);
+		free(client->buf);
+		client->buf = strdup("");
+		g_io_channel_unref(src);
+		return FALSE;
+	}
+
+	if (written >= len) {
+		newbuf = strdup("");
+		g_io_channel_unref(src);
+		more = FALSE;
+	} else {
+		newbuf = strdup(client->buf + written);
+		more = TRUE;
+	}
+	free(client->buf);
+	client->buf = newbuf;
+
+	return more;
+}
+
+static gboolean tcp_read(GIOChannel *src, GIOCondition cond, gpointer data)
+{
+	char buf[256];
+	gsize count;
+
+	fprintf(stderr, "TCP: reading client %p\n", data);
+
+	tcp_client *client = (tcp_client*) data;
+
+	if (cond != G_IO_IN) {
+		tcp_close(client);
+		g_io_channel_unref(src);
+		return FALSE;
+	}
+
+	g_io_channel_read_chars(src, buf, sizeof(buf), &count, NULL);
+
+	if (count == 0) {
+		tcp_close(client);
+		g_io_channel_unref(src);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void tcp_send(tcp_client *client, const char *msg)
+{
+	char *newbuf;
+
+	fprintf(stderr, "TCP: scheduling write %p\n", client);
+
+	asprintf(&newbuf, "%s%s", client->buf, msg);
+
+	free(client->buf);
+	client->buf = newbuf;
+
+	GSocket *socket = g_socket_connection_get_socket(client->sk);
+	gint fd = g_socket_get_fd(socket);
+	GIOChannel *channel = g_io_channel_unix_new(fd);
+	g_io_add_watch(channel, G_IO_OUT, tcp_write, client);
+}
+
+static void tcp_accept(GObject *src, GAsyncResult *res, gpointer user_data)
+{
+	tcp_client *new_client;
+	GSocketConnection *sk;
+
+	fprintf(stderr, "TCP: accepting\n");
+
+	sk = g_socket_listener_accept_finish(server, res, NULL, NULL);
+
+	if (!sk) {
+		fprintf(stderr, "TCP: Failed accept\n");
+		return;
+	}
+
+	g_object_ref(sk);
+
+	new_client = g_new0(tcp_client, 1);
+	new_client->sk = sk;
+	new_client->buf = strdup("");
+
+	fprintf(stderr, "TCP: adding client %p to list\n", new_client);
+
+	GSocket *socket = g_socket_connection_get_socket(sk);
+	gint fd = g_socket_get_fd(socket);
+	GIOChannel *channel = g_io_channel_unix_new(fd);
+	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, tcp_read, new_client);
+
+	tcp_clients = g_slist_prepend(tcp_clients, new_client);
+}
+
+static void tcp_listen()
+{
+	server = g_socket_listener_new();
+	g_socket_listener_add_inet_port(server, PORT, NULL, NULL);
+	g_socket_listener_accept_async(server, NULL, tcp_accept, NULL);
+
+	fprintf(stderr, "TCP: listening\n");
+}
+
+static void tcp_announce(const char *command, const char *path, const char *arg)
+{
+	GSList *i;
+	char *msg;
+	char *j;
+	char *arg2 = strdup(arg);
+
+	for (j = arg2; *j; ++j)
+		if ((*j == '\t') || (*j == '\n'))
+			*j = ' ';
+
+	asprintf(&msg, "%s\t%s\t%s\n", command, path, arg2);
+
+	printf("%s\n", msg);
+	
+	for (i = tcp_clients; i; i = i->next) {
+		tcp_send(i->data, msg);
+	}
+
+	free(arg2);
+	free(msg);
+}
 
 
 /* Called by IEEE library */
@@ -322,9 +501,9 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 }
 
 /**
- * Configures data types for auto-testing
+ * Configures data types for auto-testing and TCP mode
  */
-void autotesting_configurepassive()
+void self_configure()
 {
 	guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
 	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
@@ -524,9 +703,12 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Device connected: %s\n\n",
 							device_path);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("CONNECTED", device_path, btaddr);
 		return TRUE;
 	}
 
@@ -559,7 +741,6 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 	const char *device_path;
 
 	DEBUG("call_agent_associated");
-	DEBUG("%s", xml);
 
 	device_path = get_device_object(NULL, conn_handle);
 
@@ -568,9 +749,13 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Device associated: %s\n\n",
 							device_path);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("ASSOCIATED", device_path, "");
+		tcp_announce("DESCRIPTION", device_path, xml);
 		return TRUE;
 	}
 
@@ -613,9 +798,12 @@ static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Measurement Data from %s\n\n%s\n\n",
 							device_path, xml);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("MEASUREMENT", device_path, xml);
 		return TRUE;
 	}
 
@@ -659,9 +847,12 @@ static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Device Attributes from %s\n\n%s\n\n",
 							device_path, xml);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("ATTRIBUTES", device_path, xml);
 		return TRUE;
 	}
 
@@ -702,9 +893,12 @@ static gboolean call_agent_disassociated(guint64 conn_handle)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Device disassociate: %s\n\n",
 							device_path);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("DISASSOCIATE", device_path, "");
 		return TRUE;
 	}
 
@@ -744,9 +938,12 @@ static gboolean call_agent_disconnected(guint64 conn_handle, const char *btaddr)
 		return FALSE;
 	}
 
-	if (autotesting) {
+	if (opmode == AUTOTESTING) {
 		DEBUG("\n\n(Auto-test) Device disconnect: %s\n\n",
 							device_path);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		tcp_announce("DISCONNECT", device_path, "");
 		return TRUE;
 	}
 
@@ -992,7 +1189,7 @@ static void app_clean_up()
 {
 	g_main_loop_unref(mainloop);
 
-	if (!autotesting) {
+	if (opmode == DBUS_SERVER) {
 		g_object_unref(busProxy);
 		g_object_unref(srvObj);
 		dbus_g_connection_unref(bus);
@@ -1026,22 +1223,33 @@ int main(int argc, char *argv[])
 	GError *error = NULL;
 	guint result;
 
+	opmode = DBUS_SERVER;
+
 	if (argc > 1) {
 		if (strcmp(argv[1], "--autotest") == 0) {
-			autotesting = TRUE;
+			opmode = AUTOTESTING;
 		}
 		if (strcmp(argv[1], "--autotesting") == 0) {
-			autotesting = TRUE;
+			opmode = AUTOTESTING;
 		}
 		if (strcmp(argv[1], "--auto") == 0) {
-			autotesting = TRUE;
+			opmode = AUTOTESTING;
+		}
+		if (strcmp(argv[1], "--tcp") == 0) {
+			opmode = TCP_SERVER;
+		}
+		if (strcmp(argv[1], "--tcpserver") == 0) {
+			opmode = TCP_SERVER;
 		}
 	}
 
 	app_setup_signals();
 	g_type_init();
 
-	if (autotesting)
+	if (opmode == TCP_SERVER)
+		tcp_listen();
+
+	if (opmode != DBUS_SERVER)
 		goto init_plugin;
 
 	bus = dbus_g_bus_get(DBUS_BUS_SYSTEM, &error);
@@ -1119,8 +1327,11 @@ init_plugin:
 	manager_add_listener(listener);
 	manager_start();
 
-	if (autotesting)
-		autotesting_configurepassive();
+	if (opmode != DBUS_SERVER)
+		self_configure();
+
+	if (opmode == TCP_SERVER)
+		tcp_listen();
 
 	mainloop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_ref(mainloop);
