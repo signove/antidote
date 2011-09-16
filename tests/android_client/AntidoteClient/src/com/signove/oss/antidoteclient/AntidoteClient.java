@@ -33,6 +33,7 @@ public class AntidoteClient extends Activity {
 	Map <String, String> map;
 	String ADDRESS = "127.0.0.1";
 	int PORT = 9005;
+	boolean running = true;
 	
 	public Document parse_xml(String xml)
 	{
@@ -314,7 +315,7 @@ public class AntidoteClient extends Activity {
         		byte[] data = new byte[256];
         		int len;
 
-        		while (true) {
+        		while (running) {
         			Log.w("Antidote", "Reading...");
         		
         			try {
@@ -322,6 +323,9 @@ public class AntidoteClient extends Activity {
         			} catch (IOException e) {
         				len = -1;
         			}
+        			
+        			if (! running)
+        				break;
         		
         			if (len <= 0) {
         				Runnable r = new Runnable() {
@@ -347,6 +351,11 @@ public class AntidoteClient extends Activity {
                     tm.postDelayed(r, 0);
                 }
             
+        		try {
+        			sk.close();
+        		} catch (Exception e) {
+        	
+        		}
                 Log.w("Antidote", "Thread end");
         	}
         }; 
@@ -357,10 +366,24 @@ public class AntidoteClient extends Activity {
         Log.w("Antidote", "Connect end");
 	}
 	
+	@Override
+	public void onDestroy()
+	{
+		Log.w("Antidote", "Destroying activity");
+		running = false;
+		try {
+			sk.close();
+		} catch (Exception e) {
+		
+		}
+		super.onDestroy();
+	}
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.main);
         status = (TextView) findViewById(R.id.status);
         msg = (TextView) findViewById(R.id.msg);
