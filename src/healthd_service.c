@@ -85,12 +85,13 @@ typedef struct {
 
 static const unsigned int PORT = 9005;
 static GSList *tcp_clients = NULL;
-static int server_fd;
+static int server_fd = -1;
 
 static void tcp_close(tcp_client *client)
 {
 	fprintf(stderr, "TCP: freeing client %p\n", client);
 
+	shutdown(client->fd, SHUT_RDWR);
 	close(client->fd);
 	client->fd = -1;
 	free(client->buf);
@@ -105,7 +106,6 @@ static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
 	gsize len = strlen(client->buf);
 	gsize written;
 	char *newbuf;
-	GError *err = NULL;
 	gboolean more;
 
 	if (cond != G_IO_OUT) {
@@ -120,12 +120,12 @@ static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
 
 	fprintf(stderr, "TCP: writing client %p\n", data);
 
-	g_io_channel_write_chars(src, client->buf, len, &written, &err);
+	int fd = g_io_channel_unix_get_fd(src);
+	written = send(fd, client->buf, len, 0);
 
 	fprintf(stderr, "TCP: client %p written %d bytes\n", data, written);
 
-	if (err) {
-		g_free(err);
+	if (written <= 0) {
 		free(client->buf);
 		client->buf = strdup("");
 		g_io_channel_unref(src);
@@ -161,7 +161,8 @@ static gboolean tcp_read(GIOChannel *src, GIOCondition cond, gpointer data)
 		return FALSE;
 	}
 
-	g_io_channel_read_chars(src, buf, sizeof(buf), &count, NULL);
+	int fd = g_io_channel_unix_get_fd(src);
+	count = recv(fd, buf, 256, 0);
 
 	if (count == 0) {
 		tcp_close(client);
@@ -192,11 +193,12 @@ static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 	tcp_client *new_client;
 	struct sockaddr_in addr;
 	int fd;
-	int addrlen = sizeof(addrlen);
+	socklen_t addrlen = sizeof(struct sockaddr_in);
+	bzero(&addr, sizeof(addr));
 
-	fprintf(stderr, "TCP: accepting\n");
+	fprintf(stderr, "TCP: accepting condition\n");
 
-	fd = accept(server_fd, (struct sockaddr *) &addr, &addrlen);
+	fd = accept(g_io_channel_unix_get_fd(src), (struct sockaddr *) &addr, &addrlen);
 
 	if (fd < 0) {
 		fprintf(stderr, "TCP: Failed accept\n");
