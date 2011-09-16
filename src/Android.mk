@@ -81,6 +81,7 @@ LOCAL_CFLAGS := $(common_CFLAGS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. \
 	$(call include-path-for, glib) \
 	$(call include-path-for, glib)/glib \
+	$(call include-path-for, glib)/gmodule \
 	$(call include-path-for, gio) \
 	$(call include-path-for, dbus) \
 	$(call include-path-for, dbus-glib) \
