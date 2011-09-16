@@ -89,7 +89,8 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. \
 
 LOCAL_STATIC_LIBRARIES := libantidotecommpluginbluez libantidote \
 			libdbus-glib_static \
-			libgobject_static libgio_static \
+			libgio_static \
+			libgobject_static \
 			libgthread_static \
 			libglib_static
 

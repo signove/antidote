@@ -39,6 +39,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <glib.h>
 #include <gio/gio.h>
 #include <dbus/dbus-glib.h>
@@ -77,21 +79,21 @@ static gboolean call_agent_associated(guint64, char *);
 /* TCP clients */
 
 typedef struct {
-	GSocketConnection *sk;
+	int fd;
 	char *buf;
 } tcp_client;
 
 static const unsigned int PORT = 9005;
 static GSList *tcp_clients = NULL;
-static GSocketListener *server = NULL;
+static int server_fd;
 
 static void tcp_close(tcp_client *client)
 {
 	fprintf(stderr, "TCP: freeing client %p\n", client);
 
-	g_object_unref(client->sk);
+	close(client->fd);
+	client->fd = -1;
 	free(client->buf);
-	client->sk = 0;
 	client->buf = 0;
 	tcp_clients = g_slist_remove(tcp_clients, client);
 	free(client);
@@ -181,47 +183,54 @@ static void tcp_send(tcp_client *client, const char *msg)
 	free(client->buf);
 	client->buf = newbuf;
 
-	GSocket *socket = g_socket_connection_get_socket(client->sk);
-	gint fd = g_socket_get_fd(socket);
-	GIOChannel *channel = g_io_channel_unix_new(fd);
+	GIOChannel *channel = g_io_channel_unix_new(client->fd);
 	g_io_add_watch(channel, G_IO_OUT, tcp_write, client);
 }
 
-static void tcp_accept(GObject *src, GAsyncResult *res, gpointer user_data)
+static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 {
 	tcp_client *new_client;
-	GSocketConnection *sk;
+	struct sockaddr_in addr;
+	int fd;
+	int addrlen = sizeof(addrlen);
 
 	fprintf(stderr, "TCP: accepting\n");
 
-	sk = g_socket_listener_accept_finish(server, res, NULL, NULL);
+	fd = accept(server_fd, (struct sockaddr *) &addr, &addrlen);
 
-	if (!sk) {
+	if (fd < 0) {
 		fprintf(stderr, "TCP: Failed accept\n");
-		return;
+		return TRUE;
 	}
 
-	g_object_ref(sk);
-
 	new_client = g_new0(tcp_client, 1);
-	new_client->sk = sk;
+	new_client->fd = fd;
 	new_client->buf = strdup("");
 
 	fprintf(stderr, "TCP: adding client %p to list\n", new_client);
 
-	GSocket *socket = g_socket_connection_get_socket(sk);
-	gint fd = g_socket_get_fd(socket);
 	GIOChannel *channel = g_io_channel_unix_new(fd);
 	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, tcp_read, new_client);
 
 	tcp_clients = g_slist_prepend(tcp_clients, new_client);
+
+	return TRUE;
 }
 
 static void tcp_listen()
 {
-	server = g_socket_listener_new();
-	g_socket_listener_add_inet_port(server, PORT, NULL, NULL);
-	g_socket_listener_accept_async(server, NULL, tcp_accept, NULL);
+	struct sockaddr_in addr;
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(PORT);
+	bind(server_fd, (struct sockaddr *) &addr, sizeof(addr));
+	listen(server_fd, 5);
+
+	GIOChannel *channel = g_io_channel_unix_new(server_fd);
+	g_io_add_watch(channel, G_IO_IN, tcp_accept, 0);
 
 	fprintf(stderr, "TCP: listening\n");
 }
