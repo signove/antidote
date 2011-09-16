@@ -50,7 +50,7 @@ def send_clients(msg):
 		client[1] += msg
 	
 
-next_tx = time.time() + 5
+next_tx = time.time() + 1
 
 while True:
 	rd = [ client[0] for client in clients ]
@@ -71,7 +71,7 @@ while True:
 		write_client(sk)
 
 	if time.time() > next_tx:
-		next_tx = time.time() + 5
+		next_tx = time.time() + 1
 		if clients:
 			send_clients(bank[pos % len(bank)])
 			pos += 1
