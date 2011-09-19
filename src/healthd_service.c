@@ -123,7 +123,7 @@ static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
 	int fd = g_io_channel_unix_get_fd(src);
 	written = send(fd, client->buf, len, 0);
 
-	fprintf(stderr, "TCP: client %p written %d bytes\n", data, written);
+	fprintf(stderr, "TCP: client %p written %d bytes\n", data, (int) written);
 
 	if (written <= 0) {
 		free(client->buf);
