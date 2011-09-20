@@ -36,6 +36,12 @@ typedef struct usb_phdc_device {
 	libusb_device *usb_device;
 	libusb_device_handle *usb_device_handle;
 	libusb_context *usb_device_context;
+	struct libusb_transfer *read_transfer;
+	struct libusb_transfer *write_transfer;
+
+	unsigned char *buffer_in;
+	unsigned char *buffer_out;
+
 	uint8_t ep_bulk_in;
 	uint8_t ep_bulk_out;
 	uint8_t ep_interrupt_in;
@@ -55,6 +61,7 @@ typedef struct usb_phdc_device {
 	int number_of_specializations;
 
 	void (*data_read_cb)(unsigned char* buffer, int size);
+	void (*device_removed_cb)(int fd, void *user_data);
 
 } usb_phdc_device;
 

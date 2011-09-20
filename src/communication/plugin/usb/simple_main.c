@@ -41,6 +41,7 @@ int read_more_data = 1;
 
 void print_read_data(unsigned char *buffer, int buffer_length);
 void write_ieee_response(unsigned char *buffer_in, int buffer_length);
+void phdc_device_removed(int fd, void *user_data);
 
 unsigned char association_response[] = { 0xe3, 0x00, 0x00, 0x2c,
 		0x00,
@@ -67,6 +68,23 @@ void print_read_data(unsigned char *buffer, int buffer_length)
 
 	write_ieee_response(buffer, buffer_length);
 	free(buffer);
+}
+
+void phdc_device_removed(int fd, void *user_data)
+{
+	usb_phdc_device *phdc_device = (usb_phdc_device *) user_data;
+
+	if (phdc_device->read_transfer != NULL) {
+		libusb_cancel_transfer(phdc_device->read_transfer);
+		libusb_free_transfer(phdc_device->read_transfer);
+		phdc_device->read_transfer = NULL;
+	}
+
+	if (phdc_device->write_transfer != NULL) {
+		libusb_cancel_transfer(phdc_device->write_transfer);
+		libusb_free_transfer(phdc_device->write_transfer);
+		phdc_device->read_transfer = NULL;
+	}
 }
 
 //Fake write response
@@ -113,6 +131,7 @@ int main(int argc, char **argv)
 		phdc_device = &(phdc_context->device_list[0]); //Get the first device to read measurements
 
 		phdc_device->data_read_cb = print_read_data;
+		phdc_device->device_removed_cb = phdc_device_removed;
 		print_phdc_info(phdc_device);
 		if (open_phdc_handle(phdc_device) == 1) {
 			while (read_more_data == 1) {
