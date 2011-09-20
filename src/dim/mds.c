@@ -1335,6 +1335,52 @@ char *mds_get_unit_code_string(OID_Type unit_code)
 	case MDC_DIM_KG_PER_M_SQ:
 		return "kg m-2";
 
+		/* Cardiovascular and activity monitor */
+	case MDC_DIM_ANG_DEG:
+		return "o";
+	case MDC_DIM_X_M:
+		return "m";
+	case MDC_DIM_X_FOOT:
+		return "ft";
+	case MDC_DIM_X_G:
+		return "g";
+	case MDC_DIM_X_M_PER_MIN:
+		return "m min-1";
+	case MDC_DIM_YR:
+		return "y";
+	case MDC_DIM_X_JOULES:
+		return "J";
+	case MDC_DIM_X_WATT:
+		return "W";
+	case MDC_DIM_RESP_PER_MIN:
+		return "resp min-1";
+	case MDC_DIM_X_STEP:
+		return "step";
+	case MDC_DIM_X_FOOT_PER_MIN:
+		return "ft per minute";
+	case MDC_DIM_X_INCH_PER_MIN:
+		return "inch per minute";
+	case MDC_DIM_X_STEP_PER_MIN:
+		return "step per minute";
+	case MDC_DIM_X_CAL:
+		return "cal";
+	case MDC_DIM_RPM:
+		return "rpm";
+
+		/*Glucometer*/
+	case MDC_DIM_MILLI_L:
+		return "mL";
+	case MDC_DIM_MILLI_G:
+		return "mg";
+	case MDC_DIM_MILLI_G_PER_DL:
+		return "mg dL-1";
+	case MDC_DIM_MILLI_MOLE_PER_L:
+		return "mmol L-1";
+
+		/* Themometer*/
+	case MDC_DIM_FAHR:
+		return "oF";
+
 	default:
 		return "";
 	}

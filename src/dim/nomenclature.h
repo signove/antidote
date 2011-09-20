@@ -184,11 +184,35 @@
 #define MDC_DIM_BEAT_PER_MIN 2720 /* bpm */
 #define MDC_DIM_KILO_PASCAL 3843 /* kPa */
 #define MDC_DIM_MMHG 3872 /* mmHg */
-/*Body composition monitor*/
+/* Body composition monitor */
 #define MDC_DIM_CENTI_M 1297 /* cm */
 #define MDC_DIM_INCH 1376 /* in */
 #define MDC_DIM_LB 1760 /* lb */
 #define MDC_DIM_KG_PER_M_SQ 1952 /* kg m-2 */
+/* Cardiovascular and activity monitor */
+#define MDC_DIM_DIMLESS 512 /* */
+#define MDC_DIM_ANG_DEG 736 /* o */
+#define MDC_DIM_X_M 1280 /* m */
+#define MDC_DIM_X_FOOT 1344 /* ft */
+#define MDC_DIM_X_G 1728 /* g */
+#define MDC_DIM_X_M_PER_MIN 6560 /* m min-1 */
+#define MDC_DIM_YR 2368 /* y */
+#define MDC_DIM_X_JOULES 3968 /* J */
+#define MDC_DIM_X_WATT 4032 /* W */
+#define MDC_DIM_RESP_PER_MIN 2784  /* resp min-1 */
+#define MDC_DIM_X_STEP 6656 /* step */
+#define MDC_DIM_X_FOOT_PER_MIN 6688 /* ft per minute */
+#define MDC_DIM_X_INCH_PER_MIN 6720 /* inch per minute */
+#define MDC_DIM_X_STEP_PER_MIN 6752 /* step per minute */
+#define MDC_DIM_X_CAL 6784 /* cal */
+#define MDC_DIM_RPM 6816 /* rpm */
+/*Glucometer*/
+#define MDC_DIM_MILLI_L 1618 /* mL */
+#define MDC_DIM_MILLI_G 1746 /* mg */
+#define MDC_DIM_MILLI_G_PER_DL 2130 /* mg dL-1 */
+#define MDC_DIM_MILLI_MOLE_PER_L 4722 /* mmol L-1 */
+/* Themometer*/
+#define MDC_DIM_FAHR 4416 /* oF */
 
 /* ********************************************************************************
  * From Communication Infrastructure (MDC_PART_INFRA)
