@@ -41,7 +41,7 @@ int read_more_data = 1;
 
 void print_read_data(unsigned char *buffer, int buffer_length);
 void write_ieee_response(unsigned char *buffer_in, int buffer_length);
-void phdc_device_removed(int fd, void *user_data);
+void device_disconnected();
 
 unsigned char association_response[] = { 0xe3, 0x00, 0x00, 0x2c,
 		0x00,
@@ -77,13 +77,6 @@ void process_exit(int s)
 	exit(s);
 }
 
-void phdc_device_removed(int fd, void *user_data)
-{
-	if (read_more_data == 1) {
-		process_exit(0);
-	}
-}
-
 //Fake write response
 void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 {
@@ -108,6 +101,11 @@ void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 
 }
 
+void device_disconnected()
+{
+	read_more_data = 0;
+}
+
 int main(int argc, char **argv)
 {
 	signal(SIGINT, process_exit);
@@ -122,12 +120,12 @@ int main(int argc, char **argv)
 		phdc_device = &(phdc_context->device_list[0]); //Get the first device to read measurements
 
 		phdc_device->data_read_cb = print_read_data;
-		phdc_device->device_removed_cb = phdc_device_removed;
+		phdc_device->error_read_cb = device_disconnected;
+
 		print_phdc_info(phdc_device);
 		if (open_phdc_handle(phdc_device) == 1) {
 			while (read_more_data == 1) {
-				if (poll_phdc_device(phdc_device) == 1) {
-				}
+				poll_phdc_device(phdc_device);
 			}
 			process_exit(0);
 		}

@@ -42,7 +42,6 @@ typedef struct usb_phdc_device {
 
 	uint8_t ep_bulk_in;
 	uint8_t ep_bulk_out;
-	uint8_t ep_interrupt_in;
 	int health_interface;
 
 	uint16_t vendor_id;
@@ -59,7 +58,7 @@ typedef struct usb_phdc_device {
 	int number_of_specializations;
 
 	void (*data_read_cb)(unsigned char* buffer, int size);
-	void (*device_removed_cb)(int fd, void *user_data);
+	void (*error_read_cb)();
 
 } usb_phdc_device;
 
@@ -72,8 +71,6 @@ typedef struct usb_phdc_context {
 int init_phdc_usb_plugin(usb_phdc_context *phdc_context);
 
 void search_phdc_devices(usb_phdc_context *phdc_context);
-
-void listen_for_incoming_data(usb_phdc_device *phdc_device);
 
 int send_apdu_stream(usb_phdc_device *phdc_device, unsigned char *data, int len);
 
