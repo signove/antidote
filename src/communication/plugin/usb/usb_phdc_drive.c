@@ -241,40 +241,46 @@ static void request_usb_data_cb(struct libusb_transfer *transfer)
 {
 
 	usb_phdc_device *phdc_device = (usb_phdc_device *) transfer->user_data;
-	unsigned char *received_data;
-	int k;
-
 	fprintf(stdout, "Data received with status: %d\n", transfer->status);
 
 	if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
-		received_data = (unsigned char *) calloc(1,
-				transfer->actual_length * sizeof(unsigned char));
-
-		for (k = 0; k < transfer->actual_length; k++) {
-			received_data[k] = transfer->buffer[k];
-		}
-
-		phdc_device->data_read_cb(received_data, transfer->actual_length);
+		phdc_device->data_read_cb(transfer->buffer, transfer->actual_length);
 	}
+}
 
+static void send_data_cb(struct libusb_transfer *transfer)
+{
+	fprintf(stdout, "send_data_cb completed: %d\n", transfer->status);
+	libusb_free_transfer(transfer);
 }
 
 static void query_phdc_fds(usb_phdc_device *phdc_device)
 {
-	int i = 0;
+	int i, j = 0;
+	int in_events = 0;
+	int total_events = 0;
 	const struct libusb_pollfd** lpfds = libusb_get_pollfds(phdc_device->usb_device_context);
 
 	while (lpfds[i] != NULL) {
+		if (lpfds[i]->events == 4) {
+			in_events++;
+		}
 		i++;
 	}
 
-	phdc_device->file_descriptors_count = i;
+	total_events = i;
 
-	phdc_device->file_descriptors = (struct pollfd*) calloc(1, i * sizeof(struct pollfd));
+	phdc_device->fds = (struct pollfd*) calloc(1, in_events * sizeof(struct pollfd));
+	phdc_device->fds_count = in_events;
 
-	for (i = 0; i < phdc_device->file_descriptors_count; i++) {
-		phdc_device->file_descriptors[i].fd = lpfds[i]->fd;
-		phdc_device->file_descriptors[i].events = lpfds[i]->events;
+	for (i = 0; i < total_events; i++) {
+		if (lpfds[i]->events == 4) {
+			phdc_device->fds[j].fd = lpfds[i]->fd;
+			phdc_device->fds[j].events = lpfds[i]->events;
+			j++;
+			fprintf(stdout, "File descriptor watched %d, evt %d\n", lpfds[i]->fd, lpfds[i]->events);
+		}
+
 	}
 
 	free(lpfds);
@@ -283,16 +289,12 @@ static void query_phdc_fds(usb_phdc_device *phdc_device)
 			phdc_device->device_removed_cb, (void *) phdc_device);
 
 	phdc_device->buffer_in = (unsigned char *) calloc(1, MAX_BUFFER_SIZE * sizeof(unsigned char));
-	phdc_device->buffer_out = (unsigned char *) calloc(1, MAX_BUFFER_SIZE * sizeof(unsigned char));
-	phdc_device->write_transfer = libusb_alloc_transfer(0);
+
 	phdc_device->read_transfer = libusb_alloc_transfer(0);
 
-	libusb_fill_bulk_transfer(phdc_device->write_transfer, phdc_device->usb_device_handle, phdc_device->ep_bulk_out,
-			phdc_device->buffer_out, MAX_BUFFER_SIZE, NULL, NULL, 0);
-
 	libusb_fill_bulk_transfer(phdc_device->read_transfer, phdc_device->usb_device_handle,
-			phdc_device->ep_bulk_in, phdc_device->buffer_in, MAX_BUFFER_SIZE,
-			request_usb_data_cb, (void *) phdc_device, 0);
+			phdc_device->ep_bulk_in, phdc_device->buffer_in, MAX_BUFFER_SIZE, request_usb_data_cb,
+			(void *) phdc_device, 0);
 }
 
 int open_phdc_handle(usb_phdc_device *phdc_device)
@@ -341,58 +343,37 @@ init_failure:
 void listen_for_incoming_data(usb_phdc_device *phdc_device)
 {
 	int ret;
-	unsigned char data[MAX_BUFFER_SIZE];
 	int read_length = 0;
 
 	fprintf(stdout, "network_usb_wait_for_data\n");
 
-	ret = libusb_bulk_transfer(phdc_device->usb_device_handle, phdc_device->ep_bulk_in, data,
-			sizeof(data), &read_length, 0);
+	ret = libusb_bulk_transfer(phdc_device->usb_device_handle, phdc_device->ep_bulk_in, phdc_device->buffer_in,
+			MAX_BUFFER_SIZE, &read_length, 0);
 
 	fprintf(stdout, "libusb_bulk_transfer %d\n", ret);
 
 	if (ret < 0) {
-		fprintf(stdout, "Read error\n");
-		return;
+		fprintf(stdout, "Read error %d\n", ret);
 	}
 
-	phdc_device->data_read_cb(data, read_length);
-}
-
-void read_incoming_data(usb_phdc_device *phdc_device)
-{
-	int i;
-	int len;
-	unsigned char data[MAX_BUFFER_SIZE];
-
-	fprintf(stdout, "read_incoming_data\n");
-
-	for (i = 0; i < phdc_device->file_descriptors_count; i++) {
-		if (phdc_device->file_descriptors[i].revents != 0) {
-			fprintf(stdout, "reading file descriptor %d\n", phdc_device->file_descriptors[i].fd);
-			len = read(phdc_device->file_descriptors[i].fd, data, sizeof(data));
-			if (len > 0) {
-				phdc_device->data_read_cb(data, len);
-			}
-		}
-		phdc_device->file_descriptors[i].revents = 0;
-	}
+	phdc_device->data_read_cb(phdc_device->buffer_in, read_length);
 }
 
 int send_apdu_stream(usb_phdc_device *phdc_device, unsigned char *data, int len)
 {
-	/*Changed to be asynchronous*/
 	int ret;
-//	int write_length;
+	struct libusb_transfer *transfer;
 
 	fprintf(stdout, "network_usb_send_apdu_stream\n");
 
-	ret = libusb_submit_transfer(phdc_device->write_transfer);
+	transfer = libusb_alloc_transfer(0);
 
-//	ret = libusb_bulk_transfer(phdc_device->usb_device_handle, phdc_device->ep_bulk_out, data, len,
-//			&write_length, 0);
-//
-//	fprintf(stdout, "libusb_bulk_transfer %d\n", ret);
+	libusb_fill_bulk_transfer(transfer, phdc_device->usb_device_handle, phdc_device->ep_bulk_out,
+			data, len, send_data_cb, NULL, 0);
+
+	ret = libusb_submit_transfer(transfer);
+
+	fprintf(stdout, "libusb_bulk_transfer status: %d\n", ret);
 
 	return ret == LIBUSB_SUCCESS ? 1 : 0;
 }
@@ -484,10 +465,15 @@ static void release_phdc_device(usb_phdc_device *phdc_device)
 		phdc_device->specializations = NULL;
 	}
 
-	if (phdc_device->file_descriptors_count > 0) {
-		phdc_device->file_descriptors_count = 0;
-		free(phdc_device->file_descriptors);
-		phdc_device->file_descriptors = NULL;
+	if (phdc_device->fds_count > 0) {
+		phdc_device->fds_count = 0;
+		free(phdc_device->fds);
+		phdc_device->fds = NULL;
+	}
+
+	if (phdc_device->read_transfer != NULL) {
+		libusb_free_transfer(phdc_device->read_transfer);
+		phdc_device->read_transfer = NULL;
 	}
 
 	if (phdc_device->usb_device_context != NULL) {
@@ -500,10 +486,6 @@ static void release_phdc_device(usb_phdc_device *phdc_device)
 		phdc_device->buffer_in = NULL;
 	}
 
-	if (phdc_device->buffer_out != NULL) {
-		free(phdc_device->buffer_out);
-		phdc_device->buffer_out = NULL;
-	}
 }
 
 void release_phdc_resources(usb_phdc_context *phdc_context)
@@ -519,9 +501,7 @@ void release_phdc_resources(usb_phdc_context *phdc_context)
 
 static void request_usb_data(usb_phdc_device *phdc_device)
 {
-	if (phdc_device->read_transfer != NULL) {
-		libusb_submit_transfer(phdc_device->read_transfer);
-	}
+	libusb_submit_transfer(phdc_device->read_transfer);
 }
 
 int poll_phdc_device(usb_phdc_device *phdc_device)
@@ -534,7 +514,7 @@ int poll_phdc_device(usb_phdc_device *phdc_device)
 
 	request_usb_data(phdc_device);
 
-	evt_count = poll(phdc_device->file_descriptors, phdc_device->file_descriptors_count, -1);
+	evt_count = poll(phdc_device->fds, phdc_device->fds_count, -1);
 
 	if (evt_count > 0) {
 		has_events = 1;

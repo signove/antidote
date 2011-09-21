@@ -67,23 +67,20 @@ void print_read_data(unsigned char *buffer, int buffer_length)
 	fprintf(stdout, "\n-----------------------------------------------\n");
 
 	write_ieee_response(buffer, buffer_length);
-	free(buffer);
+}
+
+void process_exit(int s)
+{
+	fprintf(stdout, "Exiting by reason:  %d\n", s);
+	release_phdc_resources(phdc_context);
+	free(phdc_context);
+	exit(s);
 }
 
 void phdc_device_removed(int fd, void *user_data)
 {
-	usb_phdc_device *phdc_device = (usb_phdc_device *) user_data;
-
-	if (phdc_device->read_transfer != NULL) {
-		libusb_cancel_transfer(phdc_device->read_transfer);
-		libusb_free_transfer(phdc_device->read_transfer);
-		phdc_device->read_transfer = NULL;
-	}
-
-	if (phdc_device->write_transfer != NULL) {
-		libusb_cancel_transfer(phdc_device->write_transfer);
-		libusb_free_transfer(phdc_device->write_transfer);
-		phdc_device->read_transfer = NULL;
+	if (read_more_data == 1) {
+		process_exit(0);
 	}
 }
 
@@ -111,17 +108,11 @@ void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 
 }
 
-void request_exit(int s)
-{
-	fprintf(stdout, "Request Exit: %d\n", s);
-	read_more_data = 0;
-}
-
 int main(int argc, char **argv)
 {
-	signal(SIGINT, request_exit);
-	signal(SIGTERM, request_exit);
-	signal(SIGQUIT, request_exit);
+	signal(SIGINT, process_exit);
+	signal(SIGTERM, process_exit);
+	signal(SIGQUIT, process_exit);
 
 	phdc_context = (usb_phdc_context *) calloc(1, sizeof(usb_phdc_context));
 
@@ -138,8 +129,7 @@ int main(int argc, char **argv)
 				if (poll_phdc_device(phdc_device) == 1) {
 				}
 			}
-			release_phdc_resources(phdc_context);
-			free(phdc_context);
+			process_exit(0);
 		}
 	}
 

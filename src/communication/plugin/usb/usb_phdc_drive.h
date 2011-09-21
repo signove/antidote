@@ -36,11 +36,9 @@ typedef struct usb_phdc_device {
 	libusb_device *usb_device;
 	libusb_device_handle *usb_device_handle;
 	libusb_context *usb_device_context;
-	struct libusb_transfer *read_transfer;
-	struct libusb_transfer *write_transfer;
 
+	struct libusb_transfer *read_transfer;
 	unsigned char *buffer_in;
-	unsigned char *buffer_out;
 
 	uint8_t ep_bulk_in;
 	uint8_t ep_bulk_out;
@@ -50,8 +48,8 @@ typedef struct usb_phdc_device {
 	uint16_t vendor_id;
 	uint16_t product_id;
 
-	struct pollfd *file_descriptors;
-	nfds_t file_descriptors_count;
+	struct pollfd *fds;
+	nfds_t fds_count;
 
 	char *manufacturer;
 	char *name;
@@ -76,8 +74,6 @@ int init_phdc_usb_plugin(usb_phdc_context *phdc_context);
 void search_phdc_devices(usb_phdc_context *phdc_context);
 
 void listen_for_incoming_data(usb_phdc_device *phdc_device);
-
-void read_incoming_data(usb_phdc_device *phdc_device);
 
 int send_apdu_stream(usb_phdc_device *phdc_device, unsigned char *data, int len);
 
