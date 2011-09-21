@@ -90,7 +90,7 @@ public class AntidoteClient extends Activity {
 	
 	public void handle_packet_description(String path, String xml)
 	{
-		msg.setText("Description");
+		msg.setText("MDS received");
 		show_dev(path);
 	}
 	
@@ -373,7 +373,7 @@ public class AntidoteClient extends Activity {
 		running = false;
 		try {
 			sk.close();
-		} catch (Exception e) {
+			} catch (Exception e) {
 		
 		}
 		super.onDestroy();
