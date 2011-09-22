@@ -47,7 +47,7 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_util_HEADERS = util/bytelib.h
 
 #Bin Programs
-bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd
+bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd healthd_usb
 
 # Minimal sample app to use the IEEE protocol facade
 ieee_manager_SOURCES = sample_manager.c
@@ -80,6 +80,18 @@ healthd_CFLAGS = @DBUS_CFLAGS@ @GLIB_CFLAGS@  @GIO_CFLAGS@
 
 healthd_LDADD = \
              communication/plugin/bluez/libbluezplugin.la \
+             libantidote.la \
+             @GLIB_LIBS@ \
+             @GIO_LIBS@ \
+             @DBUS_LIBS@ \
+             @DBUS_GLIB_LIBS@
+
+#healthd: D-BUS Service for IEEE protocol facade              
+healthd_usb_SOURCES = healthd_usb.c
+healthd_usb_CFLAGS = @DBUS_CFLAGS@ @GLIB_CFLAGS@ @GIO_CFLAGS@
+
+healthd_usb_LDADD = \
+             communication/plugin/usb/libusbplugin.la \
              libantidote.la \
              @GLIB_LIBS@ \
              @GIO_LIBS@ \

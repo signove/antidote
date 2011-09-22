@@ -45,4 +45,3 @@ typedef struct PluginUsbListener {
 
 void plugin_usb_setup(CommunicationPlugin *plugin);
 void plugin_usb_set_listener(PluginUsbListener *plugin);
-gboolean plugin_usb_update_data_types(guint16 data_types[]);
