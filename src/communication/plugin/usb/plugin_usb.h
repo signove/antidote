@@ -24,6 +24,7 @@
  * $LICENSE_TEXT:END$ *
  *
  * \author Elvis Pfutzenreuter
+ * \author Jose Luis do Nascimento
  * \date Mar 25, 2011
  */
 

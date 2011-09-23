@@ -96,4 +96,5 @@ healthd_usb_LDADD = \
              @GLIB_LIBS@ \
              @GIO_LIBS@ \
              @DBUS_LIBS@ \
-             @DBUS_GLIB_LIBS@
+             @DBUS_GLIB_LIBS@ \
+	     @USB1_LIBS@
