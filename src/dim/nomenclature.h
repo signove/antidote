@@ -211,7 +211,7 @@
 #define MDC_DIM_MILLI_G 1746 /* mg */
 #define MDC_DIM_MILLI_G_PER_DL 2130 /* mg dL-1 */
 #define MDC_DIM_MILLI_MOLE_PER_L 4722 /* mmol L-1 */
-/* Themometer*/
+/* Thermometer*/
 #define MDC_DIM_FAHR 4416 /* oF */
 
 /* ********************************************************************************

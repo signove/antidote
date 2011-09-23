@@ -1377,7 +1377,7 @@ char *mds_get_unit_code_string(OID_Type unit_code)
 	case MDC_DIM_MILLI_MOLE_PER_L:
 		return "mmol L-1";
 
-		/* Themometer*/
+		/* Thermometer*/
 	case MDC_DIM_FAHR:
 		return "oF";
 
