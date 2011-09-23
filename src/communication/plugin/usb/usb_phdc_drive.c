@@ -236,14 +236,13 @@ static int is_phdc_11073_device(libusb_device *device,
 
 static void request_usb_data_cb(struct libusb_transfer *transfer)
 {
-
 	usb_phdc_device *phdc_device = (usb_phdc_device *) transfer->user_data;
 	fprintf(stdout, "Data received with status: %d\n", transfer->status);
 
 	if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
-		phdc_device->data_read_cb(transfer->buffer, transfer->actual_length);
+		phdc_device->data_read_cb(phdc_device, transfer->buffer, transfer->actual_length);
 	} else if (transfer->status == LIBUSB_TRANSFER_ERROR) {
-		phdc_device->error_read_cb();
+		phdc_device->error_read_cb(phdc_device);
 	}
 }
 
@@ -328,7 +327,7 @@ init_failure:
 	return ret;
 }
 
-int send_apdu_stream(usb_phdc_device *phdc_device, unsigned char *data, int len)
+int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len)
 {
 	int ret;
 	struct libusb_transfer *transfer;
@@ -473,6 +472,17 @@ static void request_usb_data(usb_phdc_device *phdc_device)
 	libusb_submit_transfer(phdc_device->read_transfer);
 }
 
+void poll_phdc_device_pre(usb_phdc_device *phdc_device)
+{	
+	// TODO is this necessary every time a poll() returns?
+	request_usb_data(phdc_device);
+}
+
+void poll_phdc_device_post(usb_phdc_device *phdc_device)
+{
+	libusb_handle_events(phdc_device->usb_device_context);
+}
+
 int poll_phdc_device(usb_phdc_device *phdc_device)
 {
 
@@ -481,7 +491,7 @@ int poll_phdc_device(usb_phdc_device *phdc_device)
 
 	fprintf(stdout, "poll_phdc_device\n");
 
-	request_usb_data(phdc_device);
+	poll_phdc_device_pre(phdc_device);
 
 	evt_count = poll(phdc_device->fds, phdc_device->fds_count, -1);
 
@@ -490,7 +500,7 @@ int poll_phdc_device(usb_phdc_device *phdc_device)
 	}
 
 	if (has_events) {
-		libusb_handle_events(phdc_device->usb_device_context);
+		poll_phdc_device_post(phdc_device);
 	}
 
 	return has_events;

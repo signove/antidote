@@ -39,9 +39,9 @@ usb_phdc_context *phdc_context = NULL;
 usb_phdc_device *phdc_device = NULL;
 int read_more_data = 1;
 
-void print_read_data(unsigned char *buffer, int buffer_length);
+void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length);
 void write_ieee_response(unsigned char *buffer_in, int buffer_length);
-void device_disconnected();
+void device_disconnected(usb_phdc_device *dev);
 
 unsigned char association_response[] = { 0xe3, 0x00, 0x00, 0x2c,
 		0x00,
@@ -56,7 +56,7 @@ unsigned char configuration_response[] = { 0xE7, 0x00, 0x00, 0x16, 0x00, 0x14, 0
 		0x01, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x1C, 0x00, 0x04, 0x40, 0x00,
 		0x00, 0x00 };
 
-void print_read_data(unsigned char *buffer, int buffer_length)
+void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length)
 {
 	int i;
 	fprintf(stdout, "Data received length: %d \n", buffer_length);
@@ -88,20 +88,20 @@ void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 	fprintf(stdout, "write_ieee_response for message type: %d\n", msg_type);
 
 	if (msg_type == 0xE2) { //Association Request
-		send_apdu_stream(phdc_device, association_response, sizeof(association_response));
+		usb_send_apdu(phdc_device, association_response, sizeof(association_response));
 	} else if (msg_type == 0xE7) { //Configuration received
 		configuration_response[6] = buffer_in[6];
 		configuration_response[7] = buffer_in[7];
-		send_apdu_stream(phdc_device, configuration_response, sizeof(configuration_response));
+		usb_send_apdu(phdc_device, configuration_response, sizeof(configuration_response));
 	} else if (msg_type == 0xE4) { //Association Release Request
-		send_apdu_stream(phdc_device, association_release_response,
+		usb_send_apdu(phdc_device, association_release_response,
 				sizeof(association_release_response));
 		read_more_data = 0; //Flag to exit from while main loop
 	}
 
 }
 
-void device_disconnected()
+void device_disconnected(usb_phdc_device *dev)
 {
 	read_more_data = 0;
 }

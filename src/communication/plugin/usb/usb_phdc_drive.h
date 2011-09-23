@@ -31,6 +31,8 @@
 #include <libusb-1.0/libusb.h>
 #include <poll.h>
 
+struct usb_phdc_device;
+
 typedef struct usb_phdc_device {
 
 	libusb_device *usb_device;
@@ -57,8 +59,8 @@ typedef struct usb_phdc_device {
 	int *specializations;
 	int number_of_specializations;
 
-	void (*data_read_cb)(unsigned char* buffer, int size);
-	void (*error_read_cb)();
+	void (*data_read_cb)(struct usb_phdc_device *dev, unsigned char* buffer, int size);
+	void (*error_read_cb)(struct usb_phdc_device *dev);
 
 } usb_phdc_device;
 
@@ -72,7 +74,7 @@ int init_phdc_usb_plugin(usb_phdc_context *phdc_context);
 
 void search_phdc_devices(usb_phdc_context *phdc_context);
 
-int send_apdu_stream(usb_phdc_device *phdc_device, unsigned char *data, int len);
+int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len);
 
 int open_phdc_handle(usb_phdc_device *phdc_device);
 
@@ -80,6 +82,10 @@ void release_phdc_resources(usb_phdc_context *phdc_context);
 
 void print_phdc_info(usb_phdc_device *phdc_device);
 
+void poll_phdc_device_pre(usb_phdc_device *phdc_device);
+
 int poll_phdc_device(usb_phdc_device *phdc_device);
+
+void poll_phdc_device_post(usb_phdc_device *phdc_device);
 
 #endif /*USB_PHDC_DRIVE_*/
