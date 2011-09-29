@@ -254,7 +254,7 @@ static void send_data_cb(struct libusb_transfer *transfer)
 
 static void query_phdc_fds(usb_phdc_device *phdc_device)
 {
-	int i;
+	int i = 0;
 	int total_events = 0;
 	const struct libusb_pollfd** lpfds = libusb_get_pollfds(phdc_device->usb_device_context);
 
