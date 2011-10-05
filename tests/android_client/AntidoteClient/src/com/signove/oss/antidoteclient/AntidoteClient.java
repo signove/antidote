@@ -1,6 +1,7 @@
 package com.signove.oss.antidoteclient;
 
 import android.app.Activity;
+import java.io.File;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.os.Handler;
@@ -30,6 +31,7 @@ public class AntidoteClient extends Activity {
 	Handler tm;
 	Socket sk;
 	String buffer;
+	Process service_process;
 	Map <String, String> map;
 	String ADDRESS = "127.0.0.1";
 	int PORT = 9005;
@@ -373,8 +375,12 @@ public class AntidoteClient extends Activity {
 		running = false;
 		try {
 			sk.close();
-			} catch (Exception e) {
-		
+		} catch (Exception e) {
+	   	    // do nothing
+		}
+		if (service_process != null) {
+			service_process.destroy();
+			service_process = null;
 		}
 		super.onDestroy();
 	}
@@ -401,8 +407,19 @@ public class AntidoteClient extends Activity {
         		connect();
         	}
         };
-        
-        tm.postDelayed(do_connect, 1000);
+ 
+        File fhomedir = getFilesDir();
+        String homedir = fhomedir.getAbsolutePath();
+        String[] environ = new String[1];
+        environ[0] = "TMPDIR=" + homedir;
+        Log.w("Antidote", environ[0]);
+        try {
+        	service_process = Runtime.getRuntime().exec("/system/bin/healthd --tcp", environ, fhomedir);
+        } catch (IOException e) {
+        	service_process = null;
+        	Log.w("Antidote", "onCreate: Could not start healthd service");
+        }
+        tm.postDelayed(do_connect, 3000);
         
         Log.w("Antidote", "onCreate");
     }
