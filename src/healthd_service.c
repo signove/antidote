@@ -222,7 +222,10 @@ static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 static void tcp_listen()
 {
 	struct sockaddr_in addr;
+	int reuse = 1;
+
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
