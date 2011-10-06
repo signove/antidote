@@ -17,6 +17,9 @@ reporting.
 State machine: evaluate the possibility of removing
 FSMEventData.
 
+Work with more than one communication plug-in
+simultaneously.
+
 ASN.1: writer stream (using in encoding) should not need
 to know final msg size in advance.
 
@@ -66,6 +69,9 @@ that, if needed.
 
 Think in a more numeric-object-centered model instead of
 communication- and event-centered like now.
+
+Improve timeout cases that could be handled by plug-in
+(e.g. HDP reconnections)
 	
 
 DOCUMENTATION
