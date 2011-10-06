@@ -561,7 +561,6 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 		DEBUG("ENUM ATTR: [type:%s, value:%d]", "Enum-Observed-Value-Partition", enumeration->enum_observed_value_partition);
 		break;
 	default:
-		DEBUG("Can't fill enumeration attribute, attribute id is %d", attr_id);
 		result = dimutil_fill_metric_attr(&enumeration->metric, attr_id, stream, data_entry);
 		break;
 
