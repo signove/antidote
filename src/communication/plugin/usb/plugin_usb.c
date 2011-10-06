@@ -33,8 +33,6 @@
  */
 
 // TODO support hotplugging (depends on future version of libusb: 1.1)
-// FIXME do not fail if initial search returns nothing
-// FIXME handle multiple USB devices
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +52,7 @@ static char *current_data = NULL;
 static int data_len = 0;
 
 usb_phdc_context *phdc_context = NULL;
+int scheduled_id = 0;
 
 typedef struct device_object {
 	usb_phdc_device *impl;
@@ -384,6 +383,48 @@ static void disconnect_all_channels()
 
 static void channel_connected(usb_phdc_device *dev, usb_phdc_device *impl);
 
+static void schedule(gboolean (*cb)(gpointer), int to)
+{
+	if (scheduled_id) {
+		g_source_remove(scheduled_id);
+	}
+	scheduled_id = g_timeout_add(to, cb, NULL);
+}
+
+static gboolean search_devices(gpointer dummy)
+{
+	int i;
+
+	search_phdc_devices(phdc_context);
+
+	if (phdc_context->number_of_devices <= 0) {
+		fprintf(stderr, "No devices found, retrying in 5 seconds...\n");
+		schedule(search_devices, 5000);
+		return FALSE;
+	}
+
+	for (i = 0; i < phdc_context->number_of_devices; ++i) {
+		usb_phdc_device *usbdev = &(phdc_context->device_list[i]);
+
+		fprintf(stderr, "Opening device #%d\n", i);
+		add_device(usbdev);
+
+		usbdev->data_read_cb = data_received;
+		usbdev->error_read_cb = data_error_received;
+
+		print_phdc_info(usbdev);
+
+		if (open_phdc_handle(usbdev) == 1) {
+			channel_connected(usbdev, usbdev);
+			poll_phdc_device_pre(usbdev);
+		} else {
+			fprintf(stderr, "Trouble opening device #%d\n", i);
+		}
+	}
+
+	return FALSE;
+}
+
 /**
  * Starts Health link with USB
  *
@@ -396,26 +437,9 @@ static int init()
 	phdc_context = (usb_phdc_context *) calloc(1, sizeof(usb_phdc_context));
 
 	init_phdc_usb_plugin(phdc_context);
-	search_phdc_devices(phdc_context);
+	schedule(search_devices, 0);
 
-	if (phdc_context->number_of_devices > 0) {
-		// Get the first device to read measurements
-		usb_phdc_device *usbdev = &(phdc_context->device_list[0]);
-		add_device(usbdev);
-
-		usbdev->data_read_cb = data_received;
-		usbdev->error_read_cb = data_error_received;
-
-		print_phdc_info(usbdev);
-
-		if (open_phdc_handle(usbdev) == 1) {
-			channel_connected(usbdev, usbdev);
-			poll_phdc_device_pre(usbdev);
-			return NETWORK_ERROR_NONE;
-		}
-	}
-
-	return NETWORK_ERROR;
+	return NETWORK_ERROR_NONE;
 }
 
 
