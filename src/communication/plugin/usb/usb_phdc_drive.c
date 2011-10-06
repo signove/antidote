@@ -70,7 +70,7 @@ static int *get_device_specializations(const unsigned char *buffer, int buffer_l
 	return spec_list;
 }
 
-static void get_phdc_device_attributes(libusb_device* device,
+static int get_phdc_device_attributes(libusb_device* device,
 		struct libusb_device_descriptor device_descriptor, usb_phdc_device *phdc_device)
 {
 	unsigned char manufacturer[255];
@@ -80,6 +80,7 @@ static void get_phdc_device_attributes(libusb_device* device,
 	int i, j;
 	int type;
 	int direction;
+	int found = 0;
 
 	libusb_device_handle *dev_handler;
 	const struct libusb_interface_descriptor *interface_desc;
@@ -88,45 +89,58 @@ static void get_phdc_device_attributes(libusb_device* device,
 	int number_of_specializations = 0;
 
 	if (libusb_open(device, &dev_handler) != LIBUSB_SUCCESS) {
-		return;
+		return 0;
 	}
 
 	if (libusb_get_config_descriptor(device, 0, &config_desc) != LIBUSB_SUCCESS) {
 		libusb_close(dev_handler);
-		return;
+		return 0;
 	}
 
 	for (j = 0; j < config_desc->bNumInterfaces; j++) {
-
 		if (libusb_claim_interface(dev_handler, j) != LIBUSB_SUCCESS) {
 			libusb_close(dev_handler);
-			return;
+			return 0;
 		}
 
 		interface_desc = &(config_desc->interface[j].altsetting[0]);
 
-		if (interface_desc->bInterfaceClass == PHDC_INTERFACE_CLASS) {
-			phdc_device->health_interface = j;
-
-			phdc_device->specializations = get_device_specializations(interface_desc->extra,
-					interface_desc->extra_length, &number_of_specializations);
-			phdc_device->number_of_specializations = number_of_specializations;
-
-			for (i = 0; i < interface_desc->bNumEndpoints; i++) {
-				ep = interface_desc->endpoint[i];
-				type = (ep.bmAttributes & 0x03);
-				direction = (ep.bEndpointAddress & 0x80);
-				if (type == LIBUSB_TRANSFER_TYPE_BULK && direction == LIBUSB_ENDPOINT_IN) {
-					phdc_device->ep_bulk_in = ep.bEndpointAddress;
-				} else if (type == LIBUSB_TRANSFER_TYPE_BULK && direction == LIBUSB_ENDPOINT_OUT) {
-					phdc_device->ep_bulk_out = ep.bEndpointAddress;
-				}
-				fprintf(stdout, "Ep address: %d, type: %d, direction: %d\n", ep.bEndpointAddress,
-						type, direction);
-			}
-			break;
+		if (interface_desc->bInterfaceClass != PHDC_INTERFACE_CLASS) {
+			continue;
 		}
+
+		found = 1;
+
+		phdc_device->health_interface = j;
+
+		phdc_device->specializations = get_device_specializations(interface_desc->extra,
+				interface_desc->extra_length, &number_of_specializations);
+		phdc_device->number_of_specializations = number_of_specializations;
+
+		for (i = 0; i < interface_desc->bNumEndpoints; i++) {
+			ep = interface_desc->endpoint[i];
+			type = (ep.bmAttributes & 0x03);
+			direction = (ep.bEndpointAddress & 0x80);
+			if (type == LIBUSB_TRANSFER_TYPE_BULK &&
+						direction == LIBUSB_ENDPOINT_IN) {
+				phdc_device->ep_bulk_in = ep.bEndpointAddress;
+			} else if (type == LIBUSB_TRANSFER_TYPE_BULK &&
+						direction == LIBUSB_ENDPOINT_OUT) {
+				phdc_device->ep_bulk_out = ep.bEndpointAddress;
+			}
+			// TODO support for interrupt endpoints
+			fprintf(stderr, "Ep addr: %d, type: %d, direction: %d\n",
+				ep.bEndpointAddress, type, direction);
+		}
+
+		// keep focus on interface that we've found
+		break;
+	}
+
+	if (! found) {
+		fprintf(stderr, "Trouble finding PHDC interface\n");
 		libusb_release_interface(dev_handler, j);
+		return 0;
 	}
 
 	libusb_free_config_descriptor(config_desc);
@@ -136,12 +150,21 @@ static void get_phdc_device_attributes(libusb_device* device,
 
 	len = libusb_get_string_descriptor_ascii(dev_handler, device_descriptor.iProduct, product,
 			sizeof(product));
+	if (len < 0) {
+		fprintf(stderr, "Trouble getting USB product\n");
+		return 0;
+	}
 
 	phdc_device->name = (char *) calloc(1, len + 1);
 	strncpy(phdc_device->name, (char *) product, len);
 
-	len = libusb_get_string_descriptor_ascii(dev_handler, device_descriptor.iManufacturer, manufacturer,
-			sizeof(manufacturer));
+	len = libusb_get_string_descriptor_ascii(dev_handler, device_descriptor.iManufacturer,
+					manufacturer, sizeof(manufacturer));
+
+	if (len < 0) {
+		fprintf(stderr, "Trouble getting USB manufacturer\n");
+		return 0;
+	}
 
 	phdc_device->manufacturer = (char *) calloc(1, len + 1);
 	strncpy(phdc_device->manufacturer, (char *) manufacturer, len);
@@ -149,11 +172,20 @@ static void get_phdc_device_attributes(libusb_device* device,
 	len = libusb_get_string_descriptor_ascii(dev_handler, device_descriptor.iSerialNumber, serial,
 			sizeof(serial));
 
+	if (len < 0) {
+		fprintf(stderr, "Trouble getting USB serial number\n");
+		return 0;
+	}
+
 	phdc_device->serial_number = (char *) calloc(1, len + 1);
 	strncpy(phdc_device->serial_number, (char *) serial, len);
 
 	libusb_release_interface(dev_handler, j);
 	libusb_close(dev_handler);
+
+	fprintf(stderr, "PHDC device ok\n");
+
+	return 1;
 }
 
 static int is_ieee11073_compatible(const unsigned char *buffer, int buffer_length)
@@ -173,10 +205,10 @@ static int is_ieee11073_compatible(const unsigned char *buffer, int buffer_lengt
 			if (type == PHDC_CLASSFUNCTION_DESCRIPTOR) {
 				value = (buffer[index + 2] & 0xFF);
 				if (value == PHDC_11073_20601) {
-					fprintf(stdout, "IEEE 11073 20601 Compatible Device\n");
+					fprintf(stderr, "IEEE 11073 20601 Compatible Device\n");
 					is_ieee11073 = 1;
 				} else if (value == PHDC_VENDOR) {
-					fprintf(stdout, "Vendor device, not IEEE 11073 compatible\n");
+					fprintf(stderr, "Vendor device, not IEEE 11073 compatible\n");
 					is_ieee11073 = 0;
 				}
 			} else if (type == PHDC_11073PHD_FUNCTION_DESCRIPTOR) {
@@ -221,7 +253,7 @@ static int is_phdc_11073_device(libusb_device *device,
 	for (j = 0; j < config_desc->bNumInterfaces; j++) {
 		interface_desc = &(config_desc->interface[j].altsetting[0]);
 		if (interface_desc->bInterfaceClass == PHDC_INTERFACE_CLASS) {
-			fprintf(stdout, "Medical device found\n");
+			fprintf(stderr, "Medical device found\n");
 			result = is_ieee11073_compatible(interface_desc->extra, interface_desc->extra_length);
 			break;
 		}
@@ -237,7 +269,7 @@ static int is_phdc_11073_device(libusb_device *device,
 static void request_usb_data_cb(struct libusb_transfer *transfer)
 {
 	usb_phdc_device *phdc_device = (usb_phdc_device *) transfer->user_data;
-	fprintf(stdout, "Data received with status: %d\n", transfer->status);
+	fprintf(stderr, "Data received with status: %d\n", transfer->status);
 
 	if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
 		phdc_device->data_read_cb(phdc_device, transfer->buffer, transfer->actual_length);
@@ -248,7 +280,7 @@ static void request_usb_data_cb(struct libusb_transfer *transfer)
 
 static void send_data_cb(struct libusb_transfer *transfer)
 {
-	fprintf(stdout, "send_data_cb completed: %d\n", transfer->status);
+	fprintf(stderr, "send_data_cb completed: %d\n", transfer->status);
 	libusb_free_transfer(transfer);
 }
 
@@ -270,7 +302,7 @@ static void query_phdc_fds(usb_phdc_device *phdc_device)
 	for (i = 0; i < total_events; i++) {
 		phdc_device->fds[i].fd = lpfds[i]->fd;
 		phdc_device->fds[i].events = lpfds[i]->events;
-		fprintf(stdout, "File descriptor watched %d, evt %d\n", lpfds[i]->fd, lpfds[i]->events);
+		fprintf(stderr, "File descriptor watched %d, evt %d\n", lpfds[i]->fd, lpfds[i]->events);
 	}
 
 	free(lpfds);
@@ -291,7 +323,7 @@ int open_phdc_handle(usb_phdc_device *phdc_device)
 
 	error_handler = libusb_init(&phdc_device->usb_device_context);
 	if (error_handler != LIBUSB_SUCCESS) {
-		fprintf(stdout, "libusb_init failure %d\n", error_handler);
+		fprintf(stderr, "libusb_init failure %d\n", error_handler);
 		goto init_failure;
 	}
 
@@ -299,13 +331,13 @@ int open_phdc_handle(usb_phdc_device *phdc_device)
 			phdc_device->usb_device_context, phdc_device->vendor_id,
 			phdc_device->product_id);
 	if (phdc_device->usb_device_handle == NULL) {
-		fprintf(stdout, "libusb_open failure %d\n", error_handler);
+		fprintf(stderr, "libusb_open failure %d\n", error_handler);
 		goto release_device;
 	}
 
 	error_handler = libusb_claim_interface(phdc_device->usb_device_handle, phdc_device->health_interface);
 	if (error_handler != LIBUSB_SUCCESS) {
-		fprintf(stdout, "libusb_claim_interface failure %d\n", error_handler);
+		fprintf(stderr, "libusb_claim_interface failure %d\n", error_handler);
 		goto close_device;
 	}
 
@@ -332,7 +364,7 @@ int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len)
 	int ret;
 	struct libusb_transfer *transfer;
 
-	fprintf(stdout, "network_usb_send_apdu_stream\n");
+	fprintf(stderr, "network_usb_send_apdu_stream\n");
 
 	transfer = libusb_alloc_transfer(0);
 
@@ -341,7 +373,7 @@ int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len)
 
 	ret = libusb_submit_transfer(transfer);
 
-	fprintf(stdout, "libusb_bulk_transfer status: %d\n", ret);
+	fprintf(stderr, "libusb_bulk_transfer status: %d\n", ret);
 
 	return ret == LIBUSB_SUCCESS ? 1 : 0;
 }
@@ -351,12 +383,12 @@ void search_phdc_devices(usb_phdc_context *phdc_context)
 	libusb_device **device_list;
 	ssize_t number_of_devices;
 	libusb_device *device;
-	usb_phdc_device *phdc_device;
 	int i = 0;
 
 	number_of_devices = libusb_get_device_list(phdc_context->usb_context, &device_list);
 
 	while ((device = device_list[i++]) != NULL) {
+		usb_phdc_device new_device;
 		struct libusb_device_descriptor desc;
 		int r = libusb_get_device_descriptor(device, &desc);
 		if (r < 0) {
@@ -364,14 +396,16 @@ void search_phdc_devices(usb_phdc_context *phdc_context)
 			continue;
 		}
 		if (is_phdc_11073_device(device, desc) == 1) {
+			if (! get_phdc_device_attributes(device, desc, &new_device)) {
+				continue;
+			}
 			phdc_context->number_of_devices++;
-			phdc_context->device_list = (usb_phdc_device *) realloc(phdc_context->device_list,
-					phdc_context->number_of_devices * sizeof(usb_phdc_device));
+			phdc_context->device_list =
+				(usb_phdc_device *) realloc(phdc_context->device_list,
+				phdc_context->number_of_devices * sizeof(usb_phdc_device));
 
-			phdc_device = &(phdc_context->device_list[phdc_context->number_of_devices - 1]);
-			phdc_device->usb_device = libusb_ref_device(device);
-			get_phdc_device_attributes(device, desc, phdc_device);
-
+			new_device.usb_device = libusb_ref_device(device);
+			phdc_context->device_list[phdc_context->number_of_devices - 1] = new_device;
 		}
 	}
 
@@ -389,13 +423,13 @@ void print_phdc_info(usb_phdc_device *phdc_device)
 {
 	int i;
 
-	fprintf(stdout, "Device name: %s\n", phdc_device->name);
-	fprintf(stdout, "Device manufacturer: %s\n", phdc_device->manufacturer);
-	fprintf(stdout, "Device serial: %s\n", phdc_device->serial_number);
-	fprintf(stdout, "Number of specializations: %d\n", phdc_device->number_of_specializations);
+	fprintf(stderr, "Device name: %s\n", phdc_device->name);
+	fprintf(stderr, "Device manufacturer: %s\n", phdc_device->manufacturer);
+	fprintf(stderr, "Device serial: %s\n", phdc_device->serial_number);
+	fprintf(stderr, "Number of specializations: %d\n", phdc_device->number_of_specializations);
 
 	for (i = 0; i < phdc_device->number_of_specializations; i++) {
-		fprintf(stdout, "Specialization %d: %d\n", i, phdc_device->specializations[i]);
+		fprintf(stderr, "Specialization %d: %d\n", i, phdc_device->specializations[i]);
 	}
 
 }
@@ -474,7 +508,6 @@ static void request_usb_data(usb_phdc_device *phdc_device)
 
 void poll_phdc_device_pre(usb_phdc_device *phdc_device)
 {	
-	// TODO is this necessary every time a poll() returns?
 	request_usb_data(phdc_device);
 }
 
@@ -489,7 +522,7 @@ int poll_phdc_device(usb_phdc_device *phdc_device)
 	int has_events = 0;
 	int evt_count = 0;
 
-	fprintf(stdout, "poll_phdc_device\n");
+	fprintf(stderr, "poll_phdc_device\n");
 
 	poll_phdc_device_pre(phdc_device);
 

@@ -32,14 +32,9 @@
  * @addtogroup Communication
  */
 
-/*
-	TODO
-	* after initial search, react to plugged devices
-	* do not fail if initial search returns nothing
-	* handle multiple USB devices
-	* handle unplugging
-	* specific TODOs throughout the code
-*/
+// TODO support hotplugging (depends on future version of libusb: 1.1)
+// FIXME do not fail if initial search returns nothing
+// FIXME handle multiple USB devices
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,8 +60,9 @@ typedef struct device_object {
 	char *addr;
 } device_object;
 
+// Map between channel and device objects are always 1:1
+// We kept this for congruence with Bluetooth plug-in only.
 typedef struct channel_object {
-	// TODO is there a real differentiation between channel and device?
 	usb_phdc_device *impl;
 	usb_phdc_device *device;
 	guint64 handle;
@@ -173,8 +169,10 @@ static void remove_device(const usb_phdc_device *impl)
  */
 static char *get_device_addr(const usb_phdc_device *impl)
 {
-	// TODO return real address
-	return g_strdup("00:12:34:56:78:9A");
+	char *sn;
+	asprintf(&sn, "%04x:%04x:%s", impl->vendor_id, impl->product_id,
+			impl->serial_number);
+	return sn;
 }
 
 
@@ -263,7 +261,7 @@ static void channel_closed(usb_phdc_device *impl);
 static gboolean usb_event_received(GIOChannel *gio, GIOCondition cond, gpointer dev)
 {
 	poll_phdc_device_post(dev);
-	// reschedule next read (FIXME is this really necessary?)
+	// reschedule next read
 	poll_phdc_device_pre(dev);
 
 	return TRUE;
@@ -428,7 +426,6 @@ static int init()
  */
 static gboolean cleanup(gpointer data)
 {
-	// TODO stop USB listening
 	disconnect_all_channels();
 
 	g_free(current_data);
