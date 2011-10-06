@@ -1085,11 +1085,14 @@ gboolean device_reqmdsattr(Device *obj, GError **err)
  *\param obj
  *\param err
  * */
-gboolean device_getconfig(Device *obj, GError **err)
+gboolean device_getconfig(Device *obj, char** xml_out, GError **err)
 {
 	DEBUG("device_getconfig");
 	// manager_request_get_configuration(obj->handle);
 	// FIXME FIXME
+
+	*xml_out = strdup("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
 	return TRUE;
 }
 
