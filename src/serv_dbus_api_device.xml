@@ -12,6 +12,10 @@
     <method name="RequestDeviceAttributes">
       <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqmdsattr"/>
     </method>
+    <method name="GetConfiguration">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_getconfig"/>
+      <arg type="s" name="xml" direction="out"/>
+    </method>
     <method name="RequestActivationScanner">
       <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqactivationscanner"/>
       <arg type="i" name="handle" direction="in"/>
