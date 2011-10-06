@@ -77,7 +77,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := healthd_service.c
-LOCAL_CFLAGS := $(common_CFLAGS)
+LOCAL_CFLAGS := $(common_CFLAGS) -DANDROID_HEALTHD
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. \
 	$(call include-path-for, glib) \
 	$(call include-path-for, glib)/glib \
@@ -99,7 +99,6 @@ LOCAL_SHARED_LIBRARIES := libdbus
 LOCAL_MODULE:= healthd
 LOCAL_MODULE_TAGS := debug eng
 
-# FIXME .conf file
 #dbusstuffdir = $(libdir)/../share/dbus-1/system-services/
 #dbusstuff_DATA = src/resources/com.signove.health.service
 

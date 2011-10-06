@@ -49,9 +49,12 @@
 #include <ieee11073.h>
 #include "manager_p.h"
 #include "src/communication/plugin/bluez/plugin_bluez.h"
+#ifndef ANDROID_HEALTHD
+#include "src/communication/plugin/usb/plugin_usb.h"
+#endif
 #include "src/util/log.h"
 #include "src/communication/service.h"
-#include "src/communication/plugin/bluez/plugin_glib_socket.h"
+// #include "src/communication/plugin/bluez/plugin_glib_socket.h"
 
 
 #define SRV_SERVICE_NAME "com.signove.health"
@@ -64,12 +67,19 @@
 #define AGENT_INTERFACE "com.signove.health.agent"
 
 static PluginBluezListener bluez_listener;
+#ifndef ANDROID_HEALTHD
+static PluginUsbListener usb_listener;
+#endif
 
 static const int DBUS_SERVER = 0;
 static const int TCP_SERVER = 1;
 static const int AUTOTESTING = 2;
 
+static const int COMM_BLUEZ = 0;
+static const int COMM_USB = 1;
+
 static int opmode;
+static int commmode;
 
 static gboolean call_agent_measurementdata(guint64, char *);
 static gboolean call_agent_disassociated(guint64);
@@ -507,7 +517,9 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 	get_agent_proxy();
 	dbus_g_method_return(call);
 
-	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
+	if (commmode == COMM_BLUEZ) {
+		plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
+	}
 
 	g_free(hdp_data_types);
 
@@ -519,8 +531,10 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
  */
 void self_configure()
 {
-	guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
-	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
+	if (commmode == COMM_BLUEZ) {
+		guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
+		plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
+	}
 }
 
 /**
@@ -1066,6 +1080,19 @@ gboolean device_reqmdsattr(Device *obj, GError **err)
 	return TRUE;
 }
 
+/*DBUS facade to get device configuration
+ *
+ *\param obj
+ *\param err
+ * */
+gboolean device_getconfig(Device *obj, GError **err)
+{
+	DEBUG("device_getconfig");
+	// manager_request_get_configuration(obj->handle);
+	// FIXME FIXME
+	return TRUE;
+}
+
 /*DBUS facade to request measuremens
  *
  *\param obj
@@ -1236,25 +1263,36 @@ int main(int argc, char *argv[])
 {
 	GError *error = NULL;
 	guint result;
+	CommunicationPlugin plugin;
+	int i;
 
 	opmode = DBUS_SERVER;
+	commmode = COMM_BLUEZ;
 
-	if (argc > 1) {
-		if (strcmp(argv[1], "--autotest") == 0) {
+	for (i = 1; i < argc; ++i) {
+		if (strcmp(argv[i], "--autotest") == 0) {
 			opmode = AUTOTESTING;
 		}
-		if (strcmp(argv[1], "--autotesting") == 0) {
+		if (strcmp(argv[i], "--autotesting") == 0) {
 			opmode = AUTOTESTING;
 		}
-		if (strcmp(argv[1], "--auto") == 0) {
+		if (strcmp(argv[i], "--auto") == 0) {
 			opmode = AUTOTESTING;
 		}
-		if (strcmp(argv[1], "--tcp") == 0) {
+		if (strcmp(argv[i], "--tcp") == 0) {
 			opmode = TCP_SERVER;
 		}
-		if (strcmp(argv[1], "--tcpserver") == 0) {
+		if (strcmp(argv[i], "--tcpserver") == 0) {
 			opmode = TCP_SERVER;
 		}
+		if (strcmp(argv[i], "--bluez") == 0) {
+			commmode = COMM_BLUEZ;
+		}
+#ifndef ANDROID_HEALTHD
+		if (strcmp(argv[i], "--usb") == 0) {
+			commmode = COMM_USB;
+		}
+#endif
 	}
 
 	app_setup_signals();
@@ -1312,21 +1350,21 @@ int main(int argc, char *argv[])
 					    G_OBJECT(srvObj));
 
 init_plugin:
-	/* Initialize D-Bus -- BlueZ connection */
+	plugin = communication_plugin();
 
-	DEBUG("IEEE 11073 D-Bus service");
-
-	CommunicationPlugin plugin = communication_plugin();
-
-	/* Configure communications plugin */
-	plugin_bluez_setup(&plugin);
-	bluez_listener.peer_connected = call_agent_connected;
-	bluez_listener.peer_disconnected = call_agent_disconnected;
-	plugin_bluez_set_listener(&bluez_listener);
-
-	//Other availables plugins
-	// plugin_glib_socket_setup(&plugin, 4, 6024, 6025, 6026, 6027);
-	// plugin_glib_socket_setup(&plugin, 1, 6024);
+	if (commmode == COMM_BLUEZ) {
+		plugin_bluez_setup(&plugin);
+		bluez_listener.peer_connected = call_agent_connected;
+		bluez_listener.peer_disconnected = call_agent_disconnected;
+		plugin_bluez_set_listener(&bluez_listener);
+#ifndef ANDROID_HEALTHD
+	} else if (commmode == COMM_USB) {
+		plugin_usb_setup(&plugin);
+		usb_listener.agent_connected = call_agent_connected;
+		usb_listener.agent_disconnected = call_agent_disconnected;
+		plugin_usb_set_listener(&usb_listener);
+#endif
+	}
 
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;

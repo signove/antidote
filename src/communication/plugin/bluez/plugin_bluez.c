@@ -87,7 +87,7 @@ static GSList *apps = NULL;
 static GSList *adapters = NULL;
 static GSList *devices = NULL;
 static GSList *channels = NULL;
-guint64 last_handle = 0;
+static guint64 last_handle = 0;
 
 static PluginBluezListener *listener = NULL;
 
