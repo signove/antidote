@@ -95,6 +95,7 @@ static void ext_configurations_create_environment()
 			// TODO Check Error condition
 			ERROR("Unable to create configuration directory: %d", \
 			      errno);
+			return;
 		} else {
 			DEBUG("Configuration directory created");
 		}
@@ -106,8 +107,12 @@ static void ext_configurations_create_environment()
 
 	if (stat(concat, &st) != 0) {
 		FILE *fd = fopen(concat, "a+");
-		fclose(fd);
-		DEBUG("Configuration file created");
+		if (fd) {
+			fclose(fd);
+			DEBUG("Configuration file created");
+		} else {
+			DEBUG("Unable to create configuration file: %d", errno);
+		}
 	}
 
 	free(concat);

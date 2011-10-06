@@ -2,7 +2,10 @@ Roadmap/TODO
 ------------
 
 
-CODE REFACTORING
+Add checksum to extended configuration cache file
+
+Adopt a human-readable format for extended config
+cache file
 
 Migrate from dbus-glib to glib-included bindings for
 D-Bus (since glib 2.26).
