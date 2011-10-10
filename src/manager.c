@@ -447,6 +447,34 @@ Request *manager_set_operational_state_of_the_scanner(ContextId id,
 }
 
 /**
+ * Returns configuration of medical device
+ *
+ * @param id context id
+ * @return data list with attribute values
+ */
+DataList *manager_get_configuration(ContextId id)
+{
+	Context *ctx = context_get(id);
+
+	if (!ctx)
+		return NULL;
+
+	MDS *mds = ctx->mds;
+
+	if (!mds) {
+		ERROR("No MDS data is available");
+		return NULL;
+	}
+
+	DataList *list = mds_populate_configuration(mds);
+
+	if (!list)
+		return NULL;
+
+	return list;
+}
+
+/**
  * Returns attributes from medical device since last updated.
  *
  * @param id context id

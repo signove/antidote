@@ -34,15 +34,19 @@
 #include "mds.h"
 #include "dimutil.h"
 #include "nomenclature.h"
-#include "nomenclature.h"
+#include "pmstore.h"
+#include "rtsa.h"
 #include "src/util/bytelib.h"
 #include "src/communication/parser/decoder_ASN1.h"
 #include "src/communication/parser/struct_cleaner.h"
 #include "src/communication/parser/encoder_ASN1.h"
 #include "src/communication/service.h"
 #include "src/communication/operating.h"
+#include "src/communication/stdconfigurations.h"
+#include "src/communication/extconfigurations.h"
 #include "src/api/data_encoder.h"
 #include "src/api/text_encoder.h"
+#include "src/api/oid_string.h"
 #include "src/manager_p.h"
 #include "src/util/log.h"
 
@@ -619,6 +623,118 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 }
 
 /**
+ *  Populates data entry with configuration object attributes
+ *
+ *  \param oid type of object
+ *  \param atts attributes of object
+ *  \param superentry master data entry of object
+ */
+static void mds_populate_configuration_attributes(OID_Type supertype, 
+						const AttributeList *atts,
+						DataEntry *superentry)
+{
+	int j;
+
+	// These objects are here just to satifsy the dimutil_*_fill_attr()
+	// functions, that are also used to update actual MDS objects
+
+	struct Metric *metric = metric_instance();
+	struct Numeric *numeric = numeric_instance(metric_instance());
+	struct Enumeration *enumeration = enumeration_instance(metric_instance());
+	struct PMStore *pmstore = pmstore_instance();
+	octet_string simple_sa_obs_value;
+	simple_sa_obs_value.length = 64;
+	simple_sa_obs_value.value = calloc(64, sizeof(intu8));
+	ScaleRangeSpec32 srs32;
+	SaSpec saspec;
+	struct RTSA *sart = rtsa_instance_spec32(metric_instance(), 1,
+				simple_sa_obs_value, srs32, saspec);
+
+	superentry->choice = COMPOUND_DATA_ENTRY;
+	superentry->u.compound.entries_count = atts->count;
+	superentry->u.compound.entries = calloc(atts->count, sizeof(DataEntry));
+
+	for (j = 0; j < atts->count; ++j) {
+		AVA_Type att = atts->value[j];
+		OID_Type type = att.attribute_id;
+		Any data = att.attribute_value;
+		ByteStreamReader *r = byte_stream_reader_instance(data.value, data.length);
+		DataEntry *entry = &(superentry->u.compound.entries[j]);
+		int res;
+
+		if (supertype == MDC_MOC_VMO_METRIC_NU) {
+			res = dimutil_fill_numeric_attr(numeric, type, r, entry);
+		} else if (supertype == MDC_MOC_VMO_METRIC_ENUM) {
+			res = dimutil_fill_enumeration_attr(enumeration, type, r, entry);
+		} else if (supertype == MDC_MOC_VMO_METRIC) {
+			res = dimutil_fill_metric_attr(metric, type, r, entry);
+		} else if (supertype == MDC_MOC_VMO_METRIC_SA_RT) {
+			res = dimutil_fill_rtsa_attr(sart, type, r, entry);
+		} else if (supertype == MDC_MOC_VMO_PMSTORE) {
+			res = dimutil_fill_pmstore_attr(pmstore, type, r, entry);
+		}
+
+		if (!res) {
+			data_set_oid_type(entry, "OID", &type);
+		}
+	}
+
+	metric_destroy(metric);
+	numeric_destroy(numeric);
+	pmstore_destroy(pmstore);
+	rtsa_destroy(sart);
+	enumeration_destroy(enumeration);
+}
+
+/**
+ *  Populates data entry with device configuration
+ *
+ *  \param mds the MDS object of agent
+ *  \return data list representation of configuration
+ */
+DataList *mds_populate_configuration(MDS *mds)
+{
+	int i;
+
+	if (mds == NULL) {
+		return NULL;
+	}
+
+	const ConfigObjectList *config;
+
+	if (std_configurations_is_supported_standard(mds->dev_configuration_id)) {
+		config = std_configurations_get_configuration_attributes(
+								mds->dev_configuration_id);
+	} else {
+		config = ext_configurations_get_configuration_attributes(&mds->system_id,
+								mds->dev_configuration_id);
+	}
+
+	if (!config)
+		return NULL;
+
+	DataList *list = data_list_new(config->count);
+
+	for (i = 0; i < config->count; ++i) {
+		const ConfigObject *cfgobj = &(config->value[i]);
+		DataEntry *entry = &(list->values[i]);
+		const AttributeList *atts = &(cfgobj->attributes);
+		int attcount = atts->count;
+
+		entry->choice = COMPOUND_DATA_ENTRY;
+		data_meta_set_handle(entry, cfgobj->obj_handle);
+
+		entry->u.compound.entries_count = attcount;
+		entry->u.compound.entries = calloc(attcount, sizeof(DataEntry));
+		entry->u.compound.name = data_strcp(oid_get_moc_vmo_string(cfgobj->obj_class));
+		
+		mds_populate_configuration_attributes(cfgobj->obj_class, atts, entry);
+	}
+
+	return list;
+}
+
+/**
  *  Populates data entry with mds attributes
  *
  *  @param mds
@@ -660,7 +776,6 @@ void mds_populate_attributes(MDS *mds, DataEntry *entry)
 
 	data_set_type(&values[--size], "System-Type", &mds->system_type);
 	data_meta_set_attr_id(&values[size], MDC_ATTR_SYS_TYPE);
-
 }
 
 /**

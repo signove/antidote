@@ -56,7 +56,7 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 				  OID_Type attr_id, ByteStreamReader *stream, DataEntry *data_entry);
 
 int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
-			      ByteStreamReader *stream);
+			      ByteStreamReader *stream, DataEntry *data_entry);
 
 int dimutil_fill_peri_scanner_attr(struct PeriCfgScanner *peri_scanner,
 				   OID_Type attr_id, ByteStreamReader *stream, DataEntry *data_entry);
@@ -74,4 +74,7 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 		HandleAttrValMapEntry *val_map_entry,
 		DataEntry *measurement_entry);
 
+void dimutil_fill_configuration_attributes(const OID_Type supertype,
+					const AttributeList *atts,
+					DataEntry *entry);
 #endif /* DIMUTIL_H_ */

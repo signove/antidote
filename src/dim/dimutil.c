@@ -173,13 +173,15 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 		del_metricspecsmall(&metric->metric_spec_small);
 		decode_metricspecsmall(stream,
 				       &(metric->metric_spec_small));
-		data_set_attribute_metric_spec_small(data_entry, "Metric-Spec-Small", &metric->metric_spec_small);
+		data_set_attribute_metric_spec_small(data_entry, "Metric-Spec-Small",
+					&metric->metric_spec_small);
 		break;
 	case MDC_ATTR_METRIC_STRUCT_SMALL:
 		del_metricstructuresmall(&(metric->metric_structure_small));
 		decode_metricstructuresmall(stream,
 					    &(metric->metric_structure_small));
-		data_set_attribute_metric_structure_small(data_entry, "Metric-Structure-Small", &metric->metric_structure_small);
+		data_set_attribute_metric_structure_small(data_entry, "Metric-Structure-Small",
+					&metric->metric_structure_small);
 		break;
 	case MDC_ATTR_MSMT_STAT:
 		metric->measurement_status = read_intu16(stream, NULL);
@@ -207,7 +209,8 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 	case MDC_ATTR_ATTRIBUTE_VAL_MAP:
 		del_attrvalmap(&metric->attribute_value_map);
 		decode_attrvalmap(stream, &(metric->attribute_value_map));
-		data_set_attribute_value_map(data_entry, "Attribute-Value-Map", &metric->attribute_value_map);
+		data_set_attribute_value_map(data_entry, "Attribute-Value-Map",
+						&metric->attribute_value_map);
 		break;
 	case MDC_ATTR_SOURCE_HANDLE_REF:
 		metric->source_handle_reference = read_intu16(stream, NULL);
@@ -576,12 +579,14 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
  * \param pmstore the PMStore.
  * \param attr_id the PMStore's attribute ID.
  * \param stream the value of PMStore's attribute.
+ * \param data_entry output parameter to describe data value
  *
  * \return \b 1, if the PMStore's attribute is properly modified; \b 0 otherwise.
  *
  */
 int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
-			      ByteStreamReader *stream)
+			      ByteStreamReader *stream,
+				DataEntry *data_entry)
 {
 
 	int result = 1;
@@ -589,34 +594,52 @@ int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
 	switch (attr_id) {
 	case MDC_ATTR_ID_HANDLE:
 		pmstore->handle = read_intu16(stream, NULL);
+		data_set_handle(data_entry, "Handle", &pmstore->handle);
 		break;
 	case MDC_ATTR_PM_STORE_CAPAB:
 		pmstore->pm_store_capab = read_intu16(stream, NULL);
+		data_set_intu16(data_entry, "Capabilities", &pmstore->pm_store_capab);
 		break;
 	case MDC_ATTR_METRIC_STORE_SAMPLE_ALG:
 		pmstore->store_sample_algorithm = read_intu16(stream, NULL);
+		data_set_intu16(data_entry, "Store-Sample-Algorithm",
+				&pmstore->store_sample_algorithm);
 		break;
 	case MDC_ATTR_METRIC_STORE_CAPAC_CNT:
 		pmstore->store_capacity_count = read_intu32(stream, NULL);
+		data_set_intu32(data_entry, "Store-Capacity-Count",
+				&pmstore->store_capacity_count);
 		break;
 	case MDC_ATTR_METRIC_STORE_USAGE_CNT:
 		pmstore->store_usage_count = read_intu32(stream, NULL);
+		data_set_intu32(data_entry, "Store-Usage-Count",
+				&pmstore->store_usage_count);
 		break;
 	case MDC_ATTR_OP_STAT:
 		pmstore->operational_state = read_intu16(stream, NULL);
+		data_set_intu16(data_entry, "Operational-State",
+				&pmstore->operational_state);
 		break;
 	case MDC_ATTR_PM_STORE_LABEL_STRING:
 		del_octet_string(&pmstore->pm_store_label);
 		decode_octet_string(stream, &pmstore->pm_store_label);
+		data_set_label_string(data_entry, "PM-Store-Label",
+				&pmstore->pm_store_label);
 		break;
 	case MDC_ATTR_TIME_PD_SAMP:
 		pmstore->sample_period = read_intu32(stream, NULL);
+		data_set_intu32(data_entry, "Sample-Period",
+				&pmstore->sample_period);
 		break;
 	case MDC_ATTR_NUM_SEG:
 		pmstore->number_of_segments = read_intu16(stream, NULL);
+		data_set_intu16(data_entry, "Number-Of-Segments",
+				&pmstore->number_of_segments);
 		break;
 	case MDC_ATTR_CLEAR_TIMEOUT:
 		pmstore->clear_timeout = read_intu32(stream, NULL);
+		data_set_intu32(data_entry, "Clear-Timeout",
+				&pmstore->clear_timeout);
 		break;
 	default:
 		ERROR("Can't fill pmstore attribute attribute id is %d", attr_id);
@@ -1117,7 +1140,6 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 		break;
 		}
 	}
-
 }
 
 /** @} */

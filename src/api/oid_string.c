@@ -126,4 +126,30 @@ const char *oid_get_unit_code_string(OID_Type unit_code)
 }
 
 
+/**
+ * Parses the OID VMO type to human readable string value.
+ *
+ * \param unit_code OID unit code to be parsed
+ *
+ * \return OID code in a human readable string; "" if cannot parse the code.
+ */
+const char *oid_get_moc_vmo_string(OID_Type unit_code)
+{
+	switch (unit_code) {
+	case MDC_MOC_VMO_METRIC:
+		return "Metric";
+	case MDC_MOC_VMO_METRIC_ENUM:
+		return "Enumeration";
+	case MDC_MOC_VMO_METRIC_NU:
+		return "Numeric";
+	case MDC_MOC_VMO_METRIC_SA_RT:
+		return "SA-RT";
+	case MDC_MOC_VMO_PMSTORE:
+		return "PM-Store";
+	}
+
+	return "";
+}
+
+
 /** @} */

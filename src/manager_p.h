@@ -78,4 +78,6 @@ Request *manager_request_clear_segments(ContextId id, service_request_callback c
 
 Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
 
+DataList *manager_get_configuration(ContextId id);
+
 #endif /* MAINAPP_H_ */

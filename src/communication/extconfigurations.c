@@ -296,10 +296,10 @@ void ext_configurations_register_conf(octet_string *system_id,
 					 ext_configuration_size * sizeof(struct ExtConfig));
 
 	// update list
-	ext_configuration_list[ext_configuration_size - 1].config_id
-	= config_id;
-	ext_configuration_list[ext_configuration_size - 1].obj_size
-	= stream->size;
+	ext_configuration_list[ext_configuration_size - 1].config_id =
+		config_id;
+	ext_configuration_list[ext_configuration_size - 1].obj_size =
+		stream->size;
 
 	size = system_id->length * sizeof(intu8) + sizeof(intu16);
 	ByteStreamWriter *w_stream = byte_stream_writer_instance(size);

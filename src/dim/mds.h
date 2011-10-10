@@ -371,6 +371,8 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list, in
 
 void mds_populate_attributes(MDS *mds, DataEntry *mds_entry);
 
+DataList *mds_populate_configuration(MDS *mds);
+
 void mds_event_report_dynamic_data_update_var(Context *ctx, ScanReportInfoVar *info_var);
 
 void mds_event_report_dynamic_data_update_fixed(Context *ctx, ScanReportInfoFixed *info_fixed);

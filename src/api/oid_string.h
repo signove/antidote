@@ -34,5 +34,6 @@
 #include <asn1/phd_types.h>
 
 const char *oid_get_unit_code_string(OID_Type unit_code);
+const char *oid_get_moc_vmo_string(OID_Type unit_code);
 
 #endif /* TEXT_ENCODER_H_ */
