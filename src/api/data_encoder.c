@@ -100,7 +100,7 @@ static void set_cmp(DataEntry *data, char *name, int size)
 
 	data->choice = COMPOUND_DATA_ENTRY;
 	data->u.compound.name = name;
-	data->u.compound.entries_size = size;
+	data->u.compound.entries_count = size;
 	data->u.compound.entries = calloc(size, sizeof(DataEntry));
 }
 
@@ -1080,7 +1080,7 @@ void data_entry_del_compound(CompoundDataEntry *pointer)
 	free(pointer->name);
 	pointer->name = NULL;
 
-	for (i = 0; i < pointer->entries_size; i++) {
+	for (i = 0; i < pointer->entries_count; i++) {
 		data_entry_del(&pointer->entries[i]);
 	}
 

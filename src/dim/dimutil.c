@@ -787,7 +787,7 @@ static void dimutil_fill_metric_object(struct MDS *mds, DataEntry *data_entry,
 
 	data_entry->choice = COMPOUND_DATA_ENTRY;
 	CompoundDataEntry *cmp_entry =  &data_entry->u.compound;
-	cmp_entry->entries_size =  attr_list->count;
+	cmp_entry->entries_count =  attr_list->count;
 	cmp_entry->entries = calloc(attr_list->count, sizeof(DataEntry));
 
 	int j;
@@ -970,7 +970,7 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 			cmp_entry->name = data_strcp("Numeric");
 			metric = &metric_obj->u.numeric.metric;
 			attr_list_size = metric_obj->u.numeric.metric.attribute_value_map.count;
-			cmp_entry->entries_size = attr_list_size;
+			cmp_entry->entries_count = attr_list_size;
 			cmp_entry->entries = calloc(attr_list_size, sizeof(DataEntry));
 			int j;
 
@@ -991,7 +991,7 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 			metric = &metric_obj->u.enumeration.metric;
 
 			attr_list_size = metric_obj->u.enumeration.metric.attribute_value_map.count;
-			cmp_entry->entries_size = attr_list_size;
+			cmp_entry->entries_count = attr_list_size;
 			cmp_entry->entries = calloc(attr_list_size, sizeof(DataEntry));
 			int j;
 
@@ -1013,7 +1013,7 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 			metric = &metric_obj->u.rtsa.metric;
 
 			attr_list_size = metric_obj->u.rtsa.metric.attribute_value_map.count;
-			cmp_entry->entries_size = attr_list_size;
+			cmp_entry->entries_count = attr_list_size;
 			cmp_entry->entries = calloc(attr_list_size, sizeof(DataEntry));
 			int j;
 
@@ -1059,7 +1059,7 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 	data_meta_set_handle(measurement_entry, val_map_entry->obj_handle);
 
 	CompoundDataEntry *cmp_entry = &measurement_entry->u.compound;
-	cmp_entry->entries_size = val_map->count;
+	cmp_entry->entries_count = val_map->count;
 	cmp_entry->entries = calloc(val_map->count, sizeof(DataEntry));
 
 	if (val_map->count > 0) {

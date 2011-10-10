@@ -79,7 +79,7 @@ typedef struct CompoundDataEntry {
 	/**
 	 * Number of child entries
 	 */
-	int entries_size;
+	int entries_count;
 	struct DataEntry *entries;
 } CompoundDataEntry;
 

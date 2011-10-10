@@ -632,7 +632,7 @@ void mds_populate_attributes(MDS *mds, DataEntry *entry)
 
 	int size = 6;
 	entry->choice = COMPOUND_DATA_ENTRY;
-	entry->u.compound.entries_size = size;
+	entry->u.compound.entries_count = size;
 	entry->u.compound.entries = calloc(size, sizeof(DataEntry));
 	entry->u.compound.name = data_strcp("MDS");
 

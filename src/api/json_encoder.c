@@ -83,7 +83,7 @@ static void describe_cmp_entry(CompoundDataEntry *cmp, StringBuffer *sb)
 	strbuff_cat(sb, "\", ");
 	strbuff_cat(sb, "entries: ");
 
-	read_entries(cmp->entries, cmp->entries_size, sb);
+	read_entries(cmp->entries, cmp->entries_count, sb);
 
 	strbuff_cat(sb, "}");
 }

@@ -749,7 +749,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 
 	segm_data_entry->choice = COMPOUND_DATA_ENTRY;
 	segm_data_entry->u.compound.name = data_strcp("PM-Segment");
-	segm_data_entry->u.compound.entries_size = entry_count;
+	segm_data_entry->u.compound.entries_count = entry_count;
 	segm_data_entry->u.compound.entries = calloc(entry_count, sizeof(DataEntry));
 
 	int i;
@@ -758,7 +758,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		DataEntry *data_entry = &segm_data_entry->u.compound.entries[i];
 		data_entry->choice = COMPOUND_DATA_ENTRY;
 		data_entry->u.compound.name = data_strcp("Pm-Segment-Entry-Map");
-		data_entry->u.compound.entries_size = 2;
+		data_entry->u.compound.entries_count = 2;
 		data_entry->u.compound.entries = calloc(2, sizeof(DataEntry));
 
 
@@ -804,7 +804,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		DataEntry *objs_data_entry = &data_entry->u.compound.entries[1];
 		objs_data_entry->choice = COMPOUND_DATA_ENTRY;
 		objs_data_entry->u.compound.name = data_strcp("Segm-Entry-Elem-List");
-		objs_data_entry->u.compound.entries_size = info_size;
+		objs_data_entry->u.compound.entries_count = info_size;
 		objs_data_entry->u.compound.entries = calloc(info_size, sizeof(DataEntry));
 
 
@@ -827,7 +827,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 
 				DataEntry *obj_data_entry = &objs_data_entry->u.compound.entries[j];
 				obj_data_entry->choice = COMPOUND_DATA_ENTRY;
-				obj_data_entry->u.compound.entries_size = attr_count;
+				obj_data_entry->u.compound.entries_count = attr_count;
 				obj_data_entry->u.compound.entries = calloc(attr_count, sizeof(DataEntry));
 				data_meta_set_handle(obj_data_entry, handle);
 
