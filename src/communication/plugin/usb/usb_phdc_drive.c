@@ -274,11 +274,14 @@ static int is_phdc_11073_device(libusb_device *device,
 static void request_usb_data_cb(struct libusb_transfer *transfer)
 {
 	usb_phdc_device *phdc_device = (usb_phdc_device *) transfer->user_data;
-	fprintf(stderr, "Data received with status: %d\n", transfer->status);
 
 	if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
 		phdc_device->data_read_cb(phdc_device, transfer->buffer, transfer->actual_length);
-	} else if (transfer->status == LIBUSB_TRANSFER_ERROR) {
+	} else if (transfer->status == LIBUSB_TRANSFER_NO_DEVICE) {
+		fprintf(stderr, "Data received with status: NO_DEVICE\n");
+		phdc_device->device_gone_cb(phdc_device);
+	} else {
+		fprintf(stderr, "Data received with error status: %d\n", transfer->status);
 		phdc_device->error_read_cb(phdc_device);
 	}
 }

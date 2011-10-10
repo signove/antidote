@@ -297,6 +297,12 @@ static void data_received(usb_phdc_device *dev, unsigned char *buf, int len)
 
 static void data_error_received(usb_phdc_device *dev)
 {
+	// TODO some tolerance
+	channel_closed(dev);
+}
+
+static void device_gone(usb_phdc_device *dev)
+{
 	channel_closed(dev);
 }
 
@@ -411,6 +417,7 @@ static gboolean search_devices(gpointer dummy)
 
 		usbdev->data_read_cb = data_received;
 		usbdev->error_read_cb = data_error_received;
+		usbdev->device_gone_cb = device_gone;
 
 		print_phdc_info(usbdev);
 

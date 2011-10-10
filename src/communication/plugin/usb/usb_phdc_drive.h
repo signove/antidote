@@ -61,6 +61,7 @@ typedef struct usb_phdc_device {
 
 	void (*data_read_cb)(struct usb_phdc_device *dev, unsigned char* buffer, int size);
 	void (*error_read_cb)(struct usb_phdc_device *dev);
+	void (*device_gone_cb)(struct usb_phdc_device *dev);
 
 } usb_phdc_device;
 
