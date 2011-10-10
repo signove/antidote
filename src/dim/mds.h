@@ -379,6 +379,4 @@ void mds_event_report_dynamic_data_update_mp_var(Context *ctx, ScanReportInfoMPV
 
 void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx, ScanReportInfoMPFixed *info_mp_fixed);
 
-char *mds_get_unit_code_string(OID_Type unit_code);
-
 #endif /* MDS_H_ */

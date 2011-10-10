@@ -33,6 +33,7 @@
 #include "mds.h"
 #include "src/api/data_encoder.h"
 #include "src/api/text_encoder.h"
+#include "src/api/oid_string.h"
 #include "src/communication/parser/decoder_ASN1.h"
 #include "src/communication/parser/struct_cleaner.h"
 #include "src/util/log.h"
@@ -110,7 +111,7 @@ static int dimutil_get_unit_code(struct Metric *metric)
  */
 static char *dimutil_get_unit(struct Metric *metric)
 {
-	return strdup(mds_get_unit_code_string(dimutil_get_unit_code(metric)));
+	return strdup(oid_get_unit_code_string(dimutil_get_unit_code(metric)));
 }
 
 /**
