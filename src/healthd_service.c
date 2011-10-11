@@ -586,7 +586,9 @@ static void destroy_device(Device *device)
 	if (!device)
 		return;
 
-	dbus_g_connection_unregister_g_object(bus, G_OBJECT(device));
+	if (opmode != AUTOTESTING)
+		dbus_g_connection_unregister_g_object(bus, G_OBJECT(device));
+
 	g_free(device->path);
 	g_free(device->addr);
 	device->path = NULL;
@@ -647,8 +649,10 @@ static const char *get_device_object(const char *btaddr, guint64 conn_handle)
 		asprintf(&(device->path), "%s/%ld", DEVICE_OBJECT_PATH,
 			 ++dev_counter);
 		DEBUG("Create device object in %s", device->path);
-		dbus_g_connection_register_g_object(bus, device->path,
-						    G_OBJECT(device));
+		if (opmode != AUTOTESTING) {
+			dbus_g_connection_register_g_object(bus, device->path,
+						    	G_OBJECT(device));
+		}
 		devices = g_slist_prepend(devices, device);
 	}
 
