@@ -8,6 +8,16 @@ import dbus.mainloop.glib
 import os
 import glib
 
+gsdr = {0: "Success", 1: "Segment unknown", 2: "Fail, try later",
+	3: "Fail, segment empty", 512: "Fail, other"}
+
+def getsegmentdata_response_interpret(i):
+	try:
+		s = gsdr[i]
+	except KeyError:
+		s = "Unknown fail code"
+	return s
+
 class Agent(dbus.service.Object):
 
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
@@ -39,6 +49,40 @@ class Agent(dbus.service.Object):
 		print "MeasurementData dev %s" % dev
 		print "\tData:\t", data
 
+	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
+	def PMStoreData(self, dev, pmstore_handle, data):
+		print
+		print "PMStore dev %s handle %d" % (dev, pmstore_handle)
+		print "\tData:\t", data
+
+	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
+	def SegmentInfo(self, dev, pmstore_handle, data):
+		print
+		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
+		print "\tData:\t", data
+
+	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
+	def SegmentDataResponse(self, dev, pmstore_handle, pmsegment, response):
+		print
+		print "SegmentDataResponse dev %s PM-Store handle %d" % (dev, pmstore_handle)
+		print "=== InstNumber %d" % pmsegment
+		print "=== Response %s" % getsegmentdata_response_interpret(response)
+		print "\tData:\t", data
+
+	@dbus.service.method("com.signove.health.agent", in_signature="siis", out_signature="")
+	def SegmentData(self, dev, pmstore_handle, pmsegment, data):
+		print
+		print "SegmentData dev %s PM-Store handle %d" % (dev, pmstore_handle)
+		print "=== InstNumber %d" % pmsegment
+		print "\tData:\t", data
+
+	@dbus.service.method("com.signove.health.agent", in_signature="sii", out_signature="")
+	def SegmentCleared(self, dev, pmstore_handle, pmsegment, retstatus):
+		print
+		print "SegmentCleared dev %s PM-Store handle %d" % (dev, pmstore_handle)
+		print "=== InstNumber %d retstatus %d" % (pmsegment, retstatus)
+		print
+		
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
 	def DeviceAttributes(self, dev, data):
 		print
@@ -74,9 +118,6 @@ def do_something(dev):
 	# print dev.RequestMeasurementDataTransmission()
 	# print dev.RequestActivationScanner(55)
 	# print dev.RequestDeactivationScanner(55)
-	# print dev.GetSegmentInfo()
-	# print dev.GetSegmentData()
-	# print dev.ClearSegmentData()
 	# print dev.ReleaseAssociation()
 	# print dev.Disconnect()
 	return False

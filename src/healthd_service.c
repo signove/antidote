@@ -1177,39 +1177,85 @@ gboolean device_testagent(Device *obj, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to get segments info
+/*DBUS facade to get PM-Store attributes
  *
  *\param obj
+ *\param handle PM-Store handle
+ *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-gboolean device_get_segminfo(Device *obj, GError **err)
+gboolean device_get_pmstore(Device *obj, gint handle,
+				gint* ret, GError **err)
+{
+	DEBUG("device_get_pmstore");
+	// manager_request_get_pmstore(obj->handle, NULL);
+	*ret = 0;
+	return TRUE;
+}
+
+/*DBUS facade to get segments info from a PM-Store
+ *
+ *\param obj
+ *\param handle PM-Store handle
+ *\param ret Preliminary return status (actual data goes via Agent callback)
+ *\param err
+ * */
+gboolean device_get_segminfo(Device *obj, gint handle,
+				gint* ret, GError **err)
 {
 	DEBUG("device_get_segminfo");
-	manager_request_get_segment_info(obj->handle, NULL);
+	// manager_request_get_segment_info(obj->handle, NULL);
+	*ret = 0;
 	return TRUE;
 }
 
-/*DBUS facade to get segments data
+/*DBUS facade to get segments data from a PM-Segment
  *
  *\param obj
+ *\param handle PM-Store handle
+ *\param instnumber PM-Segment InstNumber
+ *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-gboolean device_get_segmdata(Device *obj, GError **err)
+gboolean device_get_segmdata(Device *obj, gint handle, gint instnumber,
+				gint* ret, GError **err)
 {
 	DEBUG("device_getsegmdata");
-	manager_request_get_segment_data(obj->handle, NULL);
+	// manager_request_get_segment_data(obj->handle, NULL);
+	*ret = 0;
 	return TRUE;
 }
 
-/*DBUS facade to clear segments
+/*DBUS facade to clear a PM-store segment
  *
  *\param obj
+ *\param handle PM-Store handle
+ *\param instnumber PM-Segment InstNumber
+ *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-gboolean device_clearsegmdata(Device *obj, GError **err)
+gboolean device_clearsegmdata(Device *obj, gint handle, gint instnumber,
+				gint *ret, GError **err)
 {
 	DEBUG("device_clearsegmdata");
-	manager_request_clear_segments(obj->handle, NULL);
+	// manager_request_clear_segments(obj->handle, NULL);
+	*ret = 0;
+	return TRUE;
+}
+
+/*DBUS facade to clear all segments of a PM-Store
+ *
+ *\param obj
+ *\param handle PM-Store handle
+ *\param ret Preliminary return status (actual data goes via Agent callback)
+ *\param err
+ * */
+gboolean device_clearallsegmdata(Device *obj, gint handle,
+				gint *ret, GError **err)
+{
+	DEBUG("device_clearallsegmdata");
+	// manager_request_clear_segments(obj->handle, NULL);
+	*ret = 0;
 	return TRUE;
 }
 

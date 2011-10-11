@@ -100,6 +100,55 @@ dbus_glib_marshal_device_BOOLEAN__POINTER (GClosure     *closure,
   g_value_set_boolean (return_value, v_return);
 }
 
+/* BOOLEAN:INT,POINTER,POINTER */
+extern void dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER (GClosure     *closure,
+                                                                   GValue       *return_value,
+                                                                   guint         n_param_values,
+                                                                   const GValue *param_values,
+                                                                   gpointer      invocation_hint,
+                                                                   gpointer      marshal_data);
+void
+dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER (GClosure     *closure,
+                                                       GValue       *return_value G_GNUC_UNUSED,
+                                                       guint         n_param_values,
+                                                       const GValue *param_values,
+                                                       gpointer      invocation_hint G_GNUC_UNUSED,
+                                                       gpointer      marshal_data)
+{
+  typedef gboolean (*GMarshalFunc_BOOLEAN__INT_POINTER_POINTER) (gpointer     data1,
+                                                                 gint         arg_1,
+                                                                 gpointer     arg_2,
+                                                                 gpointer     arg_3,
+                                                                 gpointer     data2);
+  register GMarshalFunc_BOOLEAN__INT_POINTER_POINTER callback;
+  register GCClosure *cc = (GCClosure*) closure;
+  register gpointer data1, data2;
+  gboolean v_return;
+
+  g_return_if_fail (return_value != NULL);
+  g_return_if_fail (n_param_values == 4);
+
+  if (G_CCLOSURE_SWAP_DATA (closure))
+    {
+      data1 = closure->data;
+      data2 = g_value_peek_pointer (param_values + 0);
+    }
+  else
+    {
+      data1 = g_value_peek_pointer (param_values + 0);
+      data2 = closure->data;
+    }
+  callback = (GMarshalFunc_BOOLEAN__INT_POINTER_POINTER) (marshal_data ? marshal_data : cc->callback);
+
+  v_return = callback (data1,
+                       g_marshal_value_peek_int (param_values + 1),
+                       g_marshal_value_peek_pointer (param_values + 2),
+                       g_marshal_value_peek_pointer (param_values + 3),
+                       data2);
+
+  g_value_set_boolean (return_value, v_return);
+}
+
 /* BOOLEAN:POINTER,POINTER */
 extern void dbus_glib_marshal_device_BOOLEAN__POINTER_POINTER (GClosure     *closure,
                                                                GValue       *return_value,
@@ -194,6 +243,57 @@ dbus_glib_marshal_device_BOOLEAN__INT_POINTER (GClosure     *closure,
   g_value_set_boolean (return_value, v_return);
 }
 
+/* BOOLEAN:INT,INT,POINTER,POINTER */
+extern void dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER (GClosure     *closure,
+                                                                       GValue       *return_value,
+                                                                       guint         n_param_values,
+                                                                       const GValue *param_values,
+                                                                       gpointer      invocation_hint,
+                                                                       gpointer      marshal_data);
+void
+dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER (GClosure     *closure,
+                                                           GValue       *return_value G_GNUC_UNUSED,
+                                                           guint         n_param_values,
+                                                           const GValue *param_values,
+                                                           gpointer      invocation_hint G_GNUC_UNUSED,
+                                                           gpointer      marshal_data)
+{
+  typedef gboolean (*GMarshalFunc_BOOLEAN__INT_INT_POINTER_POINTER) (gpointer     data1,
+                                                                     gint         arg_1,
+                                                                     gint         arg_2,
+                                                                     gpointer     arg_3,
+                                                                     gpointer     arg_4,
+                                                                     gpointer     data2);
+  register GMarshalFunc_BOOLEAN__INT_INT_POINTER_POINTER callback;
+  register GCClosure *cc = (GCClosure*) closure;
+  register gpointer data1, data2;
+  gboolean v_return;
+
+  g_return_if_fail (return_value != NULL);
+  g_return_if_fail (n_param_values == 5);
+
+  if (G_CCLOSURE_SWAP_DATA (closure))
+    {
+      data1 = closure->data;
+      data2 = g_value_peek_pointer (param_values + 0);
+    }
+  else
+    {
+      data1 = g_value_peek_pointer (param_values + 0);
+      data2 = closure->data;
+    }
+  callback = (GMarshalFunc_BOOLEAN__INT_INT_POINTER_POINTER) (marshal_data ? marshal_data : cc->callback);
+
+  v_return = callback (data1,
+                       g_marshal_value_peek_int (param_values + 1),
+                       g_marshal_value_peek_int (param_values + 2),
+                       g_marshal_value_peek_pointer (param_values + 3),
+                       g_marshal_value_peek_pointer (param_values + 4),
+                       data2);
+
+  g_value_set_boolean (return_value, v_return);
+}
+
 G_END_DECLS
 
 #endif /* __dbus_glib_marshal_device_MARSHAL_H__ */
@@ -209,16 +309,18 @@ static const DBusGMethodInfo dbus_glib_device_methods[] = {
   { (GCallback) device_reqmdsattr, dbus_glib_marshal_device_BOOLEAN__POINTER, 320 },
   { (GCallback) device_releaseassoc, dbus_glib_marshal_device_BOOLEAN__POINTER, 384 },
   { (GCallback) device_abortassoc, dbus_glib_marshal_device_BOOLEAN__POINTER, 432 },
-  { (GCallback) device_get_segminfo, dbus_glib_marshal_device_BOOLEAN__POINTER, 478 },
-  { (GCallback) device_get_segmdata, dbus_glib_marshal_device_BOOLEAN__POINTER, 522 },
-  { (GCallback) device_clearsegmdata, dbus_glib_marshal_device_BOOLEAN__POINTER, 566 },
-  { (GCallback) device_testagent, dbus_glib_marshal_device_BOOLEAN__POINTER, 612 },
+  { (GCallback) device_get_pmstore, dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER, 478 },
+  { (GCallback) device_get_segminfo, dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER, 552 },
+  { (GCallback) device_get_segmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 630 },
+  { (GCallback) device_clearsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 733 },
+  { (GCallback) device_clearallsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER, 838 },
+  { (GCallback) device_testagent, dbus_glib_marshal_device_BOOLEAN__POINTER, 918 },
 };
 
 const DBusGObjectInfo dbus_glib_device_object_info = {  1,
   dbus_glib_device_methods,
-  13,
-"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetSegmentInfo\0S\0\0com.signove.health.device\0GetSegmentData\0S\0\0com.signove.health.device\0ClearSegmentData\0S\0\0com.signove.health.device\0TestAgent\0S\0\0\0",
+  15,
+"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetPMStore\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentInfo\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0TestAgent\0S\0\0\0",
 "\0",
 "\0"
 };
