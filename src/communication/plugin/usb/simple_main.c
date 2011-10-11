@@ -106,6 +106,11 @@ void device_disconnected(usb_phdc_device *dev)
 	read_more_data = 0;
 }
 
+void schedule_timeout(int ms)
+{
+	fprintf(stderr, "Timeout of %dms requested by USB but not scheduled\n", ms);
+}
+
 int main(int argc, char **argv)
 {
 	signal(SIGINT, process_exit);
@@ -114,18 +119,19 @@ int main(int argc, char **argv)
 
 	phdc_context = (usb_phdc_context *) calloc(1, sizeof(usb_phdc_context));
 
-	init_phdc_usb_plugin(phdc_context);
+	init_phdc_usb_plugin(phdc_context, NULL, NULL, schedule_timeout);
 	search_phdc_devices(phdc_context);
 	if (phdc_context->number_of_devices > 0) {
-		phdc_device = &(phdc_context->device_list[0]); //Get the first device to read measurements
+		// Get the first device to read measurements
+		phdc_device = &(phdc_context->device_list[0]);
 
 		phdc_device->data_read_cb = print_read_data;
 		phdc_device->error_read_cb = device_disconnected;
 
 		print_phdc_info(phdc_device);
-		if (open_phdc_handle(phdc_device) == 1) {
+		if (open_phdc_handle(phdc_device, phdc_context) == 1) {
 			while (read_more_data == 1) {
-				poll_phdc_device(phdc_device);
+				poll_phdc_device(phdc_device, phdc_context);
 			}
 			process_exit(0);
 		}

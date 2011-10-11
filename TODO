@@ -1,6 +1,8 @@
 Roadmap/TODO
 ------------
 
+USB: SIGINT does not exit main loop when a USB device
+     has been disconnected while reading
 
 Add checksum to extended configuration cache file
 

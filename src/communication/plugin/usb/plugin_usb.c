@@ -52,7 +52,8 @@ static char *current_data = NULL;
 static int data_len = 0;
 
 usb_phdc_context *phdc_context = NULL;
-int scheduled_id = 0;
+int sch_search = 0;
+int sch_usb = 0;
 
 typedef struct device_object {
 	usb_phdc_device *impl;
@@ -65,8 +66,9 @@ typedef struct channel_object {
 	usb_phdc_device *impl;
 	usb_phdc_device *device;
 	guint64 handle;
-	GSList *gios;
 } channel_object;
+
+static GSList *gios = NULL;
 
 static GSList *devices = NULL;
 static GSList *channels = NULL;
@@ -230,7 +232,68 @@ static channel_object *get_channel_by_handle(guint64 handle)
 	}
 
 	return NULL;
+}
 
+/**
+ * Unlisten fd and destroy GIOChannel
+ */
+static void unlisten_fd(int fd)
+{
+	GSList *i;
+
+	for (i = gios; i; i = i->next) {
+		GIOChannel *gio = i->data;
+		if (g_io_channel_unix_get_fd(gio) == fd) {
+			g_io_channel_unref(gio);
+			gios = g_slist_remove(gios, gio);
+			DEBUG("\tunlistened fd %d", fd);
+			break;
+		}
+	}
+}
+
+/**
+ * Callback to stop listening for an FD (delete GIOChannel)
+ */
+static void removed_fd(int fd, void *user_data)
+{
+	DEBUG("removed_fd %d...", fd);
+	unlisten_fd(fd);
+}
+
+static void unlisten_all_fds()
+{
+	while (gios)
+		unlisten_fd(g_io_channel_unix_get_fd(gios->data));
+}
+
+static gboolean usb_event_received(GIOChannel *gio, GIOCondition cond, gpointer dev);
+
+/**
+ * Callback to add GIO channel for fd
+ */
+static void added_fd(int fd, short events, void *user_data)
+{
+	GIOChannel *gio;
+
+	/* Guarantee that there are no more than one listener to the same fd */
+	unlisten_fd(fd);
+
+	gio = g_io_channel_unix_new(fd);
+
+	g_io_add_watch(gio,
+		((events & POLLIN) ? G_IO_IN : 0) |
+		((events & POLLOUT) ? G_IO_OUT : 0) |
+		((events & POLLPRI) ? G_IO_PRI : 0) |
+		((events & POLLERR) ? G_IO_ERR : 0) |
+		((events & POLLHUP) ? G_IO_HUP : 0) |
+		((events & POLLNVAL) ? G_IO_NVAL : 0),
+		usb_event_received,
+		NULL);
+
+	gios = g_slist_prepend(gios, gio);
+
+	DEBUG("added_fd %d %d", fd, events);
 }
 
 /**
@@ -241,12 +304,6 @@ static void remove_channel(const usb_phdc_device *impl)
 	channel_object *c = get_channel(impl);
 
 	if (c) {
-		while (c->gios) {
-			GIOChannel *gio = c->gios->data;
-			g_io_channel_unref(gio);
-			c->gios = g_slist_remove(c->gios, gio);
-		}
-
 		g_free(c);
 		channels = g_slist_remove(channels, c);
 	}
@@ -259,10 +316,7 @@ static void channel_closed(usb_phdc_device *impl);
  */
 static gboolean usb_event_received(GIOChannel *gio, GIOCondition cond, gpointer dev)
 {
-	poll_phdc_device_post(dev);
-	// reschedule next read
-	poll_phdc_device_pre(dev);
-
+	phdc_device_fd_event(phdc_context);
 	return TRUE;
 }
 
@@ -298,11 +352,13 @@ static void data_received(usb_phdc_device *dev, unsigned char *buf, int len)
 static void data_error_received(usb_phdc_device *dev)
 {
 	// TODO some tolerance
+	DEBUG("USB device: error receiving");
 	channel_closed(dev);
 }
 
 static void device_gone(usb_phdc_device *dev)
 {
+	DEBUG("USB device is gone");
 	channel_closed(dev);
 }
 
@@ -313,34 +369,14 @@ static void device_gone(usb_phdc_device *dev)
 static guint64 add_channel(usb_phdc_device *impl, usb_phdc_device *device)
 {
 	channel_object *c;
-	GIOChannel *gio;
-	GSList *gios = NULL;
-	int i;
 
 	if (get_channel(impl))
 		remove_channel(impl);
-
-	for (i = 0; i < device->fds_count; ++i) {
-		gio = g_io_channel_unix_new(device->fds[i].fd);
-
-		g_io_add_watch(gio,
-			((device->fds[i].events & POLLIN) ? G_IO_IN : 0) |
-			((device->fds[i].events & POLLOUT) ? G_IO_OUT : 0) |
-			((device->fds[i].events & POLLPRI) ? G_IO_PRI : 0) |
-			((device->fds[i].events & POLLERR) ? G_IO_ERR : 0) |
-			((device->fds[i].events & POLLHUP) ? G_IO_HUP : 0) |
-			((device->fds[i].events & POLLNVAL) ? G_IO_NVAL : 0),
-			usb_event_received,
-			device);
-
-		gios = g_slist_prepend(gios, gio);
-	}
 
 	c = (channel_object *) g_new(channel_object, 1);
 	c->impl = impl;
 	c->device = device;
 	c->handle = ++last_handle;
-	c->gios = gios;
 
 	channels = g_slist_prepend(channels, c);
 
@@ -389,12 +425,23 @@ static void disconnect_all_channels()
 
 static void channel_connected(usb_phdc_device *dev, usb_phdc_device *impl);
 
-static void schedule(gboolean (*cb)(gpointer), int to)
+static void schedule(int *id, gboolean (*cb)(gpointer), gpointer context, int to)
 {
-	if (scheduled_id) {
-		g_source_remove(scheduled_id);
+	if (*id) {
+		g_source_remove(*id);
 	}
-	scheduled_id = g_timeout_add(to, cb, NULL);
+	*id = g_timeout_add(to, cb, context);
+}
+
+gboolean usb_alarm(gpointer dummy)
+{
+	phdc_device_timeout_event(phdc_context);
+	return FALSE;
+}
+
+static void schedule_usb_timeout(int ms)
+{
+	schedule(&sch_usb, usb_alarm, NULL, ms);
 }
 
 static gboolean search_devices(gpointer dummy)
@@ -404,15 +451,15 @@ static gboolean search_devices(gpointer dummy)
 	search_phdc_devices(phdc_context);
 
 	if (phdc_context->number_of_devices <= 0) {
-		fprintf(stderr, "No devices found, retrying in 5 seconds...\n");
-		schedule(search_devices, 5000);
+		DEBUG("No devices found, retrying in 5 seconds...");
+		schedule(&sch_search, search_devices, NULL, 5000);
 		return FALSE;
 	}
 
 	for (i = 0; i < phdc_context->number_of_devices; ++i) {
 		usb_phdc_device *usbdev = &(phdc_context->device_list[i]);
 
-		fprintf(stderr, "Opening device #%d\n", i);
+		DEBUG("Opening device #%d", i);
 		add_device(usbdev);
 
 		usbdev->data_read_cb = data_received;
@@ -421,11 +468,11 @@ static gboolean search_devices(gpointer dummy)
 
 		print_phdc_info(usbdev);
 
-		if (open_phdc_handle(usbdev) == 1) {
+		if (open_phdc_handle(usbdev, phdc_context) == 1) {
 			channel_connected(usbdev, usbdev);
 			poll_phdc_device_pre(usbdev);
 		} else {
-			fprintf(stderr, "Trouble opening device #%d\n", i);
+			DEBUG("Trouble opening device #%d", i);
 		}
 	}
 
@@ -443,8 +490,8 @@ static int init()
 
 	phdc_context = (usb_phdc_context *) calloc(1, sizeof(usb_phdc_context));
 
-	init_phdc_usb_plugin(phdc_context);
-	schedule(search_devices, 0);
+	init_phdc_usb_plugin(phdc_context, added_fd, removed_fd, schedule_usb_timeout);
+	schedule(&sch_search, search_devices, NULL, 0);
 
 	return NETWORK_ERROR_NONE;
 }
@@ -463,6 +510,7 @@ static gboolean cleanup(gpointer data)
 	current_data = NULL;
 
 	release_phdc_resources(phdc_context);
+	unlisten_all_fds();
 
 	return FALSE;
 }
@@ -477,7 +525,8 @@ static int finalize()
 {
 	DEBUG("Stopping USB link...");
 
-	g_idle_add(cleanup, NULL);
+	cleanup(NULL);
+	// g_idle_add(cleanup, NULL);
 
 	return NETWORK_ERROR_NONE;
 }
@@ -491,7 +540,7 @@ static int finalize()
 static ByteStreamReader *get_apdu(struct Context *ctx)
 {
 	guchar *buffer;
-	DEBUG("\nUSB: get APDU stream");
+	DEBUG("USB: get APDU stream");
 
 	// Create bytestream
 	buffer = malloc(data_len);
@@ -500,7 +549,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 	ByteStreamReader *stream = byte_stream_reader_instance(buffer, data_len);
 
 	if (stream == NULL) {
-		ERROR("\n network:usb Error creating bytelib");
+		ERROR("network:usb Error creating bytelib");
 		return NULL;
 	}
 
@@ -516,7 +565,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
  */
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
-	DEBUG("\nSend APDU");
+	DEBUG("Send APDU");
 
 	channel_object *c = get_channel_by_handle(ctx->id);
 

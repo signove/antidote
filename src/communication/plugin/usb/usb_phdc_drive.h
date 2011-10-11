@@ -37,7 +37,6 @@ typedef struct usb_phdc_device {
 
 	libusb_device *usb_device;
 	libusb_device_handle *usb_device_handle;
-	libusb_context *usb_device_context;
 
 	struct libusb_transfer *read_transfer;
 	unsigned char *buffer_in;
@@ -48,9 +47,6 @@ typedef struct usb_phdc_device {
 
 	uint16_t vendor_id;
 	uint16_t product_id;
-
-	struct pollfd *fds;
-	nfds_t fds_count;
 
 	char *manufacturer;
 	char *name;
@@ -63,6 +59,8 @@ typedef struct usb_phdc_device {
 	void (*error_read_cb)(struct usb_phdc_device *dev);
 	void (*device_gone_cb)(struct usb_phdc_device *dev);
 
+	int ok;
+
 } usb_phdc_device;
 
 typedef struct usb_phdc_context {
@@ -71,13 +69,16 @@ typedef struct usb_phdc_context {
 	int number_of_devices;
 } usb_phdc_context;
 
-int init_phdc_usb_plugin(usb_phdc_context *phdc_context);
+int init_phdc_usb_plugin(usb_phdc_context *phdc_context,
+			void (*added_fd)(int fd, short events, void *ctx),
+			void (*removed_fd)(int fd, void *ctx),
+			void (*sch_timeout)(int ms));
 
 void search_phdc_devices(usb_phdc_context *phdc_context);
 
 int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len);
 
-int open_phdc_handle(usb_phdc_device *phdc_device);
+int open_phdc_handle(usb_phdc_device *phdc_device, usb_phdc_context *ctx);
 
 void release_phdc_resources(usb_phdc_context *phdc_context);
 
@@ -85,8 +86,12 @@ void print_phdc_info(usb_phdc_device *phdc_device);
 
 void poll_phdc_device_pre(usb_phdc_device *phdc_device);
 
-int poll_phdc_device(usb_phdc_device *phdc_device);
+int poll_phdc_device(usb_phdc_device *phdc_device, usb_phdc_context *ctx);
 
-void poll_phdc_device_post(usb_phdc_device *phdc_device);
+void poll_phdc_device_post(usb_phdc_context *ctx);
+
+void phdc_device_fd_event(usb_phdc_context *ctx);
+
+void phdc_device_timeout_event(usb_phdc_context *ctx);
 
 #endif /*USB_PHDC_DRIVE_*/
