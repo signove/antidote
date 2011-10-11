@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /**
  * \file healthd_service.c
- * \brief Bluez server source.
+ * \brief Health manager service
 *
  * Copyright (C) 2010 Signove Tecnologia Corporation.
  * All rights reserved.
@@ -560,7 +560,7 @@ static Device *device_by_handle(guint64 handle)
 	return device;
 }
 
-static Device *device_by_addr(const char *btaddr)
+static Device *device_by_addr(const char *low_addr)
 {
 	GSList *i;
 	Device *device = NULL;
@@ -569,7 +569,7 @@ static Device *device_by_addr(const char *btaddr)
 	for (i = devices; i; i = i->next) {
 		Device *candidate = i->data;
 
-		if (strcmp(candidate->addr, btaddr) == 0) {
+		if (strcmp(candidate->addr, low_addr) == 0) {
 			device = candidate;
 			break;
 		}
@@ -624,15 +624,15 @@ void client_disconnected()
  *
  * @return a copy of object path (does not transfer ownership)
  */
-static const char *get_device_object(const char *btaddr, guint64 conn_handle)
+static const char *get_device_object(const char *low_addr, guint64 conn_handle)
 {
 	static long int dev_counter = 0;
 
 	Device *device = NULL;
 
-	if (btaddr) {
+	if (low_addr) {
 		/* First search upon connection, normal to fail at first time */
-		device = device_by_addr(btaddr);
+		device = device_by_addr(low_addr);
 	} else {
 		/* This search should not fail */
 		device = device_by_handle(conn_handle);
@@ -645,7 +645,7 @@ static const char *get_device_object(const char *btaddr, guint64 conn_handle)
 
 	if (!device) {
 		device = g_object_new(DEVICE_TYPE_OBJECT, NULL);
-		device->addr = g_strdup(btaddr);
+		device->addr = g_strdup(low_addr);
 		asprintf(&(device->path), "%s/%ld", DEVICE_OBJECT_PATH,
 			 ++dev_counter);
 		DEBUG("Create device object in %s", device->path);
@@ -721,14 +721,14 @@ static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointe
 /**
  * Function that calls D-Bus agent.Connected method.
  */
-static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
+static gboolean call_agent_connected(guint64 conn_handle, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
 
 	DEBUG("call_agent_connected");
 
-	device_path = get_device_object(btaddr, conn_handle);
+	device_path = get_device_object(low_addr, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
@@ -740,7 +740,7 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
 							device_path);
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
-		tcp_announce("CONNECTED", device_path, btaddr);
+		tcp_announce("CONNECTED", device_path, low_addr);
 		return TRUE;
 	}
 
@@ -751,7 +751,7 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *btaddr)
 	call = dbus_g_proxy_begin_call(agent_proxy, "Connected",
 				       call_agent_epilogue, NULL, NULL,
 				       G_TYPE_STRING, device_path,
-				       G_TYPE_STRING, btaddr,
+				       G_TYPE_STRING, low_addr,
 				       G_TYPE_INVALID, G_TYPE_INVALID);
 
 	if (!call) {
@@ -956,14 +956,14 @@ static gboolean call_agent_disassociated(guint64 conn_handle)
  *
  * @return success status
  */
-static gboolean call_agent_disconnected(guint64 conn_handle, const char *btaddr)
+static gboolean call_agent_disconnected(guint64 conn_handle, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
 
 	DEBUG("call_agent_disconnected");
 
-	device_path = get_device_object(btaddr, conn_handle);
+	device_path = get_device_object(low_addr, conn_handle);
 
 	if (!device_path) {
 		DEBUG("No device associated with handle!");
