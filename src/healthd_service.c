@@ -99,7 +99,7 @@ static int server_fd = -1;
 
 static void tcp_close(tcp_client *client)
 {
-	fprintf(stderr, "TCP: freeing client %p\n", client);
+	DEBUG("TCP: freeing client %p", client);
 
 	shutdown(client->fd, SHUT_RDWR);
 	close(client->fd);
@@ -119,7 +119,7 @@ static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
 	gboolean more;
 
 	if (cond != G_IO_OUT) {
-		fprintf(stderr, "TCP: write: false alarm\n");
+		DEBUG("TCP: write: false alarm");
 		return TRUE;
 	}
 
@@ -128,12 +128,12 @@ static gboolean tcp_write(GIOChannel *src, GIOCondition cond, gpointer data)
 		return FALSE;
 	}
 
-	fprintf(stderr, "TCP: writing client %p\n", data);
+	DEBUG("TCP: writing client %p", data);
 
 	int fd = g_io_channel_unix_get_fd(src);
 	written = send(fd, client->buf, len, 0);
 
-	fprintf(stderr, "TCP: client %p written %d bytes\n", data, (int) written);
+	DEBUG("TCP: client %p written %d bytes", data, (int) written);
 
 	if (written <= 0) {
 		free(client->buf);
@@ -161,7 +161,7 @@ static gboolean tcp_read(GIOChannel *src, GIOCondition cond, gpointer data)
 	char buf[256];
 	gsize count;
 
-	fprintf(stderr, "TCP: reading client %p\n", data);
+	DEBUG("TCP: reading client %p", data);
 
 	tcp_client *client = (tcp_client*) data;
 
@@ -187,7 +187,7 @@ static void tcp_send(tcp_client *client, const char *msg)
 {
 	char *newbuf;
 
-	fprintf(stderr, "TCP: scheduling write %p\n", client);
+	DEBUG("TCP: scheduling write %p", client);
 
 	asprintf(&newbuf, "%s%s", client->buf, msg);
 
@@ -206,12 +206,12 @@ static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 	socklen_t addrlen = sizeof(struct sockaddr_in);
 	bzero(&addr, sizeof(addr));
 
-	fprintf(stderr, "TCP: accepting condition\n");
+	DEBUG("TCP: accepting condition");
 
 	fd = accept(g_io_channel_unix_get_fd(src), (struct sockaddr *) &addr, &addrlen);
 
 	if (fd < 0) {
-		fprintf(stderr, "TCP: Failed accept\n");
+		DEBUG("TCP: Failed accept");
 		return TRUE;
 	}
 
@@ -219,7 +219,7 @@ static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 	new_client->fd = fd;
 	new_client->buf = strdup("");
 
-	fprintf(stderr, "TCP: adding client %p to list\n", new_client);
+	DEBUG("TCP: adding client %p to list", new_client);
 
 	GIOChannel *channel = g_io_channel_unix_new(fd);
 	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, tcp_read, new_client);
@@ -247,7 +247,7 @@ static void tcp_listen()
 	GIOChannel *channel = g_io_channel_unix_new(server_fd);
 	g_io_add_watch(channel, G_IO_IN, tcp_accept, 0);
 
-	fprintf(stderr, "TCP: listening\n");
+	DEBUG("TCP: listening");
 }
 
 static void tcp_announce(const char *command, const char *path, const char *arg)
