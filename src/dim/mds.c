@@ -118,11 +118,13 @@ int mds_get_nomenclature_code()
  * Action used to retrieve segments info of PMStores
  *
  * \param ctx current context
+ * \param handle PM-Store handle
  * \param request_callback
  *
  * \return Request
  */
-Request *mds_service_get_segment_info(Context *ctx, service_request_callback request_callback)
+Request *mds_service_get_segment_info(Context *ctx, int handle,
+			 service_request_callback request_callback)
 {
 	if (ctx->mds != NULL) {
 		SegmSelection *selection = calloc(1, sizeof(SegmSelection));
@@ -132,7 +134,8 @@ Request *mds_service_get_segment_info(Context *ctx, service_request_callback req
 		int i;
 
 		for (i = 0; i < ctx->mds->objects_list_count; ++i) {
-			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
+			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE &&
+				(handle < 0 || handle == ctx->mds->objects_list[i].obj_handle)) {
 				Request *result = pmstore_service_action_get_segment_info(
 							  ctx,
 							  &(ctx->mds->objects_list[i].u.pmstore),
@@ -155,12 +158,16 @@ Request *mds_service_get_segment_info(Context *ctx, service_request_callback req
  * Action used to retrieve segments info of PMStores
  *
  * \param ctx current context.
+ * \param handle PM-Store handle (-1 if any)
+ * \param instnumber PM-Instance number (-1 if all)
  * \param request_callback
  * \return Request
  */
-Request *mds_service_get_segment_data(Context *ctx, service_request_callback request_callback)
+Request *mds_service_get_segment_data(Context *ctx,
+					int handle,
+					int instnumber,
+					service_request_callback request_callback)
 {
-	// TODO make inst_number selectable
 	if (ctx->mds != NULL) {
 		struct PMStore pmstore;
 		TrigSegmDataXferReq *seg_data_xfer = calloc(1,
@@ -169,17 +176,28 @@ Request *mds_service_get_segment_data(Context *ctx, service_request_callback req
 		int j;
 
 		for (i = 0; i < ctx->mds->objects_list_count; ++i) {
-			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
+			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE && 
+			    (handle < 0 || handle == ctx->mds->objects_list[i].obj_handle)) {
 				pmstore = ctx->mds->objects_list[i].u.pmstore;
 
 				for (j = 0; j < pmstore.segment_list_count; ++j) {
-					seg_data_xfer->seg_inst_no
-					= pmstore.segm_list[j]->instance_number;
+					if (instnumber >= 0) {
+						// want specific instance
+						if (instnumber !=
+							pmstore.segm_list[j]->instance_number) {
+							// not the one we want
+							continue;
+						}
+					}
+
+					seg_data_xfer->seg_inst_no =
+							pmstore.segm_list[j]->instance_number;
+
 					Request *result = pmstore_service_action_trig_segment_data_xfer(
-								  ctx,
-								  &pmstore,
-								  seg_data_xfer,
-								  request_callback);
+									  ctx,
+									  &pmstore,
+									  seg_data_xfer,
+									  request_callback);
 					free(seg_data_xfer);
 					return result;
 				}
@@ -196,18 +214,38 @@ Request *mds_service_get_segment_data(Context *ctx, service_request_callback req
 
 
 
-Request *mds_service_clear_segments(Context *ctx, service_request_callback request_callback)
+/**
+ * Action used to clera segments info of PMStores
+ *
+ * \param ctx current context.
+ * \param handle PM-Store handle (-1 if any)
+ * \param instnumber PM-Instance number (-1 if all)
+ * \param request_callback
+ * \return Request
+ */
+Request *mds_service_clear_segment(Context *ctx, int handle, int instnumber,
+				service_request_callback request_callback)
 {
-	// TODO segment selection
 	if (ctx->mds != NULL) {
 		SegmSelection *selection = calloc(1, sizeof(SegmSelection));
-		selection->choice = ALL_SEGMENTS_CHOSEN;
-		selection->length = 2;
-		selection->u.all_segments = 0;
+		if (instnumber < 0) {
+			selection->choice = ALL_SEGMENTS_CHOSEN;
+			selection->length = 2;
+			selection->u.all_segments = 0;
+		} else {
+			selection->choice = SEGM_ID_LIST_CHOSEN;
+			selection->length = 2 + 2 + 2; 
+			selection->u.segm_id_list.count = 1;
+			selection->u.segm_id_list.length = 2;
+			selection->u.segm_id_list.value = malloc(2);
+			selection->u.segm_id_list.value[0] = instnumber;
+		}
+
 		int i;
 
 		for (i = 0; i < ctx->mds->objects_list_count; ++i) {
-			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
+			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE &&
+				(handle < 0 || handle == ctx->mds->objects_list[i].obj_handle)) {
 				return pmstore_service_action_clear_segments_send_command(
 					       ctx,
 					       &(ctx->mds->objects_list[i].u.pmstore),
@@ -215,6 +253,7 @@ Request *mds_service_clear_segments(Context *ctx, service_request_callback reque
 			}
 		}
 
+		del_segmselection(selection);
 		free(selection);
 	} else {
 		ERROR("No MDS data is available");
@@ -394,9 +433,24 @@ Request *mds_service_action_set_time(Context *ctx, SetTimeInvoke *time, service_
  */
 Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attributeids_list_count, service_request_callback request_callback)
 {
-	return operating_service_get(ctx, attributeids_list, attributeids_list_count, MDS_TO_GET, request_callback);
+	return operating_service_get(ctx, MDS_HANDLE, attributeids_list, attributeids_list_count,
+					MDS_TO_GET, request_callback);
 }
 
+
+/**
+ * Request PM-Store attributes from agent device
+ *
+ * \param ctx current context.
+ * \param handle PM-Store handle
+ * \param request_callback
+ *
+ * \return request created
+ */
+Request *mds_get_pmstore(Context *ctx, int handle, service_request_callback request_callback)
+{
+	return operating_service_get(ctx, handle, NULL, 0, MDS_TO_GET, request_callback);
+}
 
 /**
  * This function configure the MDS structure using agent sent data which

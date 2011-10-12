@@ -62,7 +62,7 @@ struct PMSegment *pmsegment_instance(InstNumber instance_number)
 	struct PMSegment *segment = calloc(1, sizeof(struct PMSegment));
 
 	if (segment == NULL) {
-		// FIXME Error condition
+		return segment;
 	}
 
 	segment->instance_number = instance_number;

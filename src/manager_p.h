@@ -45,8 +45,11 @@ int manager_notify_evt_device_available(Context *ctx, DataList *data_list);
 
 int manager_notify_evt_device_unavailable(Context *ctx);
 
-int  manager_notify_evt_measurement_data_updated(Context *ctx, DataList *data_list);
+int manager_notify_evt_measurement_data_updated(Context *ctx, DataList *data_list);
 
-int  manager_notify_evt_timeout(Context *ctx);
+int manager_notify_evt_timeout(Context *ctx);
+
+int manager_notify_evt_segment_data(Context *ctx, int handle, int instnumber,
+					DataList *data_list);
 
 #endif /* MAINAPP_H_ */

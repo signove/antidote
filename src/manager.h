@@ -46,6 +46,11 @@ typedef struct ManagerListener {
 	 */
 	void (*measurement_data_updated)(Context *ctx, DataList *list);
 	/**
+	 *  Called when PM-Segment data event is received
+	 */
+	void (*segment_data_received)(Context *ctx, int handle, int instnumber,
+					DataList *list);
+	/**
 	 * Called after device is operational
 	 */
 	void (*device_available)(Context *ctx, DataList *list);
@@ -61,6 +66,7 @@ typedef struct ManagerListener {
 
 #define MANAGER_LISTENER_EMPTY {\
 			.measurement_data_updated = NULL,\
+			.segment_data_received = NULL, \
 			.device_available = NULL,\
 			.device_unavailable = NULL,\
 			.timeout = NULL\
@@ -84,16 +90,23 @@ Request *manager_request_measurement_data_transmission(ContextId id, service_req
 
 Request *manager_request_get_all_mds_attributes(ContextId id, service_request_callback callback);
 
-Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
+Request *manager_request_get_pmstore(ContextId id, int handle, service_request_callback callback);
+
+DataList *manager_get_pmstore_data(ContextId id, int handle);
+
+Request *manager_request_get_segment_info(ContextId id, int handle, service_request_callback callback);
+
+DataList *manager_get_segment_info_data(ContextId id, int handle);
 
 Request *manager_set_operational_state_of_the_scanner(ContextId id, HANDLE handle, OperationalState state,
 		service_request_callback callback);
 
-Request *manager_request_get_segment_data(ContextId id, service_request_callback callback);
+Request *manager_request_get_segment_data(ContextId id, int handle, int instnumber, service_request_callback callback);
 
-Request *manager_request_clear_segments(ContextId id, service_request_callback callback);
+Request *manager_request_clear_segment(ContextId id, int handle, int instnumber,
+					 service_request_callback callback);
 
-Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
+Request *manager_request_clear_segments(ContextId id, int handle, service_request_callback callback);
 
 DataList *manager_get_configuration(ContextId id);
 

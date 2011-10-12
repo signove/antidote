@@ -350,12 +350,14 @@ Request *mds_set_operational_state_of_the_scanner(Context *ctx, HANDLE handle, O
 
 void mds_service_get_all_segment_info(service_request_callback request_callback);
 
-Request *mds_service_get_segment_info(Context *ctx,
+Request *mds_service_get_segment_info(Context *ctx, int handle,
 				      service_request_callback request_callback);
 
-Request *mds_service_get_segment_data(Context *ctx, service_request_callback request_callback);
+Request *mds_service_get_segment_data(Context *ctx, int handle, int instnumber,
+				 service_request_callback request_callback);
 
-Request *mds_service_clear_segments(Context *ctx, service_request_callback request_callback);
+Request *mds_service_clear_segment(Context *ctx, int handle, int instnumber,
+					service_request_callback request_callback);
 
 int mds_is_supported_data_request(MDS *mds, DataReqMode data_req_mode);
 
@@ -366,6 +368,8 @@ Request *mds_service_action_data_request(Context *ctx, DataReqMode data_req_mode
 Request *mds_service_action_set_time(Context *ctx, SetTimeInvoke *time,  service_request_callback request_callback);
 
 Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attributeids_list_count, service_request_callback request_callback);
+
+Request *mds_get_pmstore(Context *ctx, int handle, service_request_callback request_callback);
 
 void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list, int manager);
 

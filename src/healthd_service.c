@@ -2,7 +2,7 @@
 /**
  * \file healthd_service.c
  * \brief Health manager service
-*
+ *
  * Copyright (C) 2010 Signove Tecnologia Corporation.
  * All rights reserved.
  * Contact: Signove Tecnologia Corporation (contact@signove.com)
@@ -53,8 +53,7 @@
 #endif
 #include "src/util/log.h"
 #include "src/communication/service.h"
-// #include "src/communication/plugin/bluez/plugin_glib_socket.h"
-
+#include "src/dim/pmstore_req.h"
 
 #define SRV_SERVICE_NAME "com.signove.health"
 #define SRV_OBJECT_PATH "/com/signove/health"
@@ -83,6 +82,11 @@ static int commmode;
 static gboolean call_agent_measurementdata(guint64, char *);
 static gboolean call_agent_disassociated(guint64);
 static gboolean call_agent_associated(guint64, char *);
+static gboolean call_agent_segmentinfo(guint64, guint, char *);
+static gboolean call_agent_segmentdataresponse(guint64, guint, guint, guint);
+static gboolean call_agent_segmentdata(guint64, guint, guint, char *);
+static gboolean call_agent_segmentcleared(guint64, guint, guint, guint);
+static gboolean call_agent_pmstoredata(guint64, guint, char *);
 
 
 /* TCP clients */
@@ -314,7 +318,7 @@ static int timer_count_timeout(Context *ctx)
  * Callback for when new data has been received.
  *
  * @param ctx current context.
- * @param list a pointer to a empty data list.
+ * @param list a pointer to data list.
  */
 void new_data_received(Context *ctx, DataList *list)
 {
@@ -324,6 +328,26 @@ void new_data_received(Context *ctx, DataList *list)
 
 	if (data) {
 		call_agent_measurementdata(ctx->id, data);
+		free(data);
+	}
+}
+
+/**
+ * Callback for when PM-Segment data has been received.
+ *
+ * @param ctx current context.
+ * @param handle the PM-Store handle
+ * @param instnumber the PM-Segment instance number
+ * @param list a pointer to data list.
+ */
+void segment_data_received(Context *ctx, int handle, int instnumber, DataList *list)
+{
+	DEBUG("PM-Segment Data");
+
+	char *data = xml_encode_data_list(list);
+
+	if (data) {
+		call_agent_segmentdata(ctx->id, handle, instnumber, data);
 		free(data);
 	}
 }
@@ -811,6 +835,8 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
 /**
  * Function that calls D-Bus agent.MeasurementData method.
  *
+ * @param conn_handle device handle
+ * @param xml Data in xml format
  * @return success status
  */
 static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
@@ -856,6 +882,287 @@ static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
 	return TRUE;
 }
 
+/**
+ * Function that calls D-Bus agent.SegmentInfo method.
+ *
+ * @param handle PM-Store handle
+ * @param xml PM-Segment instance data in XML format
+ * @return success status
+ */
+static gboolean call_agent_segmentinfo(guint64 conn_handle, guint handle, gchar *xml)
+{
+	DBusGProxyCall *call;
+	const char *device_path;
+
+	DEBUG("call_agent_segmentinfo");
+
+	device_path = get_device_object(NULL, conn_handle);
+
+	if (!device_path) {
+		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (opmode == AUTOTESTING) {
+		DEBUG("\n\n(Auto-test) Segment Info from %s\nhandle %d\n%s\n\n",
+						device_path, handle, xml);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		char *params;
+		asprintf(&params, "%d %s", handle, xml);
+		tcp_announce("SEGMENTINFO", device_path, params);
+		free(params);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
+		return FALSE;
+	}
+
+	call = dbus_g_proxy_begin_call(agent_proxy, "SegmentInfo",
+				       call_agent_epilogue, NULL, NULL,
+				       G_TYPE_STRING, device_path,
+				       G_TYPE_INT, handle,
+				       G_TYPE_STRING, xml,
+				       G_TYPE_INVALID, G_TYPE_INVALID);
+
+	if (!call) {
+		DEBUG("error calling agent");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * Function that calls D-Bus agent.SegmentDataResponse method.
+ *
+ * @param conn_handle device handle
+ * @param handle PM-Store handle
+ * @param instnumber PM-Segment instance number
+ * @param status Return status
+ * @return success status
+ */
+static gboolean call_agent_segmentdataresponse(guint64 conn_handle,
+			guint handle, guint instnumber, guint retstatus)
+{
+	DBusGProxyCall *call;
+	const char *device_path;
+
+	DEBUG("call_agent_segmentdataresponse");
+
+	device_path = get_device_object(NULL, conn_handle);
+
+	if (!device_path) {
+		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (opmode == AUTOTESTING) {
+		DEBUG("\n\n(Auto-test) Segment Data Response from %s\n"
+			"\thandle %d\n\tinstnumber %d retstatus %d\n\n",
+			device_path, handle, instnumber, retstatus);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		char *params;
+		asprintf(&params, "%d %d %d", handle, instnumber, retstatus);
+		tcp_announce("SEGMENTDATARESPONSE", device_path, params);
+		free(params);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
+		return FALSE;
+	}
+
+	call = dbus_g_proxy_begin_call(agent_proxy, "SegmentDataResponse",
+				       call_agent_epilogue, NULL, NULL,
+				       G_TYPE_STRING, device_path,
+				       G_TYPE_INT, handle,
+				       G_TYPE_INT, instnumber,
+				       G_TYPE_INT, retstatus,
+				       G_TYPE_INVALID, G_TYPE_INVALID);
+
+	if (!call) {
+		DEBUG("error calling agent");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * Function that calls D-Bus agent.SegmentData method.
+ *
+ * @param conn_handle device handle
+ * @param handle PM-Store handle
+ * @param instnumber PM-Segment instance number
+ * @param xml PM-Segment instance data in XML format
+ * @return success status
+ */
+static gboolean call_agent_segmentdata(guint64 conn_handle, guint handle,
+					guint instnumber, gchar *xml)
+{
+	DBusGProxyCall *call;
+	const char *device_path;
+
+	DEBUG("call_agent_segmentdata");
+
+	device_path = get_device_object(NULL, conn_handle);
+
+	if (!device_path) {
+		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (opmode == AUTOTESTING) {
+		DEBUG("\n\n(Auto-test) Segment Data from %s\n"
+			"\thandle %d\n\tinstnumber %d\n%s\n\n",
+			device_path, handle, instnumber, xml);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		char *params;
+		asprintf(&params, "%d %d %s", handle, instnumber, xml);
+		tcp_announce("SEGMENTDATA", device_path, params);
+		free(params);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
+		return FALSE;
+	}
+
+	call = dbus_g_proxy_begin_call(agent_proxy, "SegmentData",
+				       call_agent_epilogue, NULL, NULL,
+				       G_TYPE_STRING, device_path,
+				       G_TYPE_INT, handle,
+				       G_TYPE_INT, instnumber,
+				       G_TYPE_STRING, xml,
+				       G_TYPE_INVALID, G_TYPE_INVALID);
+
+	if (!call) {
+		DEBUG("error calling agent");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * Function that calls D-Bus agent.PMStoreData method.
+ *
+ * @param conn_handle device handle
+ * @param handle PM-Store handle
+ * @param xml PM-Store data attributes in XML format
+ * @return success status
+ */
+static gboolean call_agent_pmstoredata(guint64 conn_handle, guint handle, gchar *xml)
+{
+	DBusGProxyCall *call;
+	const char *device_path;
+
+	DEBUG("call_agent_pmstoredata");
+
+	device_path = get_device_object(NULL, conn_handle);
+
+	if (!device_path) {
+		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (opmode == AUTOTESTING) {
+		DEBUG("\n\n(Auto-test) PM-Store Data from %s\n"
+			"\thandle %d\n%s\n\n",
+			device_path, handle, xml);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		char *params;
+		asprintf(&params, "%d %s", handle, xml);
+		tcp_announce("PMSTOREDATA", device_path, params);
+		free(params);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
+		return FALSE;
+	}
+
+	call = dbus_g_proxy_begin_call(agent_proxy, "PMStoreData",
+				       call_agent_epilogue, NULL, NULL,
+				       G_TYPE_STRING, device_path,
+				       G_TYPE_INT, handle,
+				       G_TYPE_STRING, xml,
+				       G_TYPE_INVALID, G_TYPE_INVALID);
+
+	if (!call) {
+		DEBUG("error calling agent");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * Function that calls D-Bus agent.SegmentCleared method.
+ *
+ * @param conn_handle device handle
+ * @param handle PM-Store handle
+ * @param PM-Segment instance number
+ * @return success status
+ */
+static gboolean call_agent_segmentcleared(guint64 conn_handle, guint handle,
+							guint instnumber,
+							guint retstatus)
+{
+	DBusGProxyCall *call;
+	const char *device_path;
+
+	DEBUG("call_agent_segmentcleared");
+
+	device_path = get_device_object(NULL, conn_handle);
+
+	if (!device_path) {
+		DEBUG("No device associated with handle!");
+		return FALSE;
+	}
+
+	if (opmode == AUTOTESTING) {
+		DEBUG("\n\n(Auto-test) Segment Cleared from %s\n"
+					"\thandle %d\n\tinstnumber %d\n\n",
+					device_path, handle, instnumber);
+		return TRUE;
+	} else if (opmode == TCP_SERVER) {
+		char *params;
+		asprintf(&params, "%d %d %d", handle, instnumber, retstatus);
+		tcp_announce("SEGMENTCLEARED", device_path, params);
+		free(params);
+		return TRUE;
+	}
+
+	if (!agent_proxy) {
+		return FALSE;
+	}
+
+	call = dbus_g_proxy_begin_call(agent_proxy, "SegmentCleared",
+				       call_agent_epilogue, NULL, NULL,
+				       G_TYPE_STRING, device_path,
+				       G_TYPE_INT, handle,
+				       G_TYPE_INT, instnumber,
+				       G_TYPE_INT, retstatus,
+				       G_TYPE_INVALID, G_TYPE_INVALID);
+
+	if (!call) {
+		DEBUG("error calling agent");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 /**
  * Function that calls D-Bus agent.DeviceAttributes method.
@@ -864,8 +1171,6 @@ static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
  */
 static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
 {
-	/* Called back by new_data_received() */
-
 	DBusGProxyCall *call;
 	const char *device_path;
 
@@ -1056,7 +1361,7 @@ gboolean device_disconnect(Device *obj, GError **err)
  *\param ctx
  *\param response_apdu
  * */
-void device_reqmdsattr_callback(Context *ctx, DATA_apdu *response_apdu)
+static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	DEBUG("Medical Device Attributes");
 
@@ -1097,7 +1402,7 @@ gboolean device_getconfig(Device *obj, char** xml_out, GError **err)
 
 	if (list) {
 		*xml_out = xml_encode_data_list(list);
-		free(list);
+		data_list_del(list);
 	} else {
 		*xml_out = strdup("");
 	}
@@ -1177,6 +1482,27 @@ gboolean device_testagent(Device *obj, GError **err)
 	return TRUE;
 }
 
+/*Callback for PM-Store GET
+ *
+ *\param ctx
+ *\param r Request object
+ *\param response_apdu
+ * */
+static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+	PMStoreGetRet *ret = (PMStoreGetRet*) r->return_data;
+	DataList *list;
+	char *data;
+
+	if ((list = manager_get_pmstore_data(ctx->id, ret->handle))) {
+		if ((data = xml_encode_data_list(list))) {
+			call_agent_pmstoredata(ctx->id, ret->handle, data);
+			free(data);
+			data_list_del(list);
+		}
+	}
+}
+
 /*DBUS facade to get PM-Store attributes
  *
  *\param obj
@@ -1188,9 +1514,52 @@ gboolean device_get_pmstore(Device *obj, gint handle,
 				gint* ret, GError **err)
 {
 	DEBUG("device_get_pmstore");
-	// manager_request_get_pmstore(obj->handle, NULL);
+	manager_request_get_pmstore(obj->handle, handle, device_get_pmstore_cb);
 	*ret = 0;
 	return TRUE;
+}
+
+/*Callback for PM-Store get segment info response
+ *
+ *\param ctx
+ *\param r Request object
+ *\param response_apdu
+ * */
+static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+	PMStoreGetSegmInfoRet *ret = (PMStoreGetSegmInfoRet*) r->return_data;
+	DataList *list;
+	char *data;
+
+	if ((list = manager_get_segment_info_data(ctx->id, ret->handle))) {
+		if ((data = xml_encode_data_list(list))) {
+			call_agent_segmentinfo(ctx->id, ret->handle, data);
+			free(data);
+			data_list_del(list);
+		}
+	}
+}
+
+/*Callback for PM-Store segment data response
+ *
+ *\param ctx
+ *\param response_apdu
+ * */
+static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+	PMStoreGetSegmDataRet *ret = (PMStoreGetSegmDataRet*) r->return_data;
+	call_agent_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->response);
+}
+
+/*Callback for PM-Store clear segment response
+ *
+ *\param ctx
+ *\param response_apdu
+ * */
+static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+	PMStoreClearSegmRet *ret = (PMStoreClearSegmRet*) r->return_data;
+	call_agent_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
 /*DBUS facade to get segments info from a PM-Store
@@ -1203,9 +1572,12 @@ gboolean device_get_pmstore(Device *obj, gint handle,
 gboolean device_get_segminfo(Device *obj, gint handle,
 				gint* ret, GError **err)
 {
+	Request *req;
+
 	DEBUG("device_get_segminfo");
-	// manager_request_get_segment_info(obj->handle, NULL);
-	*ret = 0;
+	req = manager_request_get_segment_info(obj->handle, handle,
+						device_get_segminfo_cb);
+	*ret = req ? 0 : 1;
 	return TRUE;
 }
 
@@ -1220,9 +1592,12 @@ gboolean device_get_segminfo(Device *obj, gint handle,
 gboolean device_get_segmdata(Device *obj, gint handle, gint instnumber,
 				gint* ret, GError **err)
 {
-	DEBUG("device_getsegmdata");
-	// manager_request_get_segment_data(obj->handle, NULL);
-	*ret = 0;
+	Request *req;
+
+	DEBUG("device_get_segmdata");
+	req = manager_request_get_segment_data(obj->handle, handle,
+				instnumber, device_get_segmdata_cb);
+	*ret = req ? 0 : 1;
 	return TRUE;
 }
 
@@ -1237,9 +1612,12 @@ gboolean device_get_segmdata(Device *obj, gint handle, gint instnumber,
 gboolean device_clearsegmdata(Device *obj, gint handle, gint instnumber,
 				gint *ret, GError **err)
 {
+	Request *req;
+
 	DEBUG("device_clearsegmdata");
-	// manager_request_clear_segments(obj->handle, NULL);
-	*ret = 0;
+	req = manager_request_clear_segment(obj->handle, handle,
+				instnumber, device_clear_segm_cb);
+	*ret = req ? 0 : 1;
 	return TRUE;
 }
 
@@ -1253,9 +1631,12 @@ gboolean device_clearsegmdata(Device *obj, gint handle, gint instnumber,
 gboolean device_clearallsegmdata(Device *obj, gint handle,
 				gint *ret, GError **err)
 {
-	DEBUG("device_clearallsegmdata");
-	// manager_request_clear_segments(obj->handle, NULL);
-	*ret = 0;
+	Request *req;
+
+	DEBUG("device_clearsegmdata");
+	req = manager_request_clear_segments(obj->handle, handle,
+				device_clear_segm_cb);
+	*ret = req ? 0 : 1;
 	return TRUE;
 }
 
@@ -1431,6 +1812,7 @@ init_plugin:
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;
+	listener.segment_data_received = &segment_data_received;
 	listener.device_available = &device_associated;
 	listener.device_unavailable = &device_disassociated;
 

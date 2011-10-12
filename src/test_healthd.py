@@ -18,6 +18,8 @@ def getsegmentdata_response_interpret(i):
 		s = "Unknown fail code"
 	return s
 
+pmstore_handle = -1
+
 class Agent(dbus.service.Object):
 
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
@@ -42,6 +44,7 @@ class Agent(dbus.service.Object):
 
 		glib.timeout_add(0, getConfiguration, dev)
 		glib.timeout_add(1000, requestMdsAttributes, dev)
+		glib.timeout_add(2000, getSegmentInfo, dev, pmstore_handle)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
 	def MeasurementData(self, dev, data):
@@ -60,6 +63,7 @@ class Agent(dbus.service.Object):
 		print
 		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "\tData:\t", data
+		# FIXME get segment data
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentDataResponse(self, dev, pmstore_handle, pmsegment, response):
@@ -111,6 +115,13 @@ def getConfiguration(dev):
 	print
 	return False
 
+def getSegmentInfo(dev, handle):
+	ret = dev.GetSegmentInfo(handle)
+	print
+	print "GetSegmentInfo ret %d"
+	print
+	return False
+
 def do_something(dev):
 	# print dev.AbortAssociation()
 	# print dev.Connect()
@@ -121,6 +132,10 @@ def do_something(dev):
 	# print dev.ReleaseAssociation()
 	# print dev.Disconnect()
 	return False
+
+if len(sys.argv) > 2:
+	if sys.argv[1] == '--pmstore-handle':
+		pmstore_handle = int(sys.argv[2])
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 

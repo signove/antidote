@@ -38,6 +38,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 
 /**
  *
@@ -458,6 +459,31 @@ void data_set_absolute_time(DataEntry *data, char *att_name,
 		       bcdtime2number(time->sec_fractions));
 }
 
+/**
+ * Sets data entry with passed type.
+ *
+ * @param data entry
+ * @param att_name the name of DIM attribute
+ * @param adj AbsoluteTimeAdjust value
+ */
+void data_set_absolute_time_adj(DataEntry *data, char *att_name, AbsoluteTimeAdjust *adj)
+{
+	if (data == NULL)
+		return;
+
+	// AbsoluteTimeAdjust is a big-endian 6-octet uint embedded in a
+	// string of 6 octets because there is no INT-U48 type.
+	// Since there is no INT-U64 either, we opted by breaking
+	// the value in two parts than can easily be combined by
+	// client.
+
+	intu16 hi = ntohs(*((intu16*) &(adj->value[0])));
+	intu32 lo = ntohl(*((intu32*) &(adj->value[2])));
+
+	set_cmp(data, data_strcp(att_name), 2);
+	fill_cmp_child(data, 0, data_strcp("hi"), APIDEF_TYPE_INTU16, intu16_2str(hi));
+	fill_cmp_child(data, 1, data_strcp("lo"), APIDEF_TYPE_INTU32, intu32_2str(lo));
+}
 
 /**
  * Sets data entry with passed type.
@@ -997,7 +1023,95 @@ void data_set_handle_attr_val_map(DataEntry *data, char *att_name, HandleAttrVal
 		DataEntry *entry = &data->u.compound.entries[i];
 
 		data_set_handle(&entry->u.compound.entries[0], "obj-handle", &map->value[i].obj_handle);
-		data_set_attribute_value_map(&entry->u.compound.entries[1], "attr-val-map", &map->value[i].attr_val_map);
+		data_set_attribute_value_map(&entry->u.compound.entries[1], "attr-val-map",
+						&map->value[i].attr_val_map);
+	}
+}
+
+/**
+ * Sets data entry with passed type.
+ *
+ * @param entry
+ * @param att_name
+ * @param list
+ */
+static void data_set_segment_entry_list(DataEntry *entry, char *att_name, SegmEntryElemList *list)
+{
+	int i;
+
+	set_cmp(entry, data_strcp(att_name), list->count);
+
+	for (i = 0; i < list->count; ++i) {
+		SegmEntryElem *elem = &list->value[i];
+		DataEntry *sub1 = &entry->u.compound.entries[i];
+		DataEntry *sub2;
+
+		set_cmp(sub1, data_strcp("segment-entry"), 4);
+
+		sub2 = &sub1->u.compound.entries[0];
+		data_set_oid_type(sub2, "class-id", &elem->class_id);
+
+		sub2 = &sub1->u.compound.entries[1];
+		data_set_type(sub2, "type", &elem->metric_type);
+
+		sub2 = &sub1->u.compound.entries[2];
+		data_set_handle(sub2, "obj-handle", &elem->handle);
+
+		sub2 = &sub1->u.compound.entries[3];
+		data_set_attribute_value_map(sub2, "attr-val-map", &(elem->attr_val_map));
+	}
+}
+
+/**
+ * Sets data entry with passed type.
+ *
+ * @param entry
+ * @param att_name the name of DIM attribute
+ * @param map the PM-Segment entry map
+ */
+void data_set_pm_segment_entry_map(DataEntry *entry, char *att_name, PmSegmentEntryMap *map)
+{
+	if (entry == NULL)
+		return;
+
+	set_cmp(entry, data_strcp(att_name), 2);
+
+	data_set_intu16(&entry->u.compound.entries[0], "entry-header", &map->segm_entry_header);
+	data_set_segment_entry_list(&entry->u.compound.entries[1], "entry-list",
+					&map->segm_entry_elem_list);
+}
+
+/**
+ * Sets data entry with passed type.
+ *
+ * @param entry
+ * @param att_name the name of DIM attribute
+ * @param value
+ */
+void data_set_segment_stat(DataEntry *entry, char *att_name, SegmentStatistics *value)
+{
+	if (entry == NULL)
+		return;
+
+	int i;
+	intu16 FIXME2 = 0;
+
+	set_cmp(entry, data_strcp(att_name), value->count);
+
+	for (i = 0; i < value->count; ++i) {
+		SegmentStatisticEntry *elem = &value->value[i];
+		DataEntry *sub1 = &entry->u.compound.entries[i];
+		DataEntry *sub2;
+
+		set_cmp(sub1, data_strcp("stat-entry"), 2);
+
+		sub2 = &sub1->u.compound.entries[0];
+		data_set_intu16(&entry->u.compound.entries[0], "stat-type",
+				&elem->segm_stat_type);
+
+		sub2 = &sub1->u.compound.entries[1];
+		data_set_intu16(&entry->u.compound.entries[0], "stat-value",
+				&FIXME2);
 	}
 }
 

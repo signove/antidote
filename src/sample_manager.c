@@ -109,7 +109,7 @@ void device_associated(Context *ctx, DataList *list)
 /**
  * Prints device attribute values
  */
-void print_device_attributes(Context *ctx, DATA_apdu *response_apdu)
+void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	DataList *list = manager_get_mds_attributes(CONTEXT_ID);
 	char *data = json_encode_data_list(list);

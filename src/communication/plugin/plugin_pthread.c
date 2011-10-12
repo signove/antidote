@@ -280,7 +280,7 @@ static int timer_count_timeout(Context *ctx)
 
 	if (thread_ctx->timeout_thread == NULL) {
 		thread_ctx->timeout_thread = malloc(sizeof(pthread_t));
-		// FIXME using pointer as id
+		// TODO using pointer as id
 		ctx->timeout_action.id = (long int) thread_ctx->timeout_thread;
 
 		DEBUG("timer: Creating timeout counter thread id %d, time: %d",

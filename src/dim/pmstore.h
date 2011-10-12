@@ -37,6 +37,7 @@
 #include "src/util/bytelib.h"
 #include "src/communication/service.h"
 #include "src/asn1/phd_types.h"
+#include "src/api/api_definitions.h"
 
 
 /**
@@ -156,10 +157,14 @@ struct PMStore *pmstore_instance();
 void pmstore_service_action_clear_segments(struct PMStore *pm_store, SegmSelection selection);
 
 Request *pmstore_service_action_get_segment_info(Context *ctx, struct PMStore *pm_store,
-		SegmSelection *selection,  service_request_callback request_callback);
+		SegmSelection *selection, service_request_callback request_callback);
 
 void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
-				    SegmentInfoList info_list);
+					SegmentInfoList info_list,
+					struct RequestRet **ret_data);
+
+void pmstore_get_data_result(struct PMStore *pm_store,
+				struct RequestRet **ret_data);
 
 void pmstore_destroy(struct PMStore *pm_store);
 
@@ -170,7 +175,10 @@ Request *pmstore_service_action_trig_segment_data_xfer(Context *ctx, struct PMSt
 		TrigSegmDataXferReq *trig_req,  service_request_callback request_callback);
 
 void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
-		TrigSegmDataXferRsp trig_rsp);
+						TrigSegmDataXferRsp trig_rsp,
+						struct RequestRet **ret_data);
+
+void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data);
 
 void pmstore_add_segment(struct PMStore *pm_store, struct PMSegment *segment);
 
@@ -188,5 +196,9 @@ Request  *pmstore_service_action_clear_segments_send_command(Context *ctx, struc
 void pmstore_service_set_attribute(struct PMStore *pm_store, AVA_Type *attribute);
 
 int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamReader *stream);
+
+DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle);
+
+DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle);
 
 #endif /* PMSTORE_H_ */

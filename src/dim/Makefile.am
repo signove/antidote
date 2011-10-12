@@ -19,6 +19,7 @@ libdim_la_SOURCES = dim.c \
 noinst_HEADERS = dim.h \
 				 dimutil.h \
 			     pmstore.h \
+			     pmstore_req.h \
 				 pmsegment.h \
 			     cfg_scanner.h \
 			     epi_cfg_scanner.h \

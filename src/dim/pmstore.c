@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "pmstore.h"
+#include "pmstore_req.h"
 #include "src/api/api_definitions.h"
 #include "src/api/data_encoder.h"
 #include "src/api/data_list.h"
@@ -47,8 +48,7 @@
 #include "src/dim/mds.h"
 #include "src/dim/dimutil.h"
 
-
-// TODO if number_of_segments comes in configuration step,
+// FIXME EPX2 if number_of_segments comes in configuration step,
 // check if number_of_segments == segment_list_count
 
 /**
@@ -81,9 +81,16 @@ static const intu32 PM_STORE_TO_GET = 3;
  */
 static const intu32 PM_STORE_TO_CONFIRM_SET = 3;
 
-static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr_id, ByteStreamReader *stream);
-static void pmstore_populate_all_attributes(MDS *mds, struct PMStore *pmstore, int segment_index, DataEntry *segm_data_entry);
-static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore);
+static int pmstore_fill_segment_attr(struct PMSegment *pm_segment,
+					OID_Type attr_id,
+					ByteStreamReader *stream);
+
+static void pmstore_populate_all_attributes(MDS *mds, struct PMStore *pmstore,
+						struct PMSegment *pmsegment,
+						DataEntry *segm_data_entry);
+
+static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
+					struct PMSegment *pmsegment);
 
 /**
  * Returns one instance of the PMStore structure.
@@ -222,6 +229,12 @@ void pmstore_service_action_clear_segments(struct PMStore *pm_store, SegmSelecti
 	}
 }
 
+static void del_PMStoreClearSegmRet(void *p)
+{
+	PMStoreClearSegmRet *rs = p;
+	del_segmselection(&(rs->segm_selection));
+}
+
 /**
  * Deletes the data currently stored in one or more selected PMsegments.
  * All entries in the selected PM-segments are deleted. If the agent
@@ -234,10 +247,11 @@ void pmstore_service_action_clear_segments(struct PMStore *pm_store, SegmSelecti
  * \param request_callback
  *
  */
-Request  *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,
+Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,
 		SegmSelection *selection, service_request_callback request_callback)
 {
 	ByteStreamWriter *writer;
+	ByteStreamReader *reader;
 	writer = byte_stream_writer_instance(selection->length + sizeof(SegmSelection_choice) + sizeof(intu16));
 	encode_segmselection(writer, selection);
 
@@ -266,9 +280,33 @@ Request  *pmstore_service_action_clear_segments_send_command(Context *ctx, struc
 	// Send APDU
 	timeout_callback timeout_callback = NO_TIMEOUT;
 	encode_set_data_apdu(&apdu->u.prst, data_apdu);
-	Request *req = service_send_remote_operation_request(ctx, apdu, timeout_callback, request_callback);
+	Request *req = service_send_remote_operation_request(ctx, apdu, timeout_callback,
+								request_callback);
+	
+	PMStoreClearSegmRet *rs = calloc(1, sizeof(PMStoreClearSegmRet));
+	req->return_data = (struct RequestRet*) rs;
+	rs->handle = pm_store->handle;
+	rs->del_function = &del_PMStoreClearSegmRet;
+	reader = byte_stream_reader_instance(writer->buffer, writer->size);
+	decode_segmselection(reader, &(rs->segm_selection));
+	free(reader);
+
 	del_byte_stream_writer(writer, 1);
+
 	return req;
+}
+
+/**
+ * Removes PMSegments from RAM when clear segm confirmation comes back
+ *
+ * \param pmstore the PMStore to have PMSegments removed from.
+ * \param ret_data the return data associated with Request
+ *
+ */
+void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data)
+{
+	PMStoreClearSegmRet *rs = (PMStoreClearSegmRet*) ret_data;
+	pmstore_service_action_clear_segments(pmstore, rs->segm_selection);
 }
 
 /**
@@ -395,15 +433,43 @@ Request *pmstore_service_action_get_segment_info(Context *ctx, struct PMStore *p
  * Function called in response to get segments information action.
  *
  * \param pm_store the PMStore.
+ * \param ret_data Response data related to Request
+ */
+void pmstore_get_data_result(struct PMStore *pm_store,
+				struct RequestRet **ret_data)
+{
+	PMStoreGetRet *rd;
+
+	rd = calloc(1, sizeof(PMStoreGetRet));
+	*ret_data = (struct RequestRet *) rd;
+	rd->handle = pm_store->handle;
+	rd->response = 0;
+}
+
+/**
+ * Function called in response to get segments information action.
+ *
+ * \param pm_store the PMStore.
  * \param info_list the list of PMSegment info.
+ * \param ret_data Response data related to Request
  */
 void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
-				    SegmentInfoList info_list)
+					SegmentInfoList info_list,
+					struct RequestRet **ret_data)
 {
 	struct PMSegment *pmsegment = NULL;
+	PMStoreGetSegmInfoRet *rd;
 	int i;
 	int j;
 	int info_list_size = info_list.count;
+
+	rd = calloc(1, sizeof(PMStoreGetSegmInfoRet));
+	*ret_data = (struct RequestRet *) rd;
+	rd->handle = pm_store->handle;
+	rd->response = 0;
+
+	// FIXME EPX2 where errors come from? roer
+	// FIXME EPX2 check what it does under multiple passes
 
 	for (i = 0; i < info_list_size; ++i) {
 		InstNumber inst_number = info_list.value[i].seg_inst_no;
@@ -484,25 +550,18 @@ Request *pmstore_service_action_trig_segment_data_xfer(Context *ctx, struct PMSt
  *
  * \param pm_store the PMStore.
  * \param trig_rsp the data transfer response attribute.
+ * \param ret_data the related Request->RequestRet pointer to be filled
  */
 void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
-		TrigSegmDataXferRsp trig_rsp)
+						TrigSegmDataXferRsp trig_rsp,
+						struct RequestRet **ret_data)
 {
-	// TODO do something with results
-	switch (trig_rsp.trig_segm_xfer_rsp) {
-	case TSXR_SUCCESSFUL:
-		break;
-	case TSXR_FAIL_NO_SUCH_SEGMENT:
-		break;
-	case TSXR_FAIL_SEGM_TRY_LATER:
-		break;
-	case TSXR_FAIL_SEGM_EMPTY:
-		break;
-	case TSXR_FAIL_OTHER:
-		break;
-	default:
-		break;
-	}
+	PMStoreGetSegmDataRet *ret = calloc(1, sizeof(PMStoreGetSegmDataRet));
+	*ret_data = (struct RequestRet *) ret;
+
+	ret->handle = pm_store->handle;
+	ret->inst = trig_rsp.seg_inst_no;
+	ret->response = trig_rsp.trig_segm_xfer_rsp;
 }
 
 /**
@@ -524,25 +583,28 @@ void pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 	InstNumber inst_number = event.segm_data_event_descr.segm_instance;
 	pmsegment = pmstore_get_segment_by_inst_number(pm_store, inst_number);
 
-	if (pmsegment != NULL) {
-		pmsegment->fixed_segment_data.length += event.segm_data_event_entries.length;
+	if (!pmsegment)
+		return;
 
-		if (pmsegment->segment_usage_count == 0) {
-			pmsegment->fixed_segment_data.value = calloc(1, pmsegment->fixed_segment_data.length);
-		} else {
-			pmsegment->fixed_segment_data.value
-			= realloc(pmsegment->fixed_segment_data.value,
-				  pmsegment->fixed_segment_data.length);
-		}
+	// FIXME EPX2 see how it does over multiple passes
 
-		pmsegment->segment_usage_count += event.segm_data_event_descr.segm_evt_entry_count;
+	pmsegment->fixed_segment_data.length += event.segm_data_event_entries.length;
 
-		memcpy(&(pmsegment->fixed_segment_data.value[event.segm_data_event_descr.segm_evt_entry_index]),
-		       event.segm_data_event_entries.value,
-		       event.segm_data_event_entries.length);
+	if (pmsegment->segment_usage_count == 0) {
+		pmsegment->fixed_segment_data.value = calloc(1, pmsegment->fixed_segment_data.length);
+	} else {
+		pmsegment->fixed_segment_data.value
+		= realloc(pmsegment->fixed_segment_data.value,
+			  pmsegment->fixed_segment_data.length);
 	}
 
-	decode_fixed_segment_data(ctx, pm_store);
+	pmsegment->segment_usage_count += event.segm_data_event_descr.segm_evt_entry_count;
+
+	memcpy(&(pmsegment->fixed_segment_data.value[event.segm_data_event_descr.segm_evt_entry_index]),
+	       	event.segm_data_event_entries.value,
+		event.segm_data_event_entries.length);
+
+	decode_fixed_segment_data(ctx, pm_store, pmsegment);
 }
 
 /**
@@ -584,6 +646,18 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 		break;
 	case MDC_ATTR_TIME_ABS_ADJUST:
 		decode_absolutetimeadjust(stream, &(pm_segment->date_and_time_adjustment));
+		break;
+	case MDC_ATTR_SEG_USAGE_CNT:
+		pm_segment->segment_usage_count = read_intu32(stream, NULL);
+		break;
+	case MDC_ATTR_SEG_STATS:
+		decode_segmentstatistics(stream, &(pm_segment->segment_statistics));
+		break;
+	case MDC_ATTR_CONFIRM_TIMEOUT:
+		pm_segment->confirm_timeout = read_intu32(stream, NULL);
+		break;
+	case MDC_ATTR_TRANSFER_TIMEOUT:
+		pm_segment->transfer_timeout = read_intu32(stream, NULL);
 		break;
 	default:
 		result = 0;
@@ -732,11 +806,12 @@ int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamR
  * Scan a segment of index segment_index, decode segment data and generate xml
  *
  * \param pmstore the PMStore.
- * \param segment_index the index of a segment.
+ * \param segment the PMSegment
  * \param segm_data_entry output parameter to describe data value.
  */
-static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pmstore, int segment_index,
-		DataEntry *segm_data_entry)
+static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pmstore,
+						struct PMSegment *segment, 
+						DataEntry *segm_data_entry)
 {
 
 	AbsoluteTime abs_time; // length 8
@@ -744,7 +819,6 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 	HighResRelativeTime hires_rel_time;	// 8
 	intu16 value_ptr_pos = 0;
 
-	struct PMSegment *segment = pmstore->segm_list[segment_index];
 	int entry_count = segment->segment_usage_count;
 
 	segm_data_entry->choice = COMPOUND_DATA_ENTRY;
@@ -899,18 +973,16 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
  * \param pmstore the PMStore.
  *
  */
-static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore)
+static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
+						struct PMSegment *segment)
 {
-	int segm_count = pmstore->segment_list_count;
-	DataList *list = data_list_new(segm_count);
+	DataList *list = data_list_new(1);
 
-	int i;
+	pmstore_populate_all_attributes(ctx->mds, pmstore, segment, &list->values[0]);
 
-	for (i = 0; i < segm_count; ++i) {
-		pmstore_populate_all_attributes(ctx->mds,  pmstore, i, &list->values[i]);
-	}
-
-	manager_notify_evt_measurement_data_updated(ctx, list);
+	// FIXME2 flag with last segment etc.
+	manager_notify_evt_segment_data(ctx, pmstore->handle,
+					segment->instance_number, list);
 }
 
 
@@ -940,4 +1012,183 @@ void pmstore_destroy(struct PMStore *pm_store)
 	}
 }
 
+/**
+ *  Populates data entry with PM-Store attributes
+ *
+ *  \param ctx the device context
+ *  \param handle the PM-Store handle
+ *  \return data list representation of PM-Store attributes
+ */
+DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle)
+{
+	if (ctx->mds == NULL) {
+		return NULL;
+	}
+
+	struct MDS_object *mds_obj = mds_get_object_by_handle(ctx->mds, handle);
+
+	if (mds_obj == NULL || mds_obj->choice != MDS_OBJ_PMSTORE) {
+		return NULL;
+	}
+
+	struct PMStore *pmstore = &mds_obj->u.pmstore;
+
+	int i;
+	DataList *list = data_list_new(1);
+	DataEntry *entry = &(list->values[0]);
+	entry->choice = COMPOUND_DATA_ENTRY;
+	data_meta_set_handle(entry, pmstore->handle);
+
+	entry->u.compound.entries_count = 10;
+	entry->u.compound.entries = calloc(10, sizeof(DataEntry));
+	entry->u.compound.name = "Attributes";
+
+	DataEntry *values = entry->u.compound.entries;
+
+	i = 0;
+
+	data_set_intu16(&values[i], "Handle", &pmstore->handle);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_ID_HANDLE);
+
+	data_set_intu16(&values[i], "Capabilities", &pmstore->pm_store_capab);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_PM_STORE_CAPAB);
+
+	data_set_intu16(&values[i], "Store-Sample-Algorithm", &pmstore->store_sample_algorithm);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_METRIC_STORE_SAMPLE_ALG);
+
+	data_set_intu32(&values[i], "Store-Capacity-Count", &pmstore->store_capacity_count);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_METRIC_STORE_CAPAC_CNT);
+
+	data_set_intu32(&values[i], "Store-Usage-Count", &pmstore->store_usage_count);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_METRIC_STORE_USAGE_CNT);
+
+	data_set_intu16(&values[i], "Operational-State", &pmstore->operational_state);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_OP_STAT);
+
+	data_set_label_string(&values[i], "PM-Store-Label", &pmstore->pm_store_label);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_PM_STORE_LABEL_STRING);
+
+	data_set_intu32(&values[i], "Sample-Period", &pmstore->sample_period);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_PD_SAMP);
+
+	data_set_intu16(&values[i], "Number-Of-Segments", &pmstore->number_of_segments);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_NUM_SEG);
+
+	data_set_intu32(&values[i], "Clear-Timeout", &pmstore->clear_timeout);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_CLEAR_TIMEOUT);
+		
+	return list;
+}
+
+/**
+ *  Populates data list with PM-Segment
+ *
+ *  \param ctx the device context
+ *  \param segment the PM-Segment
+ *  \param data list to be filled
+ */
+static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
+						 DataEntry *entry)
+{
+	int i = 0;
+	char *s_inst_number;
+
+	entry->choice = COMPOUND_DATA_ENTRY;
+	asprintf(&s_inst_number, "%d", segment->instance_number);
+	data_set_meta_att(entry, "Instance-Number", s_inst_number);
+	free(s_inst_number);
+
+	entry->u.compound.entries_count = 9;
+	entry->u.compound.entries = calloc(9, sizeof(DataEntry));
+	entry->u.compound.name = "Segment";
+
+	DataEntry *values = entry->u.compound.entries;
+
+	data_set_intu16(&values[i], "Instance-Number", &segment->instance_number);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_ID_INSTNO);
+
+	data_set_intu16(&values[i], "Operational-State", &segment->operational_state);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_OP_STAT);
+
+	data_set_intu32(&values[i], "Sample-Period", &segment->sample_period);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_PD_SAMP);
+		
+	data_set_label_string(&values[i], "PM-Segment-Label", &segment->segment_label);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_PM_SEG_LABEL_STRING);
+		
+	data_set_intu16(&values[i], "Person-ID", &segment->pm_seg_person_id);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_PM_SEG_PERSON_ID);
+	
+	data_set_absolute_time(&values[i], "Start-Time", &segment->segment_start_abs_time);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_START_SEG);
+
+	data_set_absolute_time(&values[i], "End-Time", &segment->segment_end_abs_time);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_END_SEG);
+
+	/*
+	data_set_intu32(&values[i], "Transfer-Timeout", &segment->transfer_timeout);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TRANSFER_TIMEOUT);
+
+	data_set_intu32(&values[i], "Confirm-Timeout", &segment->confirm_timeout);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_CONFIRM_TIMEOUT);
+	*/
+
+	data_set_segment_stat(&values[i], "Segment-Statistics", &segment->segment_statistics);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_SEG_STATS);
+
+	data_set_intu32(&values[i], "Usage-Count", &segment->segment_usage_count);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_SEG_USAGE_CNT);
+
+	data_set_pm_segment_entry_map(&values[i], "PM-Segment-Entry-Map",
+						&segment->pm_segment_entry_map);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_PM_SEG_MAP);
+
+	data_set_absolute_time_adj(&values[i], "Date-And-Time-Adjustment",
+				&segment->date_and_time_adjustment);
+	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_ABS_ADJUST);
+}
+
+/**
+ *  Populates data list with PM-Store segment info
+ *
+ *  \param ctx the device context
+ *  \param handle the PM-Store handle
+ *  \return data list representation of PM-Store attributes
+ */
+DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle)
+{
+	if (ctx->mds == NULL) {
+		return NULL;
+	}
+
+	struct MDS_object *mds_obj = mds_get_object_by_handle(ctx->mds, handle);
+
+	if (mds_obj == NULL || mds_obj->choice != MDS_OBJ_PMSTORE) {
+		return NULL;
+	}
+
+	struct PMStore *pmstore = &(mds_obj->u.pmstore);
+
+	DataList *list = data_list_new(1);
+	DataEntry *entry = &(list->values[0]);
+	entry->choice = COMPOUND_DATA_ENTRY;
+	data_meta_set_handle(entry, pmstore->handle);
+
+	int i, n;
+
+	n = pmstore->segment_list_count;
+
+	entry->u.compound.entries_count = n;
+	entry->u.compound.entries = calloc(n, sizeof(DataEntry));
+	entry->u.compound.name = "Segments";
+
+	DataEntry *values = entry->u.compound.entries;
+
+	for (i = 0; i < n; ++i) {
+		struct PMSegment *seg = pmstore->segm_list[i];
+		pmstore_get_segment_data_as_datalist(seg, &values[i]);
+	}
+		
+	return list;
+}
 /** @} */

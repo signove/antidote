@@ -68,7 +68,10 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
 
 void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scanner, OID_Type event_type, Any *event);
 
-void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle);
+void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
+							Request *r);
+
+void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request *r);
 
 /**
  * Process incoming APDU
@@ -590,8 +593,13 @@ void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data)
 	APDU *apdu = data->received_apdu;
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 
-
 	GetResultSimple *result = &data_apdu->message.u.rors_cmipGet;
+
+	Request *r = service_check_known_invoke_id(ctx, data_apdu);
+	if (!r) {
+		DEBUG("operating_get_response: no related Request");
+		return;
+	}
 
 	struct MDS_object *mds_obj = mds_get_object_by_handle(ctx->mds, result->obj_handle);
 	int is_msd_pmstore_obj = mds_obj != NULL && mds_obj->choice == MDS_OBJ_PMSTORE;
@@ -607,18 +615,25 @@ void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data)
 			pmstore_service_set_attribute(&mds_obj->u.pmstore, attribute);
 		}
 	}
+
+	if (is_msd_pmstore_obj) {
+		pmstore_get_data_result(&mds_obj->u.pmstore, &(r->return_data));
+	}
 }
 
 /**
  * Creates an apdu to execute get service from mds into agent
  *
  * @param ctx
+ * @param handle the handle of desire object (0 = MDS)
  * @param attributeids_list list of ids or NULL if you want to get all attributes
  * @param attributeids_list_count number of attribute ids 0 if you want to get all attributes
  * @param timeout
  * @param request_callback
  */
-Request *operating_service_get(Context *ctx, OID_Type *attributeids_list, int attributeids_list_count, intu32 timeout, service_request_callback request_callback)
+Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributeids_list,
+				int attributeids_list_count, intu32 timeout,
+				service_request_callback request_callback)
 {
 	APDU *apdu = calloc(1, sizeof(APDU));
 
@@ -628,9 +643,8 @@ Request *operating_service_get(Context *ctx, OID_Type *attributeids_list, int at
 		DATA_apdu *data_apdu = calloc(1, sizeof(DATA_apdu));
 		data_apdu->message.choice = ROIV_CMIP_GET_CHOSEN;
 
-
 		GetArgumentSimple arg_simple;
-		arg_simple.obj_handle = MDS_HANDLE;
+		arg_simple.obj_handle = handle;
 		arg_simple.attribute_id_list.count = 0;
 		arg_simple.attribute_id_list.length = 0;
 		arg_simple.attribute_id_list.value = NULL;
@@ -776,6 +790,12 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 		return;
 	}
 
+	Request *r = service_check_known_invoke_id(ctx, data_apdu);
+	if (!r) {
+		DEBUG("operating_rors_confirmed_action_tx: no related Request");
+		return;
+	}
+
 	// Check action type
 	if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_DATA_REQUEST) {
 		DataResponse response;
@@ -798,17 +818,21 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 		free(response_data);
 
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SET_TIME) {
-		// not is needed
+		// not needed
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_CLR) {
-		// TODO Needed?
+		operating_decode_clear_segment(ctx->mds,
+				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
+				r);
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_GET_INFO) {
 		operating_decode_segment_info(ctx->mds,
-					      &(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args),
-					      data_apdu->message.u.rors_cmipConfirmedAction.obj_handle);
+				&(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args),
+				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
+				r);
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_TRIG_XFER) {
 		operating_decode_trig_segment_data_xfer_response(ctx->mds,
 				&(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args),
-				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle);
+				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
+				r);
 	}
 }
 
@@ -981,10 +1005,29 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
  * Decode incoming segment info
  *
  * \param mds the current mds
+ * \param obj_handle
+ * \param r the related Request
+ */
+void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request *r)
+{
+	// FIXME EPX2 errors come via ROER response packets
+	struct MDS_object *mds_obj;
+	mds_obj = mds_get_object_by_handle(mds, obj_handle);
+
+	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
+		pmstore_clear_segment_result(&(mds_obj->u.pmstore), r->return_data);
+	}
+}
+
+/**
+ * Decode incoming segment info
+ *
+ * \param mds the current mds
  * \param *event
  * \param *obj_handle
+ * \param *r the related Request
  */
-void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle)
+void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r)
 {
 	SegmentInfoList info_list;
 	struct MDS_object *mds_obj;
@@ -994,7 +1037,7 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handl
 	decode_segmentinfolist(event_info_stream, &info_list);
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
-		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list);
+		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list, &(r->return_data));
 	}
 
 	del_segmentinfolist(&info_list);
@@ -1007,8 +1050,10 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handl
  * \param mds the current mds
  * \param *event
  * \param *obj_handle
+ * \param *r the related Request
  */
-void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle)
+void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
+							Request *r)
 {
 	TrigSegmDataXferRsp trig_rsp;
 	struct MDS_object *mds_obj;
@@ -1018,7 +1063,8 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
 	decode_trigsegmdataxferrsp(event_data_stream, &trig_rsp);
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
-		pmstore_trig_segment_data_xfer_response(&(mds_obj->u.pmstore), trig_rsp);
+		pmstore_trig_segment_data_xfer_response(&(mds_obj->u.pmstore),
+							trig_rsp, &(r->return_data));
 	}
 
 	free(event_data_stream);
@@ -1039,7 +1085,6 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 {
 	SegmentDataEvent segm_data_event;
 	SegmentDataResult result;
-
 
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(ctx->mds, obj_handle);

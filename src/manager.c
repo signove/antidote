@@ -328,6 +328,36 @@ int manager_notify_evt_measurement_data_updated(Context *ctx, DataList *data_lis
 }
 
 /**
+ * Notifies 'segment data xfer'  event.
+ * This function should be visible to source layer of events.
+ * This function must be called in a thread safe communication context.
+ *
+ * @param ctx
+ * @param handle PM-Store handle
+ * @param instnumber PM-Segment instance number
+ * @param data_list with the segment data.
+ * @return 1 if any listener catches the notification, 0 if not
+ */
+int manager_notify_evt_segment_data(Context *ctx, int handle, int instnumber,
+							DataList *data_list)
+{
+	int ret_val = 0;
+	int i;
+
+	for (i = 0; i < manager_listener_count; i++) {
+		ManagerListener *l = &manager_listener_list[i];
+
+		if (l && l->segment_data_received) {
+			(l->segment_data_received)(ctx, handle, instnumber, data_list);
+			ret_val = 1;
+		}
+	}
+
+	data_list_del(data_list);
+	return ret_val;
+}
+
+/**
  * Notifies 'communication timeout'  event.
  * This function should be visible to source layer of events.
  * This function must be called in a thread safe communication context.
@@ -470,9 +500,6 @@ DataList *manager_get_configuration(ContextId id)
 
 	DataList *list = mds_populate_configuration(mds);
 
-	if (!list)
-		return NULL;
-
 	return list;
 }
 
@@ -568,14 +595,42 @@ Request *manager_request_get_all_mds_attributes(ContextId id, service_request_ca
 }
 
 /**
- * Requests segments information
+ * Requests PM-Store attributes
  *
  * @param id context id
+ * @param handle the PM-Store handle
  * @param callback
  * @return pointer to request sent
  */
-Request *manager_request_get_segment_info(ContextId id,
-		service_request_callback callback)
+Request *manager_request_get_pmstore(ContextId id, int handle,
+					service_request_callback callback)
+{
+	Context *ctx = context_get(id);
+
+	if (ctx != NULL) {
+		// thread-safe block - start
+		communication_lock(ctx);
+
+		Request *req = mds_get_pmstore(ctx, handle, callback);
+
+		communication_unlock(ctx);
+		// thread-safe block - end
+		return req;
+	}
+
+	return NULL;
+}
+
+/**
+ * Requests segments information
+ *
+ * @param id context id
+ * @param handle PM-Store handle
+ * @param callback
+ * @return pointer to request sent
+ */
+Request *manager_request_get_segment_info(ContextId id, int handle,
+				service_request_callback callback)
 {
 	Context *ctx = context_get(id);
 
@@ -584,7 +639,7 @@ Request *manager_request_get_segment_info(ContextId id,
 		communication_lock(ctx);
 
 		Request *req;
-		req = mds_service_get_segment_info(ctx, callback);
+		req = mds_service_get_segment_info(ctx, handle, callback);
 
 		communication_unlock(ctx);
 		// thread-safe block - end
@@ -598,11 +653,15 @@ Request *manager_request_get_segment_info(ContextId id,
  * Requests segments data
  *
  * @param id context id
+ * @param handle PM-Store handle
+ * @param instnumber PM-Instance number
  * @param callback
  * @return pointer to request sent
  */
 Request *manager_request_get_segment_data(ContextId id,
-		service_request_callback callback)
+					int handle,
+					int instnumber,
+					service_request_callback callback)
 {
 	Context *ctx = context_get(id);
 
@@ -610,7 +669,7 @@ Request *manager_request_get_segment_data(ContextId id,
 		// thread-safe block - start
 		communication_lock(ctx);
 
-		Request *req = mds_service_get_segment_data(ctx, callback);
+		Request *req = mds_service_get_segment_data(ctx, handle, instnumber, callback);
 
 		communication_unlock(ctx);
 		// thread-safe block - end
@@ -624,10 +683,12 @@ Request *manager_request_get_segment_data(ContextId id,
  * Requests clear segments data
  *
  * @param id context id
+ * @param handle PM-Store handle
  * @param callback
  * @return pointer to request sent
  */
 Request *manager_request_clear_segments(ContextId id,
+					int handle,
 					service_request_callback callback)
 {
 	Context *ctx = context_get(id);
@@ -637,7 +698,7 @@ Request *manager_request_clear_segments(ContextId id,
 		// thread-safe block - start
 		communication_lock(ctx);
 
-		Request *req = mds_service_clear_segments(ctx, callback);
+		Request *req = mds_service_clear_segment(ctx, handle, -1, callback);
 
 		communication_unlock(ctx);
 		// thread-safe block - end
@@ -645,7 +706,38 @@ Request *manager_request_clear_segments(ContextId id,
 	}
 
 	return NULL;
+}
 
+
+/**
+ * Requests clear segments data
+ *
+ * @param id context id
+ * @param handle PM-Store handle
+ * @param instnumber PM-Instance number
+ * @param callback
+ * @return pointer to request sent
+ */
+Request *manager_request_clear_segment(ContextId id,
+					int handle,
+					int instnumber,
+					service_request_callback callback)
+{
+	Context *ctx = context_get(id);
+
+	if (ctx != NULL) {
+
+		// thread-safe block - start
+		communication_lock(ctx);
+
+		Request *req = mds_service_clear_segment(ctx, handle, instnumber, callback);
+
+		communication_unlock(ctx);
+		// thread-safe block - end
+		return req;
+	}
+
+	return NULL;
 }
 
 
@@ -692,6 +784,46 @@ intu8 *manager_system_id()
 	intu8 *id = malloc(len);
 	memcpy(id, MANAGER_SYSTEM_ID, len);
 	return id;
+}
+
+
+/**
+ * Returns known PM-Store attributes
+ *
+ * @param id context id
+ * @param handle PM-Store handle
+ * @return data list with attribute values
+ */
+DataList *manager_get_pmstore_data(ContextId id, int handle)
+{
+	Context *ctx = context_get(id);
+
+	if (!ctx)
+		return NULL;
+
+	DataList *list = pmstore_get_data_as_datalist(ctx, handle);
+
+	return list;
+}
+
+
+/**
+ * Returns known PM-Store segment info 
+ *
+ * @param id context id
+ * @param handle PM-Store handle
+ * @return data list with attribute values
+ */
+DataList *manager_get_segment_info_data(ContextId id, int handle)
+{
+	Context *ctx = context_get(id);
+
+	if (!ctx)
+		return NULL;
+
+	DataList *list = pmstore_get_segment_info_data_as_datalist(ctx, handle);
+
+	return list;
 }
 
 /** @} */
