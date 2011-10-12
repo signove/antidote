@@ -80,7 +80,7 @@ void functionaltest_pericfgscanner_add_suite()
 
 }
 
-void functional_test_pericfgscanner_tc_6_1_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_pericfgscanner_tc_6_1_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 40);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.peri_cfg_scanner.scanner.scanner.operational_state);

@@ -79,7 +79,7 @@ void functionaltest_epicfgscanner_add_suite()
 
 }
 
-void functional_test_epicfgscanner_tc_5_1_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_1_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
@@ -141,7 +141,7 @@ void functional_test_epicfgscanner_tc_5_1()
 }
 
 
-void functional_test_epicfgscanner_tc_5_2_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_2_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
@@ -204,7 +204,7 @@ void functional_test_epicfgscanner_tc_5_2()
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
 }
 
-void functional_test_epicfgscanner_tc_5_3_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_3_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
@@ -266,7 +266,7 @@ void functional_test_epicfgscanner_tc_5_3()
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
 }
 
-void functional_test_epicfgscanner_tc_5_4_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_4_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
@@ -327,7 +327,7 @@ void functional_test_epicfgscanner_tc_5_4()
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
 }
 
-void functional_test_epicfgscanner_tc_5_5_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_5_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
@@ -389,7 +389,7 @@ void functional_test_epicfgscanner_tc_5_5()
 }
 
 
-void functional_test_epicfgscanner_tc_5_6_callback(Context *ctx, DATA_apdu *response_apdu)
+void functional_test_epicfgscanner_tc_5_6_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);

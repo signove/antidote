@@ -65,12 +65,23 @@ Service *service_instance()
  */
 void clean_request(Request *req)
 {
-	req->is_valid = 0;
+	req->is_valid = REQUEST_INVALID;
 	req->apdu = NULL;
 	req->timeout.func = NULL;
 	req->timeout.timeout = 0;
 	req->timeout.id = 0;
 	req->request_callback = NULL;
+	if (req->context) {
+		free(req->context);
+		req->context = NULL;
+	}
+	if (req->return_data) {
+		if (req->return_data->del_function) {
+			(req->return_data->del_function)(req->return_data);
+		}
+		free(req->return_data);
+		req->return_data = NULL;
+	}
 }
 
 /**
@@ -290,14 +301,13 @@ void service_request_retired(Context *ctx, DATA_apdu *response_apdu)
 
 	if (req != NULL && req->is_valid == REQUEST_VALID) {
 
-
 		communication_reset_timeout(ctx);
 
 		InvokeIDType retiredInvokeID = response_apdu->invoke_id;
 		req->is_valid = REQUEST_INVALID;
 
 		if (req->request_callback != NULL) {
-			(req->request_callback)(ctx, response_apdu);
+			(req->request_callback)(ctx, req, response_apdu);
 		}
 
 		service_del_request(req);
@@ -416,14 +426,14 @@ static void service_change_state(Context *ctx, ServiceState new_state)
  * @return 1 if invoke id is valid, 0 if not, in this case
  *      and association will be aborted
  */
-int service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu)
+Request *service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu)
 {
 	if (!service_is_id_valid(ctx, data_apdu->invoke_id)) {
 		communication_fire_evt(ctx, fsm_evt_req_assoc_abort, NULL);
 		return 0;
 	}
 
-	return 1;
+	return service_get_request(ctx, data_apdu->invoke_id);
 }
 
 /** @} */

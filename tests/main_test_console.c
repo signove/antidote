@@ -245,11 +245,11 @@ int main(int argc, char **argv)
 		} else if (strcmp(input, "get_all_mds") == 0) {
 			manager_request_get_all_mds_attributes(DEFAULT_CONTEXT_ID, NULL);
 		} else if (strcmp(input, "get_segment_info") == 0) {
-			manager_request_get_segment_info(DEFAULT_CONTEXT_ID, NULL);
+			manager_request_get_segment_info(DEFAULT_CONTEXT_ID, -1, NULL);
 		} else if (strcmp(input, "data_xfer") == 0) {
-			manager_request_get_segment_data(DEFAULT_CONTEXT_ID, NULL);
+			manager_request_get_segment_data(DEFAULT_CONTEXT_ID, -1, -1, NULL);
 		} else if (strcmp(input, "clear_segments") == 0) {
-			manager_request_clear_segments(DEFAULT_CONTEXT_ID, NULL);
+			manager_request_clear_segments(DEFAULT_CONTEXT_ID, -1, NULL);
 		} else if (strcmp(input, "release") == 0) {
 			manager_request_association_release(DEFAULT_CONTEXT_ID);
 		} else if (strcmp(input, "start_scan") == 0) {

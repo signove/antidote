@@ -65,11 +65,13 @@ typedef enum {
  */
 typedef void (*service_state_callback_function)(Context *ctx, ServiceState new_state);
 
+struct Request;
 
 /**
  * Function to be called when the response to this request arrives
  */
-typedef void (*service_request_callback)(Context *ctx, DATA_apdu *response_apdu);
+typedef void (*service_request_callback)(Context *ctx, struct Request *r,
+						DATA_apdu *response_apdu);
 
 /**
  * Constant to represent an active service request
@@ -86,7 +88,11 @@ static const intu16 REQUEST_INVALID = 0;
  */
 static const InvokeIDType INVOKE_ID_ERROR = -1;
 
+typedef void (*request_ret_data_free)(void *);
 
+struct RequestRet {
+	request_ret_data_free del_function;
+};
 
 /**
  * Request structure
@@ -96,6 +102,8 @@ typedef struct Request {
 	APDU *apdu;
 	timeout_callback timeout;
 	service_request_callback request_callback;
+	void *context;
+	struct RequestRet *return_data;
 } Request;
 
 /**
@@ -136,7 +144,7 @@ void service_finalize(Context *ctx, service_state_callback_function state_change
 
 int service_is_id_valid(Context *ctx, InvokeIDType invoke_id);
 
-int service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu);
+Request *service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu);
 
 void service_configure_attribute(Context *ctx, OID_Type obj_class, HANDLE obj_handle, OID_Type attribute_id, Any attribute_value);
 
