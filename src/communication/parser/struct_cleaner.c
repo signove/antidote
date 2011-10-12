@@ -572,8 +572,7 @@ void del_observationscanlist(ObservationScanList *pointer)
 		del_observationscan(pointer->value + i);
 	}
 
-	// FIXME check if count > 0 test is ok
-	if (pointer->value != NULL && pointer->count > 0) {
+	if (pointer->value != NULL) {
 		free(pointer->value);
 		pointer->value = NULL;
 	}
@@ -903,11 +902,8 @@ void del_segmentstatistics(SegmentStatistics *pointer)
 void del_attributeidlist(AttributeIdList *pointer)
 {
 	if (pointer->value != NULL) {
-		// FIXME check if pointer->count test is ok
-		if (pointer->count > 0) {
-			free(pointer->value);
-			pointer->value = NULL;
-		}
+		free(pointer->value);
+		pointer->value = NULL;
 	}
 }
 
