@@ -86,6 +86,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "src/manager_p.h"
 #include "src/api/data_encoder.h"
 #include "src/communication/plugin/plugin.h"
@@ -104,6 +105,7 @@
  * Manager listener list
  */
 static ManagerListener *manager_listener_list = NULL;
+
 /**
  * Manager listener count
  */
@@ -663,6 +665,33 @@ void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states
 		manager_notify_evt_device_unavailable(ctx);
 
 	}
+}
+
+// TODO static variable, functions to register from app
+static const intu8 MANAGER_SYSTEM_ID[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
+static const intu16 MANAGER_SYSTEM_ID_LEN = 8;
+
+/**
+ * Return length of manager system id
+ *
+ * @return length in octets
+ */
+unsigned short int manager_system_id_length()
+{
+	return MANAGER_SYSTEM_ID_LEN;
+}
+
+/**
+ * Return manager system id
+ *
+ * @return copy of system id (callee gets ownership)
+ */
+intu8 *manager_system_id()
+{
+	intu16 len = manager_system_id_length();
+	intu8 *id = malloc(len);
+	memcpy(id, MANAGER_SYSTEM_ID, len);
+	return id;
 }
 
 /** @} */

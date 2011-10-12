@@ -243,6 +243,8 @@ static void association_accept_data_protocol_20601(Context *ctx, DataProto *prot
 	ByteStreamReader *stream = byte_stream_reader_instance(data_buffer, data_length);
 
 	PhdAssociationInformation agent_assoc_information;
+	memset(&agent_assoc_information, 0, sizeof(PhdAssociationInformation));
+
 	decode_phdassociationinformation(stream, &agent_assoc_information);
 
 	if (agent_assoc_information.protocolVersion == PROTOCOL_VERSION1) {
@@ -358,6 +360,7 @@ void association_accept_config_tx(Context *ctx, fsm_events evt,
 
 		APDU response_apdu;
 		PhdAssociationInformation response_info;
+		memset(&response_info, 0, sizeof(PhdAssociationInformation));
 
 		populate_aare(&response_apdu, &response_info);
 
@@ -374,6 +377,7 @@ void association_accept_config_tx(Context *ctx, fsm_events evt,
 
 		ret_code = communication_send_apdu(ctx, &response_apdu);
 
+		del_phdassociationinformation(&response_info);
 		del_byte_stream_writer(encoded_value, 1);
 	}
 
@@ -397,6 +401,7 @@ void association_unaccept_config_tx(Context *ctx, fsm_events evt,
 	if (data != NULL && data->choice == FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN) {
 		APDU response_apdu;
 		PhdAssociationInformation response_info;
+		memset(&response_info, 0, sizeof(PhdAssociationInformation));
 
 		populate_aare(&response_apdu, &response_info);
 
@@ -414,6 +419,7 @@ void association_unaccept_config_tx(Context *ctx, fsm_events evt,
 
 		communication_send_apdu(ctx, &response_apdu);
 
+		del_phdassociationinformation(&response_info);
 		del_byte_stream_writer(encoded_value, 1);
 	}
 }
@@ -439,8 +445,8 @@ static void populate_aare(APDU *apdu, PhdAssociationInformation *response_info)
 	response_info->functionalUnits = 0x00000000;
 	response_info->systemType = SYS_TYPE_MANAGER;
 
-	response_info->system_id.value = (intu8 *) MANAGER_SYSTEM_ID_VALUE;
-	response_info->system_id.length = sizeof(MANAGER_SYSTEM_ID_VALUE);
+	response_info->system_id.value = manager_system_id();
+	response_info->system_id.length = manager_system_id_length();
 
 	response_info->dev_config_id = MANAGER_CONFIG_RESPONSE;
 	response_info->data_req_mode_capab.data_req_mode_flags = 0x0000;
@@ -460,6 +466,7 @@ void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	PhdAssociationInformation config_info;
 	DataProto proto;
 
+	memset(&config_info, 0, sizeof(PhdAssociationInformation));
 	populate_aarq(&config_apdu, &config_info, &proto);
 
 	// Encode APDU
@@ -472,7 +479,7 @@ void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	communication_send_apdu(ctx, &config_apdu);
 
 	del_byte_stream_writer(encoded_value, 1);
-	free(config_info.system_id.value);
+	del_phdassociationinformation(&config_info);
 }
 
 static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
@@ -522,6 +529,7 @@ void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events ev
 	APDU response_apdu;
 	PhdAssociationInformation response_info;
 
+	memset(&response_info, 0, sizeof(PhdAssociationInformation));
 	populate_aare(&response_apdu, &response_info);
 
 	response_apdu.u.aare.result = REJECTED_PERMANENT;
@@ -539,6 +547,7 @@ void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events ev
 	communication_send_apdu(ctx, &response_apdu);
 
 	del_byte_stream_writer(encoded_value, 1);
+	del_phdassociationinformation(&response_info);
 }
 
 /** @} */

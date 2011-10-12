@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "src/manager_p.h"
 #include "src/communication/service.h"
 #include "src/communication/communication.h"
@@ -366,6 +367,7 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 							    &(data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info));
 		} else {
 			Any event_reply_info;
+			memset(&event_reply_info, 0, sizeof(Any));
 			event_reply_info.length = 0;
 			operating_event_report_response_tx(ctx, data_apdu->invoke_id,
 							   data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle,
@@ -392,9 +394,12 @@ void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, HA
 					Any event_reply_info)
 {
 	APDU apdu;
+	memset(&apdu, 0, sizeof(APDU));
 	apdu.choice = PRST_CHOSEN;
 
 	DATA_apdu data_apdu;
+	memset(&data_apdu, 0, sizeof(DATA_apdu));
+
 	data_apdu.invoke_id = invoke_id;
 	data_apdu.message.choice = RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 

@@ -37,17 +37,8 @@
 #include "src/communication/service.h"
 
 
-/**
- * The unique system ID of the manager. EUI-64 is used to uniquely identify the manager. An agent may
- * use this field to determine whether it is communicating with the intended manager.
- *
- * See http://standards.ieee.org/regauth/index.html
- *
- * FIXME Register a valid SYSTEM ID
- */
-static const intu8 MANAGER_SYSTEM_ID_VALUE[] = { 0x11, 0x22, 0x33, 0x44, 0x55,
-		0x66, 0x77, 0x88
-					       };
+intu8 *manager_system_id();
+unsigned short int manager_system_id_length();
 
 void manager_remove_all_listeners();
 

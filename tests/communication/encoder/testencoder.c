@@ -247,11 +247,13 @@ void test_encoder_h232_apdu_encoder()
 void test_encoder_h242_apdu_encoder()
 {
 	APDU apdu;
+	memset(&apdu, 0, sizeof(APDU));
 	apdu.choice = PRST_CHOSEN;
 	apdu.length = 18;
 	apdu.u.prst.length = 16;
 
 	DATA_apdu data_apdu;
+	memset(&data_apdu, 0, sizeof(DATA_apdu));
 	data_apdu.invoke_id = 0x4321;
 	data_apdu.message.choice = RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	data_apdu.message.length = 10;
