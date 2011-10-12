@@ -34,7 +34,6 @@
 #define MANAGER_P_H_
 
 #include "src/manager.h"
-#include "src/communication/service.h"
 
 
 intu8 *manager_system_id();
@@ -49,26 +48,5 @@ int manager_notify_evt_device_unavailable(Context *ctx);
 int  manager_notify_evt_measurement_data_updated(Context *ctx, DataList *data_list);
 
 int  manager_notify_evt_timeout(Context *ctx);
-
-void manager_request_association_release(ContextId id);
-
-void manager_request_association_abort(ContextId id);
-
-Request *manager_request_measurement_data_transmission(ContextId id, service_request_callback callback);
-
-Request *manager_request_get_all_mds_attributes(ContextId id, service_request_callback callback);
-
-Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
-
-Request *manager_set_operational_state_of_the_scanner(ContextId id, HANDLE handle, OperationalState state,
-		service_request_callback callback);
-
-Request *manager_request_get_segment_data(ContextId id, service_request_callback callback);
-
-Request *manager_request_clear_segments(ContextId id, service_request_callback callback);
-
-Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
-
-DataList *manager_get_configuration(ContextId id);
 
 #endif /* MAINAPP_H_ */

@@ -47,7 +47,6 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <ieee11073.h>
-#include "manager_p.h"
 #include "src/communication/plugin/bluez/plugin_bluez.h"
 #ifndef ANDROID_HEALTHD
 #include "src/communication/plugin/usb/plugin_usb.h"

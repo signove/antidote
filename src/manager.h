@@ -35,6 +35,7 @@
 #include <api/api_definitions.h>
 #include <communication/context.h>
 #include <communication/plugin/plugin.h>
+#include <communication/service.h>
 
 /**
  * Manager event listener definition
@@ -78,5 +79,26 @@ void manager_connection_loop(ContextId context_id);
 int manager_add_listener(ManagerListener listener);
 
 DataList *manager_get_mds_attributes(ContextId id);
+
+Request *manager_request_measurement_data_transmission(ContextId id, service_request_callback callback);
+
+Request *manager_request_get_all_mds_attributes(ContextId id, service_request_callback callback);
+
+Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
+
+Request *manager_set_operational_state_of_the_scanner(ContextId id, HANDLE handle, OperationalState state,
+		service_request_callback callback);
+
+Request *manager_request_get_segment_data(ContextId id, service_request_callback callback);
+
+Request *manager_request_clear_segments(ContextId id, service_request_callback callback);
+
+Request *manager_request_get_segment_info(ContextId id, service_request_callback callback);
+
+DataList *manager_get_configuration(ContextId id);
+
+void manager_request_association_release(ContextId id);
+
+void manager_request_association_abort(ContextId id);
 
 #endif /* MANAGER_H_ */

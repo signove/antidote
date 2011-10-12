@@ -38,7 +38,6 @@
 #include "communication/plugin/plugin_fifo.h"
 #include "communication/plugin/plugin_tcp.h"
 #include "src/communication/service.h"
-#include "manager_p.h"
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
