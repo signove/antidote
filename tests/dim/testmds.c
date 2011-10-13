@@ -58,10 +58,10 @@ void testmds_add_suite()
 void test_mds_is_supported_data_request(void)
 {
 	MDS *mds = mds_create();
-	DataReqModeCapab cap;
-	cap.data_req_init_agent_count = 1;
-	cap.data_req_init_manager_count = 1;
-	cap.data_req_mode_flags = 0;
+	//DataReqModeCapab cap;
+	//cap.data_req_init_agent_count = 1;
+	//cap.data_req_init_manager_count = 1;
+	//cap.data_req_mode_flags = 0;
 
 	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_STOP | DATA_REQ_SUPP_MODE_SINGLE_RSP | DATA_REQ_SUPP_SCOPE_ALL;
 

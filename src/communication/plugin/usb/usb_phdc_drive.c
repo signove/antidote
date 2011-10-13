@@ -402,11 +402,10 @@ int usb_send_apdu(usb_phdc_device *phdc_device, unsigned char *data, int len)
 void search_phdc_devices(usb_phdc_context *phdc_context)
 {
 	libusb_device **device_list;
-	ssize_t number_of_devices;
 	libusb_device *device;
 	int i = 0;
 
-	number_of_devices = libusb_get_device_list(phdc_context->usb_context, &device_list);
+	libusb_get_device_list(phdc_context->usb_context, &device_list);
 
 	while ((device = device_list[i++]) != NULL) {
 		usb_phdc_device new_device;

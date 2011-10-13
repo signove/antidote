@@ -76,7 +76,7 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
  */
 void operating_process_apdu(Context *ctx, APDU *apdu)
 {
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	switch (apdu->choice) {
 	case PRST_CHOSEN: {
@@ -113,8 +113,9 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
 		break;
 	}
 	default:
-		reject_result.problem = UNRECOGNIZED_APDU;
+		//reject_result.problem = UNRECOGNIZED_APDU;
 		// TODO: communication_send_rorj(rejectResult)
+		break;
 	}
 }
 
@@ -149,7 +150,7 @@ static void communication_agent_process_roiv(Context *ctx, APDU *apdu)
  */
 void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 {
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	DEBUG("processing apdu in operating mode - agent");
 
@@ -189,8 +190,9 @@ void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 		break;
 	}
 	default:
-		reject_result.problem = UNRECOGNIZED_APDU;
+		//reject_result.problem = UNRECOGNIZED_APDU;
 		// TODO: communication_send_rorj(rejectResult)
+		break;
 	}
 }
 
@@ -205,7 +207,7 @@ void communication_process_roiv(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	switch (data_apdu->message.choice) {
 	case ROIV_CMIP_EVENT_REPORT_CHOSEN:
@@ -219,7 +221,7 @@ void communication_process_roiv(Context *ctx, APDU *apdu)
 				       &data);
 		break;
 	default:
-		reject_result.problem = UNRECOGNIZED_OPERATION;
+		//reject_result.problem = UNRECOGNIZED_OPERATION;
 		// TODO: communication_send_rorj(rejectResult)
 		break;
 	}
@@ -235,7 +237,7 @@ static void communication_process_rors(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
@@ -265,7 +267,7 @@ static void communication_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			reject_result.problem = UNRECOGNIZED_OPERATION;
+			//reject_result.problem = UNRECOGNIZED_OPERATION;
 			// TODO: communication_send_rorj(rejectResult)
 			break;
 		}
@@ -284,7 +286,7 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
@@ -303,7 +305,7 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			reject_result.problem = UNRECOGNIZED_OPERATION;
+			//reject_result.problem = UNRECOGNIZED_OPERATION;
 			// TODO: communication_send_rorj(rejectResult)
 			break;
 		}
@@ -933,7 +935,7 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 	ScanReportInfoVar info_var;
 	ScanReportInfoMPFixed info_mp_fixed;
 	ScanReportInfoMPVar info_mp_var;
-	ERROR error;
+	//ERROR error;
 
 	ByteStreamReader *event_info_stream = byte_stream_reader_instance(event->value, event->length);
 
@@ -962,8 +964,9 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 		 */
 		break;
 	default:
-		error = NO_SUCH_ACTION;
+		//error = NO_SUCH_ACTION;
 		// TODO: communication_send_roer(error)
+		break;
 	}
 
 	free(event_info_stream);

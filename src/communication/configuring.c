@@ -196,7 +196,7 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;
-	RejectResult reject_result;
+	//RejectResult reject_result;
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
@@ -221,7 +221,7 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			reject_result.problem = UNRECOGNIZED_OPERATION;
+			//reject_result.problem = UNRECOGNIZED_OPERATION;
 			break;
 		}
 

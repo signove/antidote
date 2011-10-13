@@ -817,12 +817,9 @@ static void dimutil_fill_metric_object(struct MDS *mds, DataEntry *data_entry,
 	octet_string val;
 	OID_Type attr_id;
 
-	struct Metric *metric = NULL;
-
 	switch (metric_obj->choice) {
 	case METRIC_NUMERIC:
 		cmp_entry->name = data_strcp("Numeric");
-		metric =  &(metric_obj->u.numeric.metric);
 
 		for (j = 0; j < attr_list->count; ++j) {
 			attr_id = attr_list->value[j].attribute_id;
@@ -844,7 +841,6 @@ static void dimutil_fill_metric_object(struct MDS *mds, DataEntry *data_entry,
 		break;
 	case METRIC_ENUM:
 		cmp_entry->name = data_strcp("Enumeration");
-		metric =  &(metric_obj->u.enumeration.metric);
 
 		for (j = 0; j < attr_list->count; ++j) {
 			attr_id = attr_list->value[j].attribute_id;
@@ -867,7 +863,6 @@ static void dimutil_fill_metric_object(struct MDS *mds, DataEntry *data_entry,
 		break;
 	case METRIC_RTSA:
 		cmp_entry->name = data_strcp("RT-SA");
-		metric =  &(metric_obj->u.enumeration.metric);
 
 		for (j = 0; j < attr_list->count; ++j) {
 			attr_id = attr_list->value[j].attribute_id;
@@ -985,13 +980,10 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 		octet_string value = fixed_obs->obs_val_data;
 		ByteStreamReader *stream = byte_stream_reader_instance(value.value, value.length);
 
-		struct Metric *metric = NULL;
-
 		switch (metric_obj->choice) {
 		case METRIC_NUMERIC: {
 			AttrValMap val_map = metric_obj->u.numeric.metric.attribute_value_map;
 			cmp_entry->name = data_strcp("Numeric");
-			metric = &metric_obj->u.numeric.metric;
 			attr_list_size = metric_obj->u.numeric.metric.attribute_value_map.count;
 			cmp_entry->entries_count = attr_list_size;
 			cmp_entry->entries = calloc(attr_list_size, sizeof(DataEntry));
@@ -1011,7 +1003,6 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 		case METRIC_ENUM: {
 			AttrValMap val_map = metric_obj->u.enumeration.metric.attribute_value_map;
 			cmp_entry->name = data_strcp("Enumeration");
-			metric = &metric_obj->u.enumeration.metric;
 
 			attr_list_size = metric_obj->u.enumeration.metric.attribute_value_map.count;
 			cmp_entry->entries_count = attr_list_size;
@@ -1033,7 +1024,6 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 		case METRIC_RTSA: {
 			AttrValMap val_map = metric_obj->u.rtsa.metric.attribute_value_map;
 			cmp_entry->name = data_strcp("RT-SA");
-			metric = &metric_obj->u.rtsa.metric;
 
 			attr_list_size = metric_obj->u.rtsa.metric.attribute_value_map.count;
 			cmp_entry->entries_count = attr_list_size;
@@ -1086,17 +1076,13 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 	cmp_entry->entries = calloc(val_map->count, sizeof(DataEntry));
 
 	if (val_map->count > 0) {
-		struct Metric *metric = NULL;
 
 		if (obj->u.metric.choice == METRIC_NUMERIC) {
 			cmp_entry->name = data_strcp("Numeric");
-			metric = &(obj->u.metric.u.numeric.metric);
 		} else if (obj->u.metric.choice == METRIC_ENUM) {
 			cmp_entry->name = data_strcp("Enumeration");
-			metric = &(obj->u.metric.u.enumeration.metric);
 		} else {
 			cmp_entry->name = data_strcp("RT-SA");
-			metric = &(obj->u.metric.u.rtsa.metric);
 		}
 	}
 

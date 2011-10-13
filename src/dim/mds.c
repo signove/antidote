@@ -416,7 +416,6 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 	int attr_list_size = 0;
 	int i;
 	int j;
-	int result = 0;
 
 	MDS *mds  = ctx->mds;
 
@@ -451,9 +450,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 							   cfgObj->attributes.value[j].attribute_value.length);
 
-				result = dimutil_fill_numeric_attr(&(object.u.metric.u.numeric),
-								   cfgObj->attributes.value[j].attribute_id,
-								   stream, NULL);
+				dimutil_fill_numeric_attr(&(object.u.metric.u.numeric),
+							  cfgObj->attributes.value[j].attribute_id,
+							  stream, NULL);
 				free(stream);
 			}
 
@@ -481,9 +480,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 							   cfgObj->attributes.value[j].attribute_value.length);
 
-				result = dimutil_fill_enumeration_attr(&(object.u.metric.u.enumeration),
-								       cfgObj->attributes.value[j].attribute_id,
-								       stream, NULL);
+				dimutil_fill_enumeration_attr(&(object.u.metric.u.enumeration),
+							      cfgObj->attributes.value[j].attribute_id,
+							      stream, NULL);
 				free(stream);
 			}
 
@@ -532,9 +531,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 				// TODO: check if data can come aggregated
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 							   cfgObj->attributes.value[j].attribute_value.length);
-				result = pmstore_set_attribute(&(object.u.pmstore),
-							       cfgObj->attributes.value[j].attribute_id,
-							       stream);
+				pmstore_set_attribute(&(object.u.pmstore),
+						      cfgObj->attributes.value[j].attribute_id,
+						      stream);
 				free(stream);
 			}
 
@@ -566,9 +565,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			for (j = 0; j < attr_list_size; ++j) {
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 							   cfgObj->attributes.value[j].attribute_value.length);
-				result = dimutil_fill_epi_scanner_attr(&(object.u.scanner.u.epi_cfg_scanner),
-								       cfgObj->attributes.value[j].attribute_id,
-								       stream, NULL);
+				dimutil_fill_epi_scanner_attr(&(object.u.scanner.u.epi_cfg_scanner),
+							      cfgObj->attributes.value[j].attribute_id,
+							      stream, NULL);
 				free(stream);
 			}
 
@@ -594,9 +593,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			for (j = 0; j < attr_list_size; ++j) {
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 							   cfgObj->attributes.value[j].attribute_value.length);
-				result = dimutil_fill_peri_scanner_attr(&(object.u.scanner.u.peri_cfg_scanner),
-									cfgObj->attributes.value[j].attribute_id,
-									stream, NULL);
+				dimutil_fill_peri_scanner_attr(&(object.u.scanner.u.peri_cfg_scanner),
+							       cfgObj->attributes.value[j].attribute_id,
+							       stream, NULL);
 				free(stream);
 			}
 
