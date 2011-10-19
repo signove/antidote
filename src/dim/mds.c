@@ -683,6 +683,7 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
  *  \param superentry master data entry of object
  */
 static void mds_populate_configuration_attributes(OID_Type supertype, 
+						const char *name,
 						const AttributeList *atts,
 						DataEntry *superentry)
 {
@@ -710,6 +711,8 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 	superentry->choice = COMPOUND_DATA_ENTRY;
 	superentry->u.compound.entries_count = atts->count;
 	superentry->u.compound.entries = calloc(atts->count, sizeof(DataEntry));
+	superentry->u.compound.name = data_strcp(name);
+		
 
 	for (j = 0; j < atts->count; ++j) {
 		AVA_Type att = atts->value[j];
@@ -786,18 +789,14 @@ DataList *mds_populate_configuration(MDS *mds)
 
 	for (i = 0; i < config->count; ++i) {
 		const ConfigObject *cfgobj = &(config->value[i]);
+		const char *name = oid_get_moc_vmo_string(cfgobj->obj_class);
 		DataEntry *entry = &(list->values[i]);
 		const AttributeList *atts = &(cfgobj->attributes);
-		int attcount = atts->count;
 
 		entry->choice = COMPOUND_DATA_ENTRY;
 		data_meta_set_handle(entry, cfgobj->obj_handle);
 
-		entry->u.compound.entries_count = attcount;
-		entry->u.compound.entries = calloc(attcount, sizeof(DataEntry));
-		entry->u.compound.name = data_strcp(oid_get_moc_vmo_string(cfgobj->obj_class));
-		
-		mds_populate_configuration_attributes(cfgobj->obj_class, atts, entry);
+		mds_populate_configuration_attributes(cfgobj->obj_class, name, atts, entry);
 	}
 
 	del_configobjectlist(config);
