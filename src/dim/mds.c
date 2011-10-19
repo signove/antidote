@@ -692,16 +692,20 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 	// functions, that are also used to update actual MDS objects
 
 	struct Metric *metric = metric_instance();
-	struct Numeric *numeric = numeric_instance(metric_instance());
-	struct Enumeration *enumeration = enumeration_instance(metric_instance());
+	struct Metric *metric_n = metric_instance();
+	struct Metric *metric_e = metric_instance();
+	struct Metric *metric_s = metric_instance();
+	struct Numeric *numeric = numeric_instance(metric_n);
+	struct Enumeration *enumeration = enumeration_instance(metric_e);
 	struct PMStore *pmstore = pmstore_instance();
+
 	octet_string simple_sa_obs_value;
 	simple_sa_obs_value.length = 64;
 	simple_sa_obs_value.value = calloc(64, sizeof(intu8));
 	ScaleRangeSpec32 srs32;
 	SaSpec saspec;
-	struct RTSA *sart = rtsa_instance_spec32(metric_instance(), 1,
-				simple_sa_obs_value, srs32, saspec);
+	struct RTSA *sart = rtsa_instance_spec32(metric_s, 1, simple_sa_obs_value,
+							srs32, saspec);
 
 	superentry->choice = COMPOUND_DATA_ENTRY;
 	superentry->u.compound.entries_count = atts->count;
@@ -730,6 +734,8 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 		if (!res) {
 			data_set_oid_type(entry, "OID", &type);
 		}
+
+		free(r);
 	}
 
 	metric_destroy(metric);
@@ -737,6 +743,15 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 	pmstore_destroy(pmstore);
 	rtsa_destroy(sart);
 	enumeration_destroy(enumeration);
+
+	free(metric);
+	free(metric_e);
+	free(metric_n);
+	free(metric_s);
+	free(numeric);
+	free(pmstore);
+	free(sart);
+	free(enumeration);
 }
 
 /**
@@ -753,8 +768,9 @@ DataList *mds_populate_configuration(MDS *mds)
 		return NULL;
 	}
 
-	const ConfigObjectList *config;
+	ConfigObjectList *config;
 
+	// gets a copy of config attributes
 	if (std_configurations_is_supported_standard(mds->dev_configuration_id)) {
 		config = std_configurations_get_configuration_attributes(
 								mds->dev_configuration_id);
@@ -783,6 +799,9 @@ DataList *mds_populate_configuration(MDS *mds)
 		
 		mds_populate_configuration_attributes(cfgobj->obj_class, atts, entry);
 	}
+
+	del_configobjectlist(config);
+	free(config);
 
 	return list;
 }
