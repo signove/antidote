@@ -1366,13 +1366,15 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
 	DEBUG("Medical Device Attributes");
 
 	DataList *list = manager_get_mds_attributes(ctx->id);
-	char *data = xml_encode_data_list(list);
 
-	if (data) {
-		call_agent_deviceattributes(ctx->id, data);
-		free(data);
+	if (list) {
+		char *data = xml_encode_data_list(list);
+		if (data) {
+			call_agent_deviceattributes(ctx->id, data);
+			free(data);
+		}
+		data_list_del(list);
 	}
-	data_list_del(list);
 }
 
 
