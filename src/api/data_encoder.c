@@ -1222,10 +1222,10 @@ void data_entry_del(DataEntry *pointer)
 			free(meta->value);
 			meta->value = NULL;
 		}
-
-		free(pointer->meta_data.values);
-		pointer->meta_data.values = NULL;
 	}
+
+	free(pointer->meta_data.values);
+	pointer->meta_data.values = NULL;
 
 	if (pointer->choice == SIMPLE_DATA_ENTRY) {
 		data_entry_del_simple(&pointer->u.simple);
@@ -1256,17 +1256,15 @@ DataList *data_list_new(int size)
  */
 void data_list_del(DataList *pointer)
 {
-	if (pointer != NULL && pointer->values != NULL) {
-		if (pointer->size > 0) {
-			int i = 0;
+	if (pointer) {
+		int i = 0;
 
-			for (i = 0; i < pointer->size; i++) {
-				data_entry_del(&pointer->values[i]);
-			}
-
-			free(pointer->values);
-			pointer->values = NULL;
+		for (i = 0; i < pointer->size; i++) {
+			data_entry_del(&pointer->values[i]);
 		}
+
+		free(pointer->values);
+		pointer->values = NULL;
 
 		free(pointer);
 		pointer = NULL;
