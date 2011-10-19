@@ -1,6 +1,14 @@
 Roadmap/TODO
 ------------
 
+Document Agent, PM-Store and GetConfiguration ops
+
+Resolve FIXMEs related to PM-Store
+
+Add unit testing cases for Agent.
+
+Add unit testing cases for GetConfiguration and PMStore ops
+
 USB: SIGINT does not exit main loop when a USB device
      has been disconnected while reading
 
@@ -77,17 +85,3 @@ communication- and event-centered like now.
 
 Improve timeout cases that could be handled by plug-in
 (e.g. HDP reconnections)
-	
-
-DOCUMENTATION
-
-Documentation of Agent role API, beyond the examples currently
-provided.
-
-Review Doxygen documentation
-
-
-UNIT TESTING
-
-Add unit testing cases for Agent. Currently, only Manager
-is covered.
