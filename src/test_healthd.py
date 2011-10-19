@@ -80,7 +80,7 @@ class Agent(dbus.service.Object):
 		print "=== InstNumber %d" % pmsegment
 		print "\tData:\t", data
 
-	@dbus.service.method("com.signove.health.agent", in_signature="sii", out_signature="")
+	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentCleared(self, dev, pmstore_handle, pmsegment, retstatus):
 		print
 		print "SegmentCleared dev %s PM-Store handle %d" % (dev, pmstore_handle)
@@ -118,7 +118,7 @@ def getConfiguration(dev):
 def getSegmentInfo(dev, handle):
 	ret = dev.GetSegmentInfo(handle)
 	print
-	print "GetSegmentInfo ret %d"
+	print "GetSegmentInfo ret %d" % ret
 	print
 	return False
 
