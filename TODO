@@ -1,9 +1,20 @@
 Roadmap/TODO
 ------------
 
+1) High-priority
+
+Timer alarm review
+
+PMStore get wrong value x timeout
+
+USB plug-in: second session for same device X context ID
+
 Document Agent, PM-Store and GetConfiguration ops
 
 Resolve FIXMEs related to PM-Store
+
+
+2) Medium priority
 
 Add unit testing cases for Agent.
 
