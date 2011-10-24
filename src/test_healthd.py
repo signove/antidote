@@ -8,6 +8,13 @@ import dbus.mainloop.glib
 import os
 import glib
 
+dump_prefix = "XML"
+
+def dump(suffix, xmldata):
+	f = open(dump_prefix + "_" + suffix + ".xml", "w")
+	f.write(xmldata)
+	f.close()
+
 gsdr = {0: "Success", 1: "Segment unknown", 2: "Fail, try later",
 	3: "Fail, segment empty", 512: "Fail, other"}
 
@@ -18,7 +25,8 @@ def getsegmentdata_response_interpret(i):
 		s = "Unknown fail code"
 	return s
 
-pmstore_handle = -1
+pmstore_handle = 11
+pmsegment_instance = 0
 
 class Agent(dbus.service.Object):
 
@@ -36,7 +44,9 @@ class Agent(dbus.service.Object):
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
 	def Associated(self, dev, xmldata):
 		print
-		print "Associated dev %s: %s" % (dev, xmldata)
+		print "Associated dev %s: XML with %d bytes" % (dev, len(xmldata))
+
+		dump("associated", xmldata)
 		
 		# Convert path to an interface
 		dev = bus.get_object("com.signove.health", dev)
@@ -44,26 +54,31 @@ class Agent(dbus.service.Object):
 
 		glib.timeout_add(0, getConfiguration, dev)
 		glib.timeout_add(1000, requestMdsAttributes, dev)
-		glib.timeout_add(2000, getSegmentInfo, dev, pmstore_handle)
+		glib.timeout_add(2000, getPMStore, dev, pmstore_handle)
+		glib.timeout_add(3000, getSegmentInfo, dev, pmstore_handle)
+		glib.timeout_add(5000, getSegmentData, dev, pmstore_handle, pmsegment_instance)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
-	def MeasurementData(self, dev, data):
+	def MeasurementData(self, dev, xmldata):
 		print
 		print "MeasurementData dev %s" % dev
-		print "\tData:\t", data
+		print "=== Data: ", xmldata
+		dump("measurement", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
-	def PMStoreData(self, dev, pmstore_handle, data):
+	def PMStoreData(self, dev, pmstore_handle, xmldata):
 		print
 		print "PMStore dev %s handle %d" % (dev, pmstore_handle)
-		print "\tData:\t", data
+		print "=== Data: XML with %d bytes" % len(xmldata)
+		dump("pmstore", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
-	def SegmentInfo(self, dev, pmstore_handle, data):
+	def SegmentInfo(self, dev, pmstore_handle, xmldata):
 		print
 		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
-		print "\tData:\t", data
-		# FIXME get segment data
+		print "=== XML with %d bytes" % len(xmldata)
+		# print "\tData:\t", data
+		dump("segmentinfo", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentDataResponse(self, dev, pmstore_handle, pmsegment, response):
@@ -71,14 +86,18 @@ class Agent(dbus.service.Object):
 		print "SegmentDataResponse dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== InstNumber %d" % pmsegment
 		print "=== Response %s" % getsegmentdata_response_interpret(response)
-		print "\tData:\t", data
+		if response != 0 and pmsegment < 7:
+			dev = bus.get_object("com.signove.health", dev)
+			dev = dbus.Interface(dev, "com.signove.health.device")
+			glib.timeout_add(0, getSegmentData, dev, pmstore_handle, pmsegment + 1)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siis", out_signature="")
-	def SegmentData(self, dev, pmstore_handle, pmsegment, data):
+	def SegmentData(self, dev, pmstore_handle, pmsegment, xmldata):
 		print
 		print "SegmentData dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== InstNumber %d" % pmsegment
-		print "\tData:\t", data
+		print "=== Data: %d bytes XML" % len(xmldata)
+		dump("segmentdata", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentCleared(self, dev, pmstore_handle, pmsegment, retstatus):
@@ -88,10 +107,11 @@ class Agent(dbus.service.Object):
 		print
 		
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
-	def DeviceAttributes(self, dev, data):
+	def DeviceAttributes(self, dev, xmldata):
 		print
 		print "DeviceAttributes dev %s" % dev
-		print "\tData:\t", data
+		print "=== Data: XML with %d bytes" % len(xmldata)
+		dump("attributes", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="s", out_signature="")
 	def Disassociated(self, dev):
@@ -110,15 +130,29 @@ def requestMdsAttributes (dev):
 def getConfiguration(dev):
 	config = dev.GetConfiguration()
 	print
-	print "Configuration"
-	print config
+	print "Configuration: XML with %d bytes" % len(config)
 	print
+	dump("config", config)
 	return False
 
 def getSegmentInfo(dev, handle):
 	ret = dev.GetSegmentInfo(handle)
 	print
 	print "GetSegmentInfo ret %d" % ret
+	print
+	return False
+
+def getSegmentData(dev, handle, instance):
+	ret = dev.GetSegmentData(handle, instance)
+	print
+	print "GetSegmentData ret %d" % ret
+	print
+	return False
+
+def getPMStore(dev, handle):
+	ret = dev.GetPMStore(handle)
+	print
+	print "GetPMStore ret %d" % ret
 	print
 	return False
 
@@ -134,8 +168,8 @@ def do_something(dev):
 	return False
 
 if len(sys.argv) > 2:
-	if sys.argv[1] == '--pmstore-handle':
-		pmstore_handle = int(sys.argv[2])
+	if sys.argv[1] == '--prefix':
+		dump_prefix = sys.argv[2]
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
