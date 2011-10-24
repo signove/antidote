@@ -1091,6 +1091,7 @@ DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle)
 static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 						 DataEntry *entry)
 {
+	int count = 11;
 	int i = 0;
 	char *s_inst_number;
 
@@ -1098,8 +1099,8 @@ static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 	asprintf(&s_inst_number, "%d", segment->instance_number);
 	data_set_meta_att(entry, data_strcp("Instance-Number"), s_inst_number);
 
-	entry->u.compound.entries_count = 11;
-	entry->u.compound.entries = calloc(11, sizeof(DataEntry));
+	entry->u.compound.entries_count = count;
+	entry->u.compound.entries = calloc(count, sizeof(DataEntry));
 	entry->u.compound.name = data_strcp("Segment");
 
 	DataEntry *values = entry->u.compound.entries;
@@ -1147,7 +1148,7 @@ static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 				&segment->date_and_time_adjustment);
 	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_ABS_ADJUST);
 
-	assert(i == 11);
+	assert(i == count);
 }
 
 /**
