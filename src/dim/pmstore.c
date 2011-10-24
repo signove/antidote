@@ -597,8 +597,9 @@ int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 		pmsegment->fixed_segment_data.length = 0;
 	}
 
-	// FIXME2 this is correct but not robust
+	// TODO this is correct but not robust
 	// What if an agent sends all pieces but shuffled?
+	// (Try again to find an answer in 20601 doc. I didn't.)
 	if (event.segm_data_event_descr.segm_evt_entry_index != pmsegment->empiric_usage_count) {
 		// unexpected segment part
 		return 0;
