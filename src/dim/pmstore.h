@@ -187,7 +187,7 @@ void pmstore_remove_selected_segm(struct PMStore *pm_store, intu16 *selection,
 
 int pmstore_get_nomenclature_code();
 
-void pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
+int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 				SegmentDataEvent event);
 
 Request  *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,

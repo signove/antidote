@@ -70,6 +70,7 @@ struct PMSegment *pmsegment_instance(InstNumber instance_number)
 	segment->fixed_segment_data.value = NULL;
 	segment->fixed_segment_data.length = 0;
 	segment->segment_usage_count = 0;
+	segment->empiric_usage_count = 0;
 	return segment;
 }
 
@@ -83,6 +84,7 @@ void pmsegment_remove_all_entries(struct PMSegment *pm_segment)
 {
 	if (pm_segment->fixed_segment_data.value != NULL) {
 		pm_segment->segment_usage_count = 0;
+		pm_segment->empiric_usage_count = 0;
 		free(pm_segment->fixed_segment_data.value);
 		pm_segment->fixed_segment_data.value = NULL;
 	}

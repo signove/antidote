@@ -142,6 +142,15 @@ struct PMSegment {
 	intu32 segment_usage_count;
 
 	/**
+	 * This attribute gives the actual (current) number of stored
+	 * entries, based on actual data events. It shall be equal to
+	 * segment_usage_count, unless the latter is outdated in local
+	 * cache (getting segment info again solves this.)
+	 *
+	 */
+	intu32 empiric_usage_count;
+
+	/**
 	 * This attribute defines the array for reporting minimum,
 	 * mean, maximum statistics for each element to be tagged.
 	 *

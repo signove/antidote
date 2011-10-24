@@ -91,7 +91,8 @@ static void pmstore_populate_all_attributes(MDS *mds, struct PMStore *pmstore,
 						DataEntry *segm_data_entry);
 
 static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
-					struct PMSegment *pmsegment);
+					struct PMSegment *pmsegment,
+					int last);
 
 /**
  * Returns one instance of the PMStore structure.
@@ -573,40 +574,52 @@ void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
  * \param pm_store the PMStore.
  * \param event the object event which refers to a new data received.
  *
- * \return the data sent by agent as a PM-segment.
+ * \return 0 if non-ok, 1 if ok
  */
-void pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
+int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 				SegmentDataEvent event)
 {
-	// TODO fixed segment data can comes as NaN. Verify page 37.
-	// TODO verify if is needed to use event.segm_data_event_descr.segm_evt_status;
 	struct PMSegment *pmsegment = NULL;
+
 	InstNumber inst_number = event.segm_data_event_descr.segm_instance;
+	int last = event.segm_data_event_descr.segm_evt_status & SEVTSTA_LAST_ENTRY;
+	int first = event.segm_data_event_descr.segm_evt_status & SEVTSTA_FIRST_ENTRY;
+
 	pmsegment = pmstore_get_segment_by_inst_number(pm_store, inst_number);
 
 	if (!pmsegment)
-		return;
+		return 0;
 
-	// FIXME EPX2 see how it does over multiple passes (use flags, positioning)
-	// FIXME EPX2 did not get whole PM-Instance!
+	if (first) {
+		pmsegment->empiric_usage_count = 0;
+		free(pmsegment->fixed_segment_data.value);
+		pmsegment->fixed_segment_data.value = NULL;
+		pmsegment->fixed_segment_data.length = 0;
+	}
 
+	// FIXME2 this is correct but not robust
+	// What if an agent sends all pieces but shuffled?
+	if (event.segm_data_event_descr.segm_evt_entry_index != pmsegment->empiric_usage_count) {
+		// unexpected segment part
+		return 0;
+	}
+
+	pmsegment->empiric_usage_count = event.segm_data_event_descr.segm_evt_entry_index +
+					event.segm_data_event_descr.segm_evt_entry_count;
+
+	int offset = pmsegment->fixed_segment_data.length;
 	pmsegment->fixed_segment_data.length += event.segm_data_event_entries.length;
 
 	pmsegment->fixed_segment_data.value = realloc(pmsegment->fixed_segment_data.value,
 		  				      pmsegment->fixed_segment_data.length);
 
-	// FIXME EPX2 perhaps segment_usage_count should not be changed?
-	pmsegment->segment_usage_count = event.segm_data_event_descr.segm_evt_entry_index +
-					event.segm_data_event_descr.segm_evt_entry_count;
-
-	// FIXME2 suspect offset
-	// FIXME2 solve this by keeping a list of individual entries instead of a single
-	// 	  fixed segment data for the whole pminstance
-	memcpy(&(pmsegment->fixed_segment_data.value[event.segm_data_event_descr.segm_evt_entry_index]),
+	memcpy(&(pmsegment->fixed_segment_data.value[offset]),
 	       	event.segm_data_event_entries.value,
 		event.segm_data_event_entries.length);
 
-	decode_fixed_segment_data(ctx, pm_store, pmsegment);
+	decode_fixed_segment_data(ctx, pm_store, pmsegment, last);
+
+	return 1;
 }
 
 /**
@@ -815,25 +828,28 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 						struct PMSegment *segment, 
 						DataEntry *segm_data_entry)
 {
-
 	AbsoluteTime abs_time; // length 8
 	RelativeTime rel_time; // length 4
 	HighResRelativeTime hires_rel_time;	// 8
-	intu16 value_ptr_pos = 0;
-	// FIXME2 protection against buffer overrun: use a single stream
 
-	int entry_count = segment->segment_usage_count;
+	int entry_count = segment->empiric_usage_count;
 
 	segm_data_entry->choice = COMPOUND_DATA_ENTRY;
 	segm_data_entry->u.compound.name = data_strcp("PM-Segment");
 	segm_data_entry->u.compound.entries_count = entry_count;
 	segm_data_entry->u.compound.entries = calloc(entry_count, sizeof(DataEntry));
 
+	ByteStreamReader *stream = byte_stream_reader_instance(segment->fixed_segment_data.value,
+							       segment->fixed_segment_data.length);
+	//  stream length double-checked at the end of every iteration
+	int offset = 0;
+
 	int i;
 
 	for (i = 0; i < entry_count; ++i) {
 
-		DEBUG("################## pm segment reader at %d %d", value_ptr_pos, i);
+		// FIXME2 remove instrumentation
+		DEBUG("################## pm segment reader at %d %d", offset, i);
 
 		DataEntry *data_entry = &segm_data_entry->u.compound.entries[i];
 		data_entry->choice = COMPOUND_DATA_ENTRY;
@@ -849,6 +865,16 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 					SEG_ELEM_HDR_HIRES_RELATIVE_TIME;
 		int k = 0;
 		int n = 0;
+
+		if ((hdr_abs_time + hdr_rel_time + hdr_hirel_time) !=
+				segment->pm_segment_entry_map.segm_entry_header) {
+			// Unknown bit in header, we can't determine
+			// header's length
+			DEBUG("Bad PM-Segment data: unknown header bit in %x",
+				segment->pm_segment_entry_map.segm_entry_header);
+			segm_data_entry->u.compound.entries_count = i;
+			break;
+		}
 
 		if (hdr_abs_time)
 			++n;
@@ -866,36 +892,25 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		DataEntry *header_item;
 
 		if (hdr_abs_time) {
-			ByteStreamReader *stream = byte_stream_reader_instance(
-							   segment->fixed_segment_data.value + value_ptr_pos, 8);
-			value_ptr_pos += 8;
+			offset += 8;
 			decode_absolutetime(stream, &abs_time);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_absolute_time(header_item, "Segment-Absolute-Time", &abs_time);
-			free(stream);
 		}
 
 		if (hdr_rel_time) {
-			ByteStreamReader *stream = byte_stream_reader_instance(
-							   segment->fixed_segment_data.value + value_ptr_pos, 4);
-			value_ptr_pos += 4;
+			offset += 4;
 			rel_time = read_intu32(stream, NULL);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
-			free(stream);
-			break;
 		}
 
 		if (hdr_hirel_time) {
-			ByteStreamReader *stream = byte_stream_reader_instance(
-							   segment->fixed_segment_data.value + value_ptr_pos, 8);
-			value_ptr_pos += 8;
+			offset += 8;
 			decode_highresrelativetime(stream, &hires_rel_time);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_high_res_relative_time(header_item, "Segment-Hires-Relative-Time",
 							&hires_rel_time);
-			free(stream);
-			break;
 		}
 
 		PmSegmentEntryMap entry_map;
@@ -911,89 +926,111 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		objs_data_entry->u.compound.entries_count = info_size;
 		objs_data_entry->u.compound.entries = calloc(info_size, sizeof(DataEntry));
 
-
 		int j;
+		int ok = 1;
 
 		for (j = 0; j < info_size; ++j) {
 			HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
 			AttrValMap val_map = entry_map.segm_entry_elem_list.value[j].attr_val_map;
 			int attr_count = val_map.count;
 
-
 			object = mds_get_object_by_handle(mds, handle);
 
-			if (object != NULL) {
-				if (object->choice == MDS_OBJ_METRIC)
-					metric_obj = &(object->u.metric);
+			if (!object) {
+				ok = 0;
+				break;
 			}
 
-			if (metric_obj != NULL) {
-
-				DataEntry *obj_data_entry = &objs_data_entry->u.compound.entries[j];
-				obj_data_entry->choice = COMPOUND_DATA_ENTRY;
-				obj_data_entry->u.compound.entries_count = attr_count;
-				obj_data_entry->u.compound.entries = calloc(attr_count, sizeof(DataEntry));
-				data_meta_set_handle(obj_data_entry, handle);
-
-				if (metric_obj->choice == METRIC_NUMERIC) {
-					obj_data_entry->u.compound.name = data_strcp("Numeric");
-				} else if (metric_obj->choice == METRIC_ENUM) {
-					obj_data_entry->u.compound.name = data_strcp("Enumeration");
-				} else {
-					obj_data_entry->u.compound.name = data_strcp("RT-SA");
-				}
-
-				int k;
-				struct Metric *metric = NULL;
-
-				for (k = 0; k < attr_count; ++k) {
-					DataEntry *entry = &obj_data_entry->u.compound.entries[k];
-
-					ByteStreamReader *stream = byte_stream_reader_instance(
-									   segment->fixed_segment_data.value + value_ptr_pos,
-									   val_map.value[k].attribute_len);
-
-					value_ptr_pos += val_map.value[k].attribute_len;
-
-					switch (metric_obj->choice) {
-					case METRIC_NUMERIC: {
-						metric = &metric_obj->u.numeric.metric;
-						dimutil_fill_numeric_attr(&(metric_obj->u.numeric),
-									  val_map.value[k].attribute_id,
-									  stream, entry);
-					}
-					break;
-					case METRIC_ENUM: {
-						metric = &metric_obj->u.enumeration.metric;
-						int err = dimutil_fill_enumeration_attr(&(metric_obj->u.enumeration),
-											val_map.value[k].attribute_id,
-											stream, entry);
-
-						if (err == 0) {
-							ERROR(" ");
-						}
-					}
-					break;
-					case METRIC_RTSA: {
-						metric = &metric_obj->u.rtsa.metric;
-						dimutil_fill_rtsa_attr(&(metric_obj->u.rtsa),
-								       val_map.value[k].attribute_id,
-								       stream, entry);
-					}
-					break;
-					}
-
-					free(stream);
-				}
-
-				data_set_meta_att(obj_data_entry, data_strcp("metric-id"),
-						  intu16_2str((intu16) metric->metric_id));
-
-				data_set_meta_att(obj_data_entry, data_strcp("partition-SCADA-code"),
-						  intu16_2str((intu16) metric->type.code));
+			if (object->choice != MDS_OBJ_METRIC) {
+				ok = 0;
+				break;
 			}
+
+			metric_obj = &(object->u.metric);
+			
+			if (!metric_obj) {
+				ok = 0;
+				break;
+			}
+
+			DataEntry *obj_data_entry = &objs_data_entry->u.compound.entries[j];
+			obj_data_entry->choice = COMPOUND_DATA_ENTRY;
+			obj_data_entry->u.compound.entries_count = attr_count;
+			obj_data_entry->u.compound.entries = calloc(attr_count, sizeof(DataEntry));
+			data_meta_set_handle(obj_data_entry, handle);
+
+			if (metric_obj->choice == METRIC_NUMERIC) {
+				obj_data_entry->u.compound.name = data_strcp("Numeric");
+			} else if (metric_obj->choice == METRIC_ENUM) {
+				obj_data_entry->u.compound.name = data_strcp("Enumeration");
+			} else {
+				obj_data_entry->u.compound.name = data_strcp("RT-SA");
+			}
+
+			int k;
+			struct Metric *metric = NULL;
+
+			for (k = 0; k < attr_count; ++k) {
+				DataEntry *entry = &obj_data_entry->u.compound.entries[k];
+
+				offset += val_map.value[k].attribute_len;
+
+				switch (metric_obj->choice) {
+				case METRIC_NUMERIC: {
+					metric = &metric_obj->u.numeric.metric;
+					dimutil_fill_numeric_attr(&(metric_obj->u.numeric),
+								  val_map.value[k].attribute_id,
+								  stream, entry);
+				}
+				break;
+				case METRIC_ENUM: {
+					metric = &metric_obj->u.enumeration.metric;
+					int err = dimutil_fill_enumeration_attr(
+								&(metric_obj->u.enumeration),
+								val_map.value[k].attribute_id,
+								stream, entry);
+
+					if (err == 0) {
+						ERROR(" ");
+						ok = 0;
+					}
+				}
+				break;
+				case METRIC_RTSA: {
+					metric = &metric_obj->u.rtsa.metric;
+					dimutil_fill_rtsa_attr(&(metric_obj->u.rtsa),
+							       val_map.value[k].attribute_id,
+							       stream, entry);
+				}
+				break;
+				default: {
+					// unknown type, unknown size = BAD
+					ok = 0;
+				}
+				}
+			}
+
+			data_set_meta_att(obj_data_entry, data_strcp("metric-id"),
+					  intu16_2str((intu16) metric->metric_id));
+
+			data_set_meta_att(obj_data_entry, data_strcp("partition-SCADA-code"),
+					  intu16_2str((intu16) metric->type.code));
+		}
+
+		if (!ok) {
+			DEBUG("PM-Segment: problem to decode item %d", i);
+			segm_data_entry->u.compound.entries_count = i;
+			break;
+		}
+
+		if (offset >= segment->fixed_segment_data.length) {
+			DEBUG("PM-Segment buffer overrun");
+			segm_data_entry->u.compound.entries_count = i;
+			break;
 		}
 	}
+
+	free(stream);
 }
 
 /**
@@ -1004,15 +1041,17 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
  *
  */
 static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
-						struct PMSegment *segment)
+					struct PMSegment *segment, int last)
 {
 	DataList *list = data_list_new(1);
 
 	pmstore_populate_all_attributes(ctx->mds, pmstore, segment, &list->values[0]);
 
-	// FIXME2 flag with last segment etc.
-	manager_notify_evt_segment_data(ctx, pmstore->handle,
-					segment->instance_number, list);
+	if (last) {
+		manager_notify_evt_segment_data(ctx, pmstore->handle,
+						segment->instance_number,
+						list);
+	}
 }
 
 

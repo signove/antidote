@@ -1095,7 +1095,14 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 	result.segm_data_event_descr = segm_data_event.segm_data_event_descr;
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
-		pmstore_segment_data_event(ctx, &(mds_obj->u.pmstore), segm_data_event);
+		int ok = pmstore_segment_data_event(ctx, &(mds_obj->u.pmstore), segm_data_event);
+		if (ok) {
+			result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_CONFIRM;
+		} else {
+			result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_ABORT;
+		}
+	} else {
+		result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_ABORT;
 	}
 
 	del_segmentdataevent(&segm_data_event);
