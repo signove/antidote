@@ -587,20 +587,21 @@ void pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 	if (!pmsegment)
 		return;
 
-	// FIXME EPX2 see how it does over multiple passes
+	// FIXME EPX2 see how it does over multiple passes (use flags, positioning)
+	// FIXME EPX2 did not get whole PM-Instance!
 
 	pmsegment->fixed_segment_data.length += event.segm_data_event_entries.length;
 
-	if (pmsegment->segment_usage_count == 0) {
-		pmsegment->fixed_segment_data.value = calloc(1, pmsegment->fixed_segment_data.length);
-	} else {
-		pmsegment->fixed_segment_data.value
-		= realloc(pmsegment->fixed_segment_data.value,
-			  pmsegment->fixed_segment_data.length);
-	}
+	pmsegment->fixed_segment_data.value = realloc(pmsegment->fixed_segment_data.value,
+		  				      pmsegment->fixed_segment_data.length);
 
-	pmsegment->segment_usage_count += event.segm_data_event_descr.segm_evt_entry_count;
+	// FIXME EPX2 perhaps segment_usage_count should not be changed?
+	pmsegment->segment_usage_count = event.segm_data_event_descr.segm_evt_entry_index +
+					event.segm_data_event_descr.segm_evt_entry_count;
 
+	// FIXME2 suspect offset
+	// FIXME2 solve this by keeping a list of individual entries instead of a single
+	// 	  fixed segment data for the whole pminstance
 	memcpy(&(pmsegment->fixed_segment_data.value[event.segm_data_event_descr.segm_evt_entry_index]),
 	       	event.segm_data_event_entries.value,
 		event.segm_data_event_entries.length);
@@ -819,6 +820,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 	RelativeTime rel_time; // length 4
 	HighResRelativeTime hires_rel_time;	// 8
 	intu16 value_ptr_pos = 0;
+	// FIXME2 protection against buffer overrun: use a single stream
 
 	int entry_count = segment->segment_usage_count;
 
@@ -830,43 +832,70 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 	int i;
 
 	for (i = 0; i < entry_count; ++i) {
+
+		DEBUG("################## pm segment reader at %d %d", value_ptr_pos, i);
+
 		DataEntry *data_entry = &segm_data_entry->u.compound.entries[i];
 		data_entry->choice = COMPOUND_DATA_ENTRY;
 		data_entry->u.compound.name = data_strcp("Pm-Segment-Entry-Map");
 		data_entry->u.compound.entries_count = 2;
 		data_entry->u.compound.entries = calloc(2, sizeof(DataEntry));
 
+		int hdr_abs_time = segment->pm_segment_entry_map.segm_entry_header &
+					SEG_ELEM_HDR_ABSOLUTE_TIME;
+		int hdr_rel_time = segment->pm_segment_entry_map.segm_entry_header &
+					SEG_ELEM_HDR_RELATIVE_TIME;
+		int hdr_hirel_time = segment->pm_segment_entry_map.segm_entry_header &
+					SEG_ELEM_HDR_HIRES_RELATIVE_TIME;
+		int k = 0;
+		int n = 0;
+
+		if (hdr_abs_time)
+			++n;
+		if (hdr_rel_time)
+			++n;
+		if (hdr_hirel_time)
+			++n;
 
 		DataEntry *header_data_entry = &data_entry->u.compound.entries[0];
+		header_data_entry->choice = COMPOUND_DATA_ENTRY;
+		header_data_entry->u.compound.name = data_strcp("Segm-Entry-Header");
+		header_data_entry->u.compound.entries_count = n;
+		header_data_entry->u.compound.entries = calloc(n, sizeof(DataEntry));
 
-		switch (segment->pm_segment_entry_map.segm_entry_header) {
-		case SEG_ELEM_HDR_ABSOLUTE_TIME: {
+		DataEntry *header_item;
+
+		if (hdr_abs_time) {
 			ByteStreamReader *stream = byte_stream_reader_instance(
 							   segment->fixed_segment_data.value + value_ptr_pos, 8);
 			value_ptr_pos += 8;
 			decode_absolutetime(stream, &abs_time);
-			data_set_absolute_time(header_data_entry, "Segment-Absolute-Time", &abs_time);
+ 			header_item = &header_data_entry->u.compound.entries[k++];
+			data_set_absolute_time(header_item, "Segment-Absolute-Time", &abs_time);
 			free(stream);
-			break;
 		}
-		case SEG_ELEM_HDR_RELATIVE_TIME: {
+
+		if (hdr_rel_time) {
 			ByteStreamReader *stream = byte_stream_reader_instance(
 							   segment->fixed_segment_data.value + value_ptr_pos, 4);
 			value_ptr_pos += 4;
 			rel_time = read_intu32(stream, NULL);
-			data_set_intu32(header_data_entry, "Segment-Relative-Time", &rel_time);
+ 			header_item = &header_data_entry->u.compound.entries[k++];
+			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
 			free(stream);
 			break;
 		}
-		case SEG_ELEM_HDR_HIRES_RELATIVE_TIME: {
+
+		if (hdr_hirel_time) {
 			ByteStreamReader *stream = byte_stream_reader_instance(
 							   segment->fixed_segment_data.value + value_ptr_pos, 8);
 			value_ptr_pos += 8;
 			decode_highresrelativetime(stream, &hires_rel_time);
-			data_set_high_res_relative_time(header_data_entry, "Segment-Hires-Relative-Time", &hires_rel_time);
+ 			header_item = &header_data_entry->u.compound.entries[k++];
+			data_set_high_res_relative_time(header_item, "Segment-Hires-Relative-Time",
+							&hires_rel_time);
 			free(stream);
 			break;
-		}
 		}
 
 		PmSegmentEntryMap entry_map;
