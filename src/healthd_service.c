@@ -296,9 +296,11 @@ static void timer_reset_timeout(Context *ctx)
  */
 static gboolean timer_alarm(gpointer data)
 {
+	DEBUG("timer_alarm");
 	Context *ctx = data;
 	void (*f)() = ctx->timeout_action.func;
-	f(ctx);
+	if (f)
+		f(ctx);
 	return FALSE;
 }
 

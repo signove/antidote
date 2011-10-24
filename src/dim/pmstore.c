@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "pmstore.h"
 #include "pmstore_req.h"
 #include "src/api/api_definitions.h"
@@ -1041,7 +1042,7 @@ DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle)
 
 	entry->u.compound.entries_count = 10;
 	entry->u.compound.entries = calloc(10, sizeof(DataEntry));
-	entry->u.compound.name = "Attributes";
+	entry->u.compound.name = data_strcp("Attributes");
 
 	DataEntry *values = entry->u.compound.entries;
 
@@ -1095,12 +1096,11 @@ static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 
 	entry->choice = COMPOUND_DATA_ENTRY;
 	asprintf(&s_inst_number, "%d", segment->instance_number);
-	data_set_meta_att(entry, "Instance-Number", s_inst_number);
-	free(s_inst_number);
+	data_set_meta_att(entry, data_strcp("Instance-Number"), s_inst_number);
 
-	entry->u.compound.entries_count = 9;
-	entry->u.compound.entries = calloc(9, sizeof(DataEntry));
-	entry->u.compound.name = "Segment";
+	entry->u.compound.entries_count = 11;
+	entry->u.compound.entries = calloc(11, sizeof(DataEntry));
+	entry->u.compound.name = data_strcp("Segment");
 
 	DataEntry *values = entry->u.compound.entries;
 
@@ -1146,6 +1146,8 @@ static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 	data_set_absolute_time_adj(&values[i], "Date-And-Time-Adjustment",
 				&segment->date_and_time_adjustment);
 	data_meta_set_attr_id(&values[i++], MDC_ATTR_TIME_ABS_ADJUST);
+
+	assert(i == 11);
 }
 
 /**
@@ -1180,7 +1182,7 @@ DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle)
 
 	entry->u.compound.entries_count = n;
 	entry->u.compound.entries = calloc(n, sizeof(DataEntry));
-	entry->u.compound.name = "Segments";
+	entry->u.compound.name = data_strcp("Segments");
 
 	DataEntry *values = entry->u.compound.entries;
 
