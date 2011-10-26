@@ -49,9 +49,6 @@
 #include "src/dim/mds.h"
 #include "src/dim/dimutil.h"
 
-// FIXME EPX2 if number_of_segments comes in configuration step,
-// check if number_of_segments == segment_list_count
-
 /**
  * \defgroup PMStore PMStore
  * \ingroup ObjectClasses
@@ -471,7 +468,6 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 	rd->response = 0;
 
 	// FIXME EPX2 where errors come from? roer
-	// FIXME EPX2 check what it does under multiple passes
 
 	for (i = 0; i < info_list_size; ++i) {
 		InstNumber inst_number = info_list.value[i].seg_inst_no;
@@ -685,6 +681,29 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 }
 
 /**
+ * Returns PMSegment position in PMStore with the given instance number.
+ *
+ * \param pm_store the PMStore to select a PMSegment.
+ * \param inst_number the PMSegment instance number
+ *
+ * \return position of PMSegment in PMStore segm_list array
+ *
+ */
+static int pmstore_get_segment_pos(struct PMStore *pm_store,
+					InstNumber inst_number)
+{
+	int i;
+
+	for (i = 0; i < pm_store->segment_list_count; ++i) {
+		if (pm_store->segm_list[i]->instance_number == inst_number) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+/**
  * Returns a PMSegment with the given instance number.
  *
  * \param pm_store the PMStore to select a PMSegment.
@@ -695,15 +714,14 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
  *
  */
 struct PMSegment *pmstore_get_segment_by_inst_number(struct PMStore *pm_store,
-		InstNumber inst_number) {
-	if (pm_store->segment_list_count == pm_store->number_of_segments) {
-		int i;
+							InstNumber inst_number)
+{
+	int pos;
 
-		for (i = 0; i < pm_store->segment_list_count; ++i) {
-			if (pm_store->segm_list[i]->instance_number == inst_number) {
-				return pm_store->segm_list[i];
-			}
-		}
+	pos = pmstore_get_segment_pos(pm_store, inst_number);
+
+	if (pos >= 0) {
+		return pm_store->segm_list[pos];
 	}
 
 	return NULL;
@@ -718,6 +736,19 @@ struct PMSegment *pmstore_get_segment_by_inst_number(struct PMStore *pm_store,
  */
 void pmstore_add_segment(struct PMStore *pm_store, struct PMSegment *segment)
 {
+	int pos;
+
+	pos = pmstore_get_segment_pos(pm_store, segment->instance_number);
+
+	if (pos >= 0) {
+		// replace PM-Segment w/ same instance number
+		struct PMSegment *old = pm_store->segm_list[pos];
+		pmsegment_destroy(old);
+		free(old);
+		pm_store->segm_list[pos] = segment;
+		return;
+	}
+
 	// test if there is not elements in the list
 	if (pm_store->segment_list_count == 0) {
 		pm_store->segm_list = calloc(1, sizeof(struct PMSegment *));
