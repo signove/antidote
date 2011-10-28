@@ -162,7 +162,7 @@ void pmstore_service_action_clear_segments(struct PMStore *pm_store, SegmSelecti
 	case SEGM_ID_LIST_CHOSEN:
 		// Remove all segments selected or only entries of all segments selected
 
-		for (i = 0; i < selection.u.segm_id_list.length; ++i) {
+		for (i = 0; i < selection.u.segm_id_list.count; ++i) {
 			InstNumber id = selection.u.segm_id_list.value[i];
 
 			for (j = 0; j < pm_store->segment_list_count; ++j) {
@@ -285,12 +285,18 @@ Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct
 	PMStoreClearSegmRet *rs = calloc(1, sizeof(PMStoreClearSegmRet));
 	req->return_data = (struct RequestRet*) rs;
 	rs->handle = pm_store->handle;
+	if (selection->choice == ALL_SEGMENTS_CHOSEN) {
+		rs->inst = -1;
+	} else if (selection->choice == SEGM_ID_LIST_CHOSEN &&
+			selection->u.segm_id_list.length > 0) {
+		rs->inst = selection->u.segm_id_list.value[0];
+	}
 	rs->del_function = &del_PMStoreClearSegmRet;
 	reader = byte_stream_reader_instance(writer->buffer, writer->size);
 	decode_segmselection(reader, &(rs->segm_selection));
 	free(reader);
 
-	del_byte_stream_writer(writer, 1);
+	del_byte_stream_writer(writer, 0);
 
 	return req;
 }
