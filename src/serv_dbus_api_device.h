@@ -314,13 +314,12 @@ static const DBusGMethodInfo dbus_glib_device_methods[] = {
   { (GCallback) device_get_segmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 630 },
   { (GCallback) device_clearsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 733 },
   { (GCallback) device_clearallsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER, 838 },
-  { (GCallback) device_testagent, dbus_glib_marshal_device_BOOLEAN__POINTER, 918 },
 };
 
 const DBusGObjectInfo dbus_glib_device_object_info = {  1,
   dbus_glib_device_methods,
-  15,
-"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetPMStore\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentInfo\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0TestAgent\0S\0\0\0",
+  14,
+"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetPMStore\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentInfo\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegmentData\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0\0",
 "\0",
 "\0"
 };

@@ -1303,34 +1303,6 @@ static gboolean call_agent_disconnected(guint64 conn_handle, const char *low_add
 }
 
 
-/**
- * Function that triggers agent unit testing
- * (not part of the official API)
- */
-gboolean test_call_agent(gpointer dummy)
-{
-	/* Calls all agent methods with fake data */
-
-	/* Creates a fake map */
-	GHashTable *map = g_hash_table_new(NULL, NULL);
-	gchar *xmldata = "<xml> </xml>";
-
-	g_hash_table_insert(map, "key1", "value1");
-	g_hash_table_insert(map, "key2", "value2");
-	g_hash_table_insert(map, "key3", "value3");
-
-	gboolean ok = TRUE;
-	// ok = ok && call_agent_connected(1, "00:11:22:33:44:55");
-	ok = ok && call_agent_associated(1, xmldata);
-	ok = ok && call_agent_measurementdata(1, xmldata);
-	ok = ok && call_agent_disassociated(1);
-	ok = ok && call_agent_disconnected(1, "00:11:22:33:44:55");
-
-	g_hash_table_unref(map);
-
-	return FALSE;
-}
-
 #include "serv_dbus_api.h"
 
 /*DBUS facade to connect
@@ -1471,18 +1443,6 @@ gboolean device_abortassoc(Device *obj, GError **err)
 {
 	DEBUG("device_abortassoc");
 	manager_request_association_release(obj->handle);
-	return TRUE;
-}
-
-/*DBUS facade to test agents
- *
- *\param obj
- *\param err
- * */
-gboolean device_testagent(Device *obj, GError **err)
-{
-	DEBUG("device_testagent");
-	g_timeout_add(500, test_call_agent, NULL);
 	return TRUE;
 }
 

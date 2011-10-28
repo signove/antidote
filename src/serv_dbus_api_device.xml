@@ -60,8 +60,5 @@
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
-    <method name="TestAgent">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_testagent"/>
-    </method>
   </interface>
 </node>
