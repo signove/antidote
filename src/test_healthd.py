@@ -80,7 +80,7 @@ class Agent(dbus.service.Object):
 		print
 		print "PMStore dev %s handle %d" % (dev, pmstore_handle)
 		print "=== Data: XML with %d bytes" % len(xmldata)
-		dump("pmstore", xmldata)
+		dump("pmstore_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
 	def SegmentInfo(self, dev, pmstore_handle, xmldata):
@@ -88,7 +88,7 @@ class Agent(dbus.service.Object):
 		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== XML with %d bytes" % len(xmldata)
 		# print "\tData:\t", data
-		dump("segmentinfo", xmldata)
+		dump("segmentinfo_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentDataResponse(self, dev, pmstore_handle, pmsegment, response):
@@ -107,7 +107,7 @@ class Agent(dbus.service.Object):
 		print "SegmentData dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== InstNumber %d" % pmsegment
 		print "=== Data: %d bytes XML" % len(xmldata)
-		dump("segmentdata", xmldata)
+		dump("segmentdata_%d_%d" % (pmstore_handle, pmsegment), xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentCleared(self, dev, pmstore_handle, pmsegment, retstatus):
