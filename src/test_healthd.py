@@ -11,6 +11,8 @@ from xml.dom.minidom import *
 
 dump_prefix = "XML"
 
+# TODO create module to interpret XML and show condensed results
+
 def beautify(xmldata):
 	try:
 		doc = parseString(xmldata)
@@ -37,6 +39,8 @@ def getsegmentdata_response_interpret(i):
 
 pmstore_handle = 11
 pmsegment_instance = 0
+clear_segment = 0
+get_segment = 0
 
 class Agent(dbus.service.Object):
 
@@ -63,10 +67,18 @@ class Agent(dbus.service.Object):
 		dev = dbus.Interface(dev, "com.signove.health.device")
 
 		glib.timeout_add(0, getConfiguration, dev)
+		if clear_segment == 1:
+			glib.timeout_add(1000, clearSegment, dev, pmstore_handle, pmsegment_instance)
+			return
+		elif clear_segment == 2:
+			glib.timeout_add(1000, clearAllSegments, dev, pmstore_handle)
+			return
+
 		glib.timeout_add(1000, requestMdsAttributes, dev)
 		glib.timeout_add(2000, getPMStore, dev, pmstore_handle)
 		glib.timeout_add(3000, getSegmentInfo, dev, pmstore_handle)
-		glib.timeout_add(5000, getSegmentData, dev, pmstore_handle, pmsegment_instance)
+		if get_segment:
+			glib.timeout_add(5000, getSegmentData, dev, pmstore_handle, pmsegment_instance)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="ss", out_signature="")
 	def MeasurementData(self, dev, xmldata):
@@ -159,6 +171,20 @@ def getSegmentData(dev, handle, instance):
 	print
 	return False
 
+def clearSegment(dev, handle, instance):
+	ret = dev.ClearSegment(handle, instance)
+	print
+	print "ClearSegment ret %d" % ret
+	print
+	return False
+
+def clearAllSegments(dev, handle):
+	ret = dev.ClearAllSegments(handle)
+	print
+	print "ClearAllSegments ret %d" % ret
+	print
+	return False
+
 def getPMStore(dev, handle):
 	ret = dev.GetPMStore(handle)
 	print
@@ -176,9 +202,33 @@ def do_something(dev):
 	# print dev.Disconnect()
 	return False
 
-if len(sys.argv) > 2:
-	if sys.argv[1] == '--prefix':
-		dump_prefix = sys.argv[2]
+args = sys.argv[1:]
+
+i = 0
+while i < len(args):
+	arg = args[i]
+
+	if arg == '--prefix':
+		dump_prefix = args[i + 1]
+		i += 1
+	elif arg == '--segment':
+		get_segment = 1
+	elif arg == '--clear-segment':
+		clear_segment = 1
+	elif arg == '--clear-all-segments':
+		clear_segment = 2
+	elif arg == '--store' or arg == '--pmstore' or arg == '--pm-store':
+		pmstore_handle = int(args[i + 1])
+		i += 1
+	elif arg == '--instance' or arg == '--inst' or arg == '--segment' or \
+				arg == '--pm-segment'  or arg == '--pmsegment':
+		pmsegment_instance = int(args[i + 1])
+		i += 1
+	else:
+		raise Exception("Invalid argument %s" % arg)
+
+	i += 1
+	
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
