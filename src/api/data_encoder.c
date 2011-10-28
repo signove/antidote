@@ -1106,12 +1106,9 @@ void data_set_segment_stat(DataEntry *entry, char *att_name, SegmentStatistics *
 		set_cmp(sub1, data_strcp("stat-entry"), 2);
 
 		sub2 = &sub1->u.compound.entries[0];
-		data_set_intu16(&entry->u.compound.entries[0], "stat-type",
-				&elem->segm_stat_type);
-
+		data_set_intu16(sub2, "stat-type", &elem->segm_stat_type);
 		sub2 = &sub1->u.compound.entries[1];
-		data_set_intu16(&entry->u.compound.entries[0], "stat-value",
-				&FIXME2);
+		data_set_intu16(sub2, "stat-value", &FIXME2);
 	}
 }
 
