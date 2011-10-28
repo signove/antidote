@@ -353,7 +353,12 @@ int manager_notify_evt_segment_data(Context *ctx, int handle, int instnumber,
 		}
 	}
 
-	data_list_del(data_list);
+	// Since encoding this may take a lot of time, we pass ownership to
+	// listeners. If there is more than one in app, it must make a deep
+	// copy of DataList or coordinate between listeners to free in time.
+
+	// data_list_del(data_list);
+
 	return ret_val;
 }
 

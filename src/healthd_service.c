@@ -334,6 +334,37 @@ void new_data_received(Context *ctx, DataList *list)
 	}
 }
 
+typedef struct {
+	ContextId id;
+	int handle;
+	int instnumber;
+	DataList *list;
+} segment_data_evt;
+
+/**
+ * Delayed PM-Segment data handling
+ *
+ * @param data pointer to event struct
+ * @return always FALSE
+ */
+static gboolean segment_data_received_phase2(gpointer revt)
+{
+	segment_data_evt *evt = revt;
+
+	DEBUG("PM-Segment Data phase 2");
+
+	char *data = xml_encode_data_list(evt->list);
+
+	if (data) {
+		call_agent_segmentdata(evt->id, evt->handle, evt->instnumber, data);
+		free(data);
+	}
+
+	data_list_del(evt->list);
+	free(revt);
+	return FALSE;
+}
+
 /**
  * Callback for when PM-Segment data has been received.
  *
@@ -345,13 +376,24 @@ void new_data_received(Context *ctx, DataList *list)
 void segment_data_received(Context *ctx, int handle, int instnumber, DataList *list)
 {
 	DEBUG("PM-Segment Data");
+	segment_data_evt *evt = calloc(1, sizeof(segment_data_evt));
 
-	char *data = xml_encode_data_list(list);
+	// Different from other callback events, "list" is not freed by core, but
+	// it is passed ownership instead.
 
-	if (data) {
-		call_agent_segmentdata(ctx->id, handle, instnumber, data);
-		free(data);
-	}
+	// Encoding a whole PM-Segment to XML may take a *LONG* time. If the program
+	// is single-threaded, encoding here would block the 11073 stack, causing
+	// the agent to abort because it didn't get confirmation in time.
+
+	// So, encoding XML from data list is better left to a thread, or, at very
+	// least, delayed until there are no pending events.
+
+	evt->id = ctx->id;
+	evt->handle = handle;
+	evt->instnumber = instnumber;
+	evt->list = list;
+
+	g_idle_add(segment_data_received_phase2, evt);
 }
 
 
@@ -663,7 +705,8 @@ static const char *get_device_object(const char *low_addr, guint64 conn_handle)
 		device = device_by_handle(conn_handle);
 
 		if (!device) {
-			DEBUG("SHOULD NOT HAPPEN: handle not found among devices");
+			DEBUG("SHOULD NOT HAPPEN: handle %lld not found among devices",
+				conn_handle);
 			return NULL;
 		}
 	}
