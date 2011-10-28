@@ -447,14 +447,17 @@ void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_
 	encode_segmentdataresult(writer, &result);
 
 	APDU apdu;
+	memset(&apdu, 0, sizeof(APDU));
 	apdu.choice = PRST_CHOSEN;
 
 	DATA_apdu data_apdu;
+	memset(&data_apdu, 0, sizeof(DATA_apdu));
+
 	data_apdu.invoke_id = invoke_id;
 	data_apdu.message.choice = RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 
 	data_apdu.message.length = sizeof(HANDLE) + sizeof(RelativeTime)
-				   + sizeof(OID_Type) + writer->size;
+				   + sizeof(OID_Type) + 2 + writer->size;
 
 	data_apdu.message.u.rors_cmipConfirmedEventReport.obj_handle
 	= obj_handle;
@@ -1093,16 +1096,15 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 	decode_segmentdataevent(event_data_stream, &segm_data_event);
 
 	result.segm_data_event_descr = segm_data_event.segm_data_event_descr;
+	result.segm_data_event_descr.segm_evt_status = SEVTSTA_MANAGER_ABORT;
 
-	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
+	if (!(segm_data_event.segm_data_event_descr.segm_evt_status & SEVTSTA_AGENT_ABORT) &&
+			mds_obj && mds_obj->choice == MDS_OBJ_PMSTORE) {
+
 		int ok = pmstore_segment_data_event(ctx, &(mds_obj->u.pmstore), segm_data_event);
 		if (ok) {
-			result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_CONFIRM;
-		} else {
-			result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_ABORT;
+			result.segm_data_event_descr.segm_evt_status = SEVTSTA_MANAGER_CONFIRM;
 		}
-	} else {
-		result.segm_data_event_descr.segm_evt_status |= SEVTSTA_MANAGER_ABORT;
 	}
 
 	del_segmentdataevent(&segm_data_event);

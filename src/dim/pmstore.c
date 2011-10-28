@@ -583,8 +583,14 @@ int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 
 	pmsegment = pmstore_get_segment_by_inst_number(pm_store, inst_number);
 
-	if (!pmsegment)
+	if (!pmsegment) {
+		DEBUG("PM-Segment data event: segment inst no not found");
 		return 0;
+	}
+
+	DEBUG("PM-Segment data event: flags %x %d %d",
+			event.segm_data_event_descr.segm_evt_status,
+			first, last);
 
 	if (first) {
 		pmsegment->empiric_usage_count = 0;
@@ -597,7 +603,7 @@ int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 	// What if an agent sends all pieces but shuffled?
 	// (Try again to find an answer in 20601 doc. I didn't.)
 	if (event.segm_data_event_descr.segm_evt_entry_index != pmsegment->empiric_usage_count) {
-		// unexpected segment part
+		DEBUG("PM-Segment data event: unexpected segment part");
 		return 0;
 	}
 
@@ -614,7 +620,10 @@ int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 	       	event.segm_data_event_entries.value,
 		event.segm_data_event_entries.length);
 
-	decode_fixed_segment_data(ctx, pm_store, pmsegment, last);
+	if (last) {
+		DEBUG("Decoding PM-Segment data...");
+		decode_fixed_segment_data(ctx, pm_store, pmsegment, last);
+	}
 
 	return 1;
 }
@@ -879,10 +888,6 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 	int i;
 
 	for (i = 0; i < entry_count; ++i) {
-
-		// FIXME2 remove instrumentation
-		DEBUG("################## pm segment reader at %d %d", offset, i);
-
 		DataEntry *data_entry = &segm_data_entry->u.compound.entries[i];
 		data_entry->choice = COMPOUND_DATA_ENTRY;
 		data_entry->u.compound.name = data_strcp("Pm-Segment-Entry-Map");
@@ -1055,7 +1060,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 			break;
 		}
 
-		if (offset >= segment->fixed_segment_data.length) {
+		if (offset > segment->fixed_segment_data.length) {
 			DEBUG("PM-Segment buffer overrun");
 			segm_data_entry->u.compound.entries_count = i;
 			break;
