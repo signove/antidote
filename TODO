@@ -5,16 +5,24 @@ Roadmap/TODO
 
 Timer alarm review
 
+USB device: use 11073 system-id instead of USB addr, because
+e.g. the same cradle may be used to sync many glucose meters.
+
 PMStore get wrong value x timeout
-
-USB plug-in: second session for same device X context ID
-
-Document Agent, PM-Store and GetConfiguration ops
 
 Resolve FIXMEs related to PM-Store
 
 
 2) Medium priority
+
+Document Agent, PM-Store and GetConfiguration ops
+
+Transcoding architecture
+
+Android: version of healthd that uses Ice Cream Sandwitch
+HDP API instead of BlueZ/D-Bus directly. Supply healthd
+service as a true Android Service, compiled with NDK
+(do not link with GLib, D-Bus & friends).
 
 Add unit testing cases for Agent.
 
@@ -43,6 +51,9 @@ FSMEventData.
 
 Work with more than one communication plug-in
 simultaneously.
+
+
+3) Low priority
 
 ASN.1: writer stream (using in encoding) should not need
 to know final msg size in advance.
