@@ -677,8 +677,14 @@ void client_disconnected()
 		g_free(client_agent);
 		g_free(client_name);
 
-		while (devices)
-			destroy_device(devices->data);
+		// TODO IMHO even if D-Bus client disconnected, it is not
+		// a reason to remove all devices, because we may be in
+		// the middle of a session and healthd must keep track of
+		// devices even if no client is connected.
+		if (0) {
+			while (devices)
+				destroy_device(devices->data);
+		}
 
 		agent_proxy = NULL;
 		client_agent = NULL;
