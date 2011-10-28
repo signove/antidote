@@ -7,10 +7,20 @@ import dbus.service
 import dbus.mainloop.glib
 import os
 import glib
+from xml.dom.minidom import *
 
 dump_prefix = "XML"
 
+def beautify(xmldata):
+	try:
+		doc = parseString(xmldata)
+	except:
+		print "Bad XML, keeping it ugly"
+		return xmldata
+	return doc.toprettyxml(indent="   ")
+
 def dump(suffix, xmldata):
+	xmldata = beautify(xmldata)
 	f = open(dump_prefix + "_" + suffix + ".xml", "w")
 	f.write(xmldata)
 	f.close()
@@ -159,7 +169,6 @@ def getPMStore(dev, handle):
 def do_something(dev):
 	# print dev.AbortAssociation()
 	# print dev.Connect()
-	# print dev.TestAgent()
 	# print dev.RequestMeasurementDataTransmission()
 	# print dev.RequestActivationScanner(55)
 	# print dev.RequestDeactivationScanner(55)
