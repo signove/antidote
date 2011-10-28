@@ -1080,11 +1080,12 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
 					struct PMSegment *segment, int last)
 {
-	DataList *list = data_list_new(1);
-
-	pmstore_populate_all_attributes(ctx->mds, pmstore, segment, &list->values[0]);
-
 	if (last) {
+		DataList *list = data_list_new(1);
+
+		pmstore_populate_all_attributes(ctx->mds, pmstore, segment,
+						&list->values[0]);
+
 		manager_notify_evt_segment_data(ctx, pmstore->handle,
 						segment->instance_number,
 						list);
