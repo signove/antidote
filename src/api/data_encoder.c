@@ -1084,37 +1084,6 @@ void data_set_pm_segment_entry_map(DataEntry *entry, char *att_name, PmSegmentEn
 /**
  * Sets data entry with passed type.
  *
- * @param entry
- * @param att_name the name of DIM attribute
- * @param value
- */
-void data_set_segment_stat(DataEntry *entry, char *att_name, SegmentStatistics *value)
-{
-	if (entry == NULL)
-		return;
-
-	int i;
-	intu16 FIXME2 = 0;
-
-	set_cmp(entry, data_strcp(att_name), value->count);
-
-	for (i = 0; i < value->count; ++i) {
-		SegmentStatisticEntry *elem = &value->value[i];
-		DataEntry *sub1 = &entry->u.compound.entries[i];
-		DataEntry *sub2;
-
-		set_cmp(sub1, data_strcp("stat-entry"), 2);
-
-		sub2 = &sub1->u.compound.entries[0];
-		data_set_intu16(sub2, "stat-type", &elem->segm_stat_type);
-		sub2 = &sub1->u.compound.entries[1];
-		data_set_intu16(sub2, "stat-value", &FIXME2);
-	}
-}
-
-/**
- * Sets data entry with passed type.
- *
  * @param data entry
  * @param att_name the name of DIM attribute
  * @param value the entry value

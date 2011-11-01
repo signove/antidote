@@ -114,7 +114,6 @@ void data_set_metric_id_list(DataEntry *data, char *att_name, MetricIdList *list
 void data_set_handle_list(DataEntry *data, char *att_name, HANDLEList *list);
 void data_set_handle_attr_val_map(DataEntry *data, char *att_name, HandleAttrValMap *map);
 void data_set_pm_segment_entry_map(DataEntry *data, char *att_name, PmSegmentEntryMap *map);
-void data_set_segment_stat(DataEntry *data, char *att_name, SegmentStatistics *stats);
 void data_set_intu16(DataEntry *data, char *att_name, intu16 *value);
 void data_set_intu32(DataEntry *data, char *att_name, intu32 *value);
 void data_set_high_res_relative_time(DataEntry *data, char *att_name, HighResRelativeTime *time);

@@ -1194,14 +1194,255 @@ DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle)
 }
 
 /**
+ * Sets data entry with passed type.
+ *
+ * @param entry
+ * @param att_name the name of DIM attribute
+ * @param value
+ */
+static void data_set_segment_stat_entry(struct MDS *mds,
+					struct PMSegment *segment,
+					DataEntry *data_entry, char *att_name,
+					octet_string *data)
+{
+	data_entry->choice = COMPOUND_DATA_ENTRY;
+	data_entry->u.compound.entries_count = 2;
+	data_entry->u.compound.entries = calloc(2, sizeof(DataEntry));
+	data_entry->u.compound.name = data_strcp(att_name);
+
+	ByteStreamReader *stream = byte_stream_reader_instance(data->value,
+							       data->length);
+	//  stream length double-checked at the end of every iteration
+	int offset = 0;
+
+	/*
+	int hdr_abs_time = segment->pm_segment_entry_map.segm_entry_header &
+				SEG_ELEM_HDR_ABSOLUTE_TIME;
+	int hdr_rel_time = segment->pm_segment_entry_map.segm_entry_header &
+				SEG_ELEM_HDR_RELATIVE_TIME;
+	int hdr_hirel_time = segment->pm_segment_entry_map.segm_entry_header &
+				SEG_ELEM_HDR_HIRES_RELATIVE_TIME;
+	int k = 0;
+	*/
+	int n = 0;
+
+	/*
+	if ((hdr_abs_time + hdr_rel_time + hdr_hirel_time) !=
+			segment->pm_segment_entry_map.segm_entry_header) {
+		// Unknown bit in header, we can't determine
+		// header's length
+		DEBUG("Bad PM-Segment data: unknown header bit in %x",
+			segment->pm_segment_entry_map.segm_entry_header);
+		segm_data_entry->u.compound.entries_count = i;
+		break;
+	}
+
+	if (hdr_abs_time)
+		++n;
+	if (hdr_rel_time)
+		++n;
+	if (hdr_hirel_time)
+		++n;
+	*/
+
+	DataEntry *header_data_entry = &data_entry->u.compound.entries[0];
+	header_data_entry->choice = COMPOUND_DATA_ENTRY;
+	header_data_entry->u.compound.name = data_strcp("Segm-Entry-Header");
+	header_data_entry->u.compound.entries_count = n;
+	header_data_entry->u.compound.entries = calloc(n, sizeof(DataEntry));
+
+	/*
+	DataEntry *header_item;
+
+	if (hdr_abs_time) {
+		offset += 8;
+		decode_absolutetime(stream, &abs_time);
+ 		header_item = &header_data_entry->u.compound.entries[k++];
+		data_set_absolute_time(header_item, "Segment-Absolute-Time", &abs_time);
+	}
+
+	if (hdr_rel_time) {
+		offset += 4;
+		rel_time = read_intu32(stream, NULL);
+ 			header_item = &header_data_entry->u.compound.entries[k++];
+			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
+	}
+
+	if (hdr_hirel_time) {
+		offset += 8;
+		decode_highresrelativetime(stream, &hires_rel_time);
+ 		header_item = &header_data_entry->u.compound.entries[k++];
+		data_set_high_res_relative_time(header_item, "Segment-Hires-Relative-Time",
+						&hires_rel_time);
+	}
+	*/
+
+	PmSegmentEntryMap entry_map;
+	entry_map = segment->pm_segment_entry_map;
+	int info_size = entry_map.segm_entry_elem_list.count;
+
+	struct Metric_object *metric_obj = NULL;
+	struct MDS_object *object = NULL;
+
+	DataEntry *objs_data_entry = &data_entry->u.compound.entries[1];
+	objs_data_entry->choice = COMPOUND_DATA_ENTRY;
+	objs_data_entry->u.compound.name = data_strcp("Segm-Entry-Elem-List");
+	objs_data_entry->u.compound.entries_count = info_size;
+	objs_data_entry->u.compound.entries = calloc(info_size, sizeof(DataEntry));
+
+	int j;
+	int ok = 1;
+
+	for (j = 0; j < info_size; ++j) {
+		HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
+		AttrValMap val_map = entry_map.segm_entry_elem_list.value[j].attr_val_map;
+		int attr_count = val_map.count;
+
+		object = mds_get_object_by_handle(mds, handle);
+
+		if (!object) {
+			ok = 0;
+			break;
+		}
+
+		if (object->choice != MDS_OBJ_METRIC) {
+			ok = 0;
+			break;
+		}
+
+		metric_obj = &(object->u.metric);
+		
+		if (!metric_obj) {
+			ok = 0;
+			break;
+		}
+
+		DataEntry *obj_data_entry = &objs_data_entry->u.compound.entries[j];
+		obj_data_entry->choice = COMPOUND_DATA_ENTRY;
+		obj_data_entry->u.compound.entries_count = attr_count;
+		obj_data_entry->u.compound.entries = calloc(attr_count, sizeof(DataEntry));
+		data_meta_set_handle(obj_data_entry, handle);
+
+		if (metric_obj->choice == METRIC_NUMERIC) {
+			obj_data_entry->u.compound.name = data_strcp("Numeric");
+		} else if (metric_obj->choice == METRIC_ENUM) {
+			obj_data_entry->u.compound.name = data_strcp("Enumeration");
+		} else {
+			obj_data_entry->u.compound.name = data_strcp("RT-SA");
+		}
+
+		int k;
+		struct Metric *metric = NULL;
+
+		for (k = 0; k < attr_count; ++k) {
+			DataEntry *entry = &obj_data_entry->u.compound.entries[k];
+
+			offset += val_map.value[k].attribute_len;
+
+			switch (metric_obj->choice) {
+			case METRIC_NUMERIC: {
+				metric = &metric_obj->u.numeric.metric;
+				dimutil_fill_numeric_attr(&(metric_obj->u.numeric),
+							  val_map.value[k].attribute_id,
+							  stream, entry);
+			}
+			break;
+			case METRIC_ENUM: {
+				metric = &metric_obj->u.enumeration.metric;
+				int err = dimutil_fill_enumeration_attr(
+							&(metric_obj->u.enumeration),
+							val_map.value[k].attribute_id,
+							stream, entry);
+
+				if (err == 0) {
+					ERROR(" ");
+					ok = 0;
+				}
+			}
+			break;
+			case METRIC_RTSA: {
+				metric = &metric_obj->u.rtsa.metric;
+				dimutil_fill_rtsa_attr(&(metric_obj->u.rtsa),
+						       val_map.value[k].attribute_id,
+						       stream, entry);
+			}
+			break;
+			default: {
+				// unknown type, unknown size = BAD
+				ok = 0;
+			}
+			}
+		}
+
+		data_set_meta_att(obj_data_entry, data_strcp("metric-id"),
+				  intu16_2str((intu16) metric->metric_id));
+
+		data_set_meta_att(obj_data_entry, data_strcp("partition-SCADA-code"),
+				  intu16_2str((intu16) metric->type.code));
+	}
+
+	if (!ok) {
+		DEBUG("PM-Segment stat entry: problem to decode");
+	}
+
+	if (offset > segment->fixed_segment_data.length) {
+		DEBUG("PM-Segment stat entry: buffer overrun");
+	}
+	if (offset < segment->fixed_segment_data.length) {
+		DEBUG("PM-Segment stat entry: buffer underrun");
+	}
+}
+
+/**
+ * Sets data entry with passed type.
+ *
+ * @param entry
+ * @param att_name the name of DIM attribute
+ * @param value
+ */
+static void data_set_segment_stat(struct MDS *mds,
+					struct PMSegment *segment,
+					DataEntry *entry, char *att_name,
+					SegmentStatistics *value)
+{
+	if (entry == NULL)
+		return;
+
+	int i;
+
+	entry->choice = COMPOUND_DATA_ENTRY;
+	entry->u.compound.entries_count = value->count;
+	entry->u.compound.entries = calloc(value->count, sizeof(DataEntry));
+	entry->u.compound.name = data_strcp(att_name);
+
+	for (i = 0; i < value->count; ++i) {
+		SegmentStatisticEntry *elem = &value->value[i];
+		DataEntry *sub1 = &entry->u.compound.entries[i];
+		DataEntry *sub2;
+
+		sub1->choice = COMPOUND_DATA_ENTRY;
+		sub1->u.compound.entries_count = 2;
+		sub1->u.compound.entries = calloc(2, sizeof(DataEntry));
+		sub1->u.compound.name = data_strcp("stat-entry");
+
+		sub2 = &sub1->u.compound.entries[0];
+		data_set_intu16(sub2, "stat-type", &elem->segm_stat_type);
+		sub2 = &sub1->u.compound.entries[1];
+		data_set_segment_stat_entry(mds, segment, sub2, "stat-values",
+						&elem->segm_stat_entry);
+	}
+}
+
+/**
  *  Populates data list with PM-Segment
  *
  *  \param ctx the device context
  *  \param segment the PM-Segment
  *  \param data list to be filled
  */
-static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
-						 DataEntry *entry)
+static void pmstore_get_segment_data_as_datalist(struct MDS *mds,
+						struct PMSegment *segment,
+						DataEntry *entry)
 {
 	int count = 11;
 	int i = 0;
@@ -1246,7 +1487,9 @@ static void pmstore_get_segment_data_as_datalist(struct PMSegment *segment,
 	data_meta_set_attr_id(&values[i++], MDC_ATTR_CONFIRM_TIMEOUT);
 	*/
 
-	data_set_segment_stat(&values[i], "Segment-Statistics", &segment->segment_statistics);
+	data_set_segment_stat(mds, segment, &values[i], "Segment-Statistics",
+				&segment->segment_statistics);
+
 	data_meta_set_attr_id(&values[i++], MDC_ATTR_SEG_STATS);
 
 	data_set_intu32(&values[i], "Usage-Count", &segment->segment_usage_count);
@@ -1301,7 +1544,7 @@ DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle)
 
 	for (i = 0; i < n; ++i) {
 		struct PMSegment *seg = pmstore->segm_list[i];
-		pmstore_get_segment_data_as_datalist(seg, &values[i]);
+		pmstore_get_segment_data_as_datalist(ctx->mds, seg, &values[i]);
 	}
 		
 	return list;
