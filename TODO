@@ -5,9 +5,6 @@ Roadmap/TODO
 
 Timer alarm review
 
-USB device: use 11073 system-id instead of USB addr, because
-e.g. the same cradle may be used to sync many glucose meters.
-
 PMStore get wrong value x timeout
 
 PMStore ROER
