@@ -12,6 +12,8 @@ PMStore get wrong value x timeout
 
 PMStore ROER
 
+test-healthd.py: detect service stop and restart
+
 
 2) Medium priority
 
