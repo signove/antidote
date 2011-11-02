@@ -41,6 +41,8 @@ pmstore_handle = 11
 pmsegment_instance = 0
 clear_segment = 0
 get_segment = 0
+get_pmstore = 0
+get_mds = 0
 
 class Agent(dbus.service.Object):
 
@@ -74,9 +76,11 @@ class Agent(dbus.service.Object):
 			glib.timeout_add(1000, clearAllSegments, dev, pmstore_handle)
 			return
 
-		glib.timeout_add(1000, requestMdsAttributes, dev)
-		glib.timeout_add(2000, getPMStore, dev, pmstore_handle)
-		glib.timeout_add(3000, getSegmentInfo, dev, pmstore_handle)
+		if get_mds:
+			glib.timeout_add(1000, requestMdsAttributes, dev)
+		if get_pmstore:
+			glib.timeout_add(2000, getPMStore, dev, pmstore_handle)
+			glib.timeout_add(3000, getSegmentInfo, dev, pmstore_handle)
 		if get_segment:
 			glib.timeout_add(5000, getSegmentData, dev, pmstore_handle, pmsegment_instance)
 
@@ -208,17 +212,23 @@ i = 0
 while i < len(args):
 	arg = args[i]
 
-	if arg == '--prefix':
+	if arg == '--mds':
+		get_mds = 1
+	elif arg == '--prefix':
 		dump_prefix = args[i + 1]
 		i += 1
 	elif arg == '--segment':
 		get_segment = 1
+		get_pmstore = 1
 	elif arg == '--clear-segment':
 		clear_segment = 1
+		get_pmstore = 1
 	elif arg == '--clear-all-segments':
 		clear_segment = 2
+		get_pmstore = 1
 	elif arg == '--store' or arg == '--pmstore' or arg == '--pm-store':
 		pmstore_handle = int(args[i + 1])
+		get_pmstore = 1
 		i += 1
 	elif arg == '--instance' or arg == '--inst' or arg == '--segment' or \
 				arg == '--pm-segment'  or arg == '--pmsegment':
