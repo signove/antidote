@@ -9,12 +9,18 @@ PMStore get wrong value x timeout
 
 PMStore ROER
 
+Implement "-1 = first PM-Store" idiom for ClearSegment and others
+
 test-healthd.py: detect service stop and restart
+
+test-healthd.py: add XML parsing to get PM-Store handles et al.
 
 
 2) Medium priority
 
 Document Agent, PM-Store and GetConfiguration ops
+
+Review documents
 
 Transcoding architecture
 
@@ -23,7 +29,7 @@ HDP API instead of BlueZ/D-Bus directly. Supply healthd
 service as a true Android Service, compiled with NDK
 (do not link with GLib, D-Bus & friends).
 
-Add unit testing cases for Agent.
+Add unit testing cases for Agent and PM-Store.
 
 Add unit testing cases for GetConfiguration and PMStore ops
 
