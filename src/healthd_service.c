@@ -1507,6 +1507,9 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 	DataList *list;
 	char *data;
 
+	if (!ret)
+		return;
+
 	if ((list = manager_get_pmstore_data(ctx->id, ret->handle))) {
 		if ((data = xml_encode_data_list(list))) {
 			call_agent_pmstoredata(ctx->id, ret->handle, data);
@@ -1544,6 +1547,9 @@ static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response
 	DataList *list;
 	char *data;
 
+	if (!ret)
+		return;
+
 	if ((list = manager_get_segment_info_data(ctx->id, ret->handle))) {
 		if ((data = xml_encode_data_list(list))) {
 			call_agent_segmentinfo(ctx->id, ret->handle, data);
@@ -1561,6 +1567,10 @@ static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response
 static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetSegmDataRet *ret = (PMStoreGetSegmDataRet*) r->return_data;
+
+	if (!ret)
+		return;
+
 	call_agent_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
@@ -1572,6 +1582,10 @@ static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response
 static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreClearSegmRet *ret = (PMStoreClearSegmRet*) r->return_data;
+
+	if (!ret)
+		return;
+
 	call_agent_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
