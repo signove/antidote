@@ -711,7 +711,7 @@ static const char *get_device_object(const char *low_addr, guint64 conn_handle)
 		device = device_by_handle(conn_handle);
 
 		if (!device) {
-			DEBUG("SHOULD NOT HAPPEN: handle %lld not found among devices",
+			DEBUG("SHOULD NOT HAPPEN: handle %lu not found among devices",
 				conn_handle);
 			return NULL;
 		}
