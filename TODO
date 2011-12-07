@@ -1,9 +1,21 @@
 Roadmap/TODO
 ------------
 
+0) Now playing
+
+Transcoding:
+	Blocking/rerouting of requests like PM-Store
+	TRANS FIXMEs
+	Doxygen
+	Documenting
+	Proper fencing of include files
+
+
 1) High-priority
 
 Timer alarm review
+
+Connection/disconnection callback: move from plugins to core
 
 PMStore get wrong value x timeout
 

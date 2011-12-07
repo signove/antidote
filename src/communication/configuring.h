@@ -59,6 +59,11 @@ void configuring_association_release_request_tx(Context *ctx, fsm_events evt,
 void configuring_transition_waiting_for_config(Context *ctx, fsm_events evt,
 		FSMEventData *event_data);
 
+ConfigResult configuring_perform_configuration_in(Context *ctx,
+					ConfigReport config_report,
+					APDU *apdu,
+					int trans);
+
 void configuring_perform_configuration(Context *ctx, fsm_events evt,
 					FSMEventData *event_data);
 

@@ -22,6 +22,7 @@ src/main
 src/test_tcp
 src/libtool
 src/healthd
+src/healthd_trans
 src/ieee_manager
 src/ieee_agent
 src/antidote.pc

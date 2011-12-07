@@ -122,5 +122,6 @@ struct Context {
 
 #define MANAGER_CONTEXT 1
 #define AGENT_CONTEXT 2
+#define MANAGER_TRANS_CONTEXT 3
 
 #endif /* CONTEXT_H_ */

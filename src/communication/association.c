@@ -227,6 +227,91 @@ static void association_process_aare_apdu(Context *ctx, APDU *apdu)
 }
 
 /**
+ * Execute association data protocol 20601 -- inner
+ * 
+ * @param ctx
+ * @param agent_assoc_information Agent Association Information
+ * @param trans 0 if regular agent, 1 if transcoded 'agent'
+ */
+int association_accept_data_protocol_20601_in(Context *ctx,
+					PhdAssociationInformation agent_assoc_information,
+					int trans)
+{
+	FSMEventData evt;
+	FSMEventData *evtp = NULL;
+
+	if (! trans) {
+		// transcoded events don't need apdu responses
+		// and they are muted by omitting FSMEventData
+		evtp = &evt;
+	}
+
+	if (agent_assoc_information.protocolVersion != PROTOCOL_VERSION1) {
+		// fire Event REJECTED_NO_COMMON_PARAMETER;
+		evt.choice = FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN;
+		evt.u.association_result = REJECTED_NO_COMMON_PARAMETER;
+		communication_fire_evt(ctx, fsm_evt_rx_aarq_unacceptable_configuration, evtp);
+		return 1;
+	}
+
+	evt.choice = FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN;
+
+	DEBUG("associating: accepted data protocol version <%.2X>", \
+	      PROTOCOL_VERSION1);
+
+	if (ctx->mds != NULL) {
+		mds_destroy(ctx->mds);
+	}
+
+	MDS *mds = mds_create();
+	ctx->mds = mds;
+
+	mds->dev_configuration_id = agent_assoc_information.dev_config_id;
+	mds->data_req_mode_capab = agent_assoc_information.data_req_mode_capab;
+
+	mds->system_id.length = agent_assoc_information.system_id.length;
+	mds->system_id.value = malloc(agent_assoc_information.system_id.length
+					      * sizeof(intu8));
+
+	if (mds->system_id.value != NULL) {
+		memcpy(mds->system_id.value,
+		       agent_assoc_information.system_id.value,
+		       mds->system_id.length * sizeof(intu8));
+	}
+
+	if ((! trans) && association_check_config_id(&agent_assoc_information)) {
+		// Configuration known
+		ConfigId id = agent_assoc_information.dev_config_id;
+		ConfigObjectList *config;
+
+		if (std_configurations_is_supported_standard(id)) {
+			config = std_configurations_get_configuration_attributes(id);
+		} else {
+			config = ext_configurations_get_configuration_attributes(
+					 &agent_assoc_information.system_id, id);
+		}
+
+		if (config != NULL) {
+			mds_configure_operating(ctx, config, 1);
+			free(config);
+		}
+
+		evt.u.association_result = ACCEPTED;
+		communication_fire_evt(ctx,
+				       fsm_evt_rx_aarq_acceptable_and_known_configuration,
+				       evtp);
+		return 2;
+	}
+
+	// associated, configuration unknown
+	evt.u.association_result = ACCEPTED_UNKNOWN_CONFIG;
+	communication_fire_evt(ctx,
+				fsm_evt_rx_aarq_acceptable_and_unknown_configuration,
+				evtp);
+	return 3;
+}
+
+/**
  * Execute association data protocol 20601
  *
  * @param ctx
@@ -247,71 +332,7 @@ static void association_accept_data_protocol_20601(Context *ctx, DataProto *prot
 
 	decode_phdassociationinformation(stream, &agent_assoc_information);
 
-	if (agent_assoc_information.protocolVersion == PROTOCOL_VERSION1) {
-		DEBUG("associating: accepted data protocol version <%.2X>", \
-		      PROTOCOL_VERSION1);
-
-		FSMEventData evt;
-		evt.choice = FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN;
-
-		if (ctx->mds != NULL) {
-			mds_destroy(ctx->mds);
-		}
-
-		MDS *mds = mds_create();
-
-		ctx->mds = mds;
-
-
-		mds->dev_configuration_id = agent_assoc_information.dev_config_id;
-		mds->data_req_mode_capab = agent_assoc_information.data_req_mode_capab;
-
-		mds->system_id.length = agent_assoc_information.system_id.length;
-		mds->system_id.value = malloc(agent_assoc_information.system_id.length
-					      * sizeof(intu8));
-
-		if (mds->system_id.value != NULL) {
-			memcpy(mds->system_id.value,
-			       agent_assoc_information.system_id.value,
-			       mds->system_id.length * sizeof(intu8));
-		}
-
-		if (association_check_config_id(&agent_assoc_information)) {
-			// Configuration known
-			evt.u.association_result = ACCEPTED;
-			communication_fire_evt(ctx,
-					       fsm_evt_rx_aarq_acceptable_and_known_configuration,
-					       &evt);
-
-			ConfigId id = agent_assoc_information.dev_config_id;
-			ConfigObjectList *config;
-
-			if (std_configurations_is_supported_standard(id)) {
-				config = std_configurations_get_configuration_attributes(id);
-			} else {
-				config = ext_configurations_get_configuration_attributes(
-						 &agent_assoc_information.system_id, id);
-			}
-
-			if (config != NULL) {
-				mds_configure_operating(ctx, config, 1);
-				free(config);
-			}
-		} else {
-			// Configuration unknown
-			evt.u.association_result = ACCEPTED_UNKNOWN_CONFIG;
-			communication_fire_evt(ctx,
-					       fsm_evt_rx_aarq_acceptable_and_unknown_configuration, &evt);
-		}
-
-	} else {
-		// fire Event REJECTED_NO_COMMON_PARAMETER;
-		FSMEventData evt;
-		evt.choice = FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN;
-		evt.u.association_result = REJECTED_NO_COMMON_PARAMETER;
-
-		communication_fire_evt(ctx, fsm_evt_rx_aarq_unacceptable_configuration, &evt);
-	}
+	association_accept_data_protocol_20601_in(ctx, agent_assoc_information, 0);
 
 	free(stream);
 	del_phdassociationinformation(&agent_assoc_information);

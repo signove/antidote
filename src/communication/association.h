@@ -39,6 +39,11 @@
 #include "src/asn1/phd_types.h"
 #include "src/communication/fsm.h"
 
+
+int association_accept_data_protocol_20601_in(Context *ctx,
+					PhdAssociationInformation agent_assoc_information,
+					int trans);
+
 void association_unassociated_process_apdu(Context *ctx, APDU *apdu);
 
 void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu);

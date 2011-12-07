@@ -141,13 +141,10 @@ Context *context_create(ContextId id, int type)
 	context->type = type;
 	context->fsm = fsm_instance();
 
-	if (type == MANAGER_CONTEXT) {
+	if (type & MANAGER_CONTEXT) {
 		fsm_set_manager_state_table(context->fsm);
-	} else if (type == AGENT_CONTEXT) {
-		fsm_set_agent_state_table(context->fsm);
 	} else {
-		ERROR("Type is neither MANAGER nor AGENT - can't create context");
-		exit(1);
+		fsm_set_agent_state_table(context->fsm);
 	}
 
 	context->id = id;

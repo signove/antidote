@@ -71,7 +71,10 @@ AC_CONFIG_FILES([Makefile \
           src/communication/plugin/Makefile \
           src/communication/plugin/bluez/Makefile \
           src/communication/plugin/usb/Makefile \
+          src/communication/plugin/trans/Makefile \
           src/communication/parser/Makefile \
+	  src/trans/Makefile \
+	  src/trans/plugin/Makefile \
           src/specializations/Makefile \
           src/antidote.pc
           tests/Makefile \

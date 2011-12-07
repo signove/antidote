@@ -858,7 +858,7 @@ void communication_timeout(Context *ctx)
 
 	if (ctx != NULL) {
 		communication_fire_evt(ctx, fsm_evt_ind_timeout, NULL);
-		if (ctx->type == MANAGER_CONTEXT)
+		if (ctx->type & MANAGER_CONTEXT)
 			manager_notify_evt_timeout(ctx);
 		else if (ctx->type == AGENT_CONTEXT)
 			agent_notify_evt_timeout(ctx);

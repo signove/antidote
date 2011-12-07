@@ -389,6 +389,89 @@ static ConfigResult configuring_evaluate_configuration_validity(
 }
 
 /**
+ * Perform configuration (standard or extended), inner layer
+ *
+ * @param ctx context
+ * @param config_report configuration report
+ * @param trans whether context is a transcoded device
+ */
+ConfigResult configuring_perform_configuration_in(Context *ctx,
+					ConfigReport config_report,
+					APDU *apdu,
+					int trans)
+{
+	FSMEventData data;
+	FSMEventData *datap = NULL;
+	int event;
+
+	if (! trans) {
+		// transcoded devices don't need response APDUs
+		// and we mute them by omitting data in event firing
+		datap = &data;
+	}
+
+	communication_reset_timeout(ctx);
+
+	ConfigResult result =
+		configuring_evaluate_configuration_validity(&config_report);
+
+	octet_string *system_id = &ctx->mds->system_id;
+
+	if (result == ACCEPTED_CONFIG) {
+		DEBUG(" configuring: accepting... ");
+		event = fsm_evt_req_agent_supplied_known_configuration;
+
+		ConfigObjectList *object_list;
+
+		if (std_configurations_is_supported_standard(
+				    config_report.config_report_id)) {
+			DEBUG(" configuring: using standard configuration ");
+			object_list = std_configurations_get_configuration_attributes(
+					      config_report.config_report_id);
+
+			mds_configure_operating(ctx, object_list, 1);
+
+			del_configreport(&config_report);
+			free(object_list);
+		} else if (ext_configurations_is_supported_standard(system_id,
+					config_report.config_report_id)) {
+			DEBUG(" configuring: using previous known extended configuration");
+			// tem malloc
+			object_list = ext_configurations_get_configuration_attributes(system_id,
+					config_report.config_report_id);
+
+			mds_configure_operating(ctx, object_list, 1);
+
+			del_configreport(&config_report);
+			free(object_list);
+		} else {
+			DEBUG(" configuring: using new extended configuration");
+			object_list = &config_report.config_obj_list;
+
+			ext_configurations_register_conf(system_id,
+				config_report.config_report_id, object_list);
+			mds_configure_operating(ctx, object_list, 1);
+			// do not free config_report, object_list
+		}
+
+	} else if (result == STANDARD_CONFIG_UNKNOWN) {
+		event = fsm_evt_req_agent_supplied_unknown_configuration;
+		DEBUG("   -> STANDARD_CONFIG_UNKNOWN");
+	} else {
+		event = fsm_evt_req_agent_supplied_unknown_configuration;
+		DEBUG("   -> UNSUPPORTED_CONFIG");
+	}
+
+	data.received_apdu = apdu;
+	data.choice = FSM_EVT_DATA_CONFIGURATION_RESULT;
+	data.u.configuration_result = result;
+
+	communication_fire_evt(ctx, event, datap);
+
+	return result;
+}
+
+/**
  * Perform configuration (standard or extended)
  *
  * @param ctx context
@@ -405,65 +488,12 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 	DATA_apdu *input_data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	EventReportArgumentSimple args = input_data_apdu->message.u.roiv_cmipConfirmedEventReport;
 
-
 	ConfigReport config_report;
 	ByteStreamReader *config_stream = byte_stream_reader_instance(args.event_info.value,
 					  args.event_info.length);
 	decode_configreport(config_stream, &config_report);
 
-	ConfigResult result = configuring_evaluate_configuration_validity(
-				      &config_report);
-	octet_string *system_id = &ctx->mds->system_id;
-
-	int event;
-
-	if (result == ACCEPTED_CONFIG) {
-		DEBUG(" configuring: accepting... ");
-
-		ConfigObjectList *object_list;
-
-		if (std_configurations_is_supported_standard(
-			    config_report.config_report_id)) {
-			DEBUG(" configuring: using standard configuration ");
-			object_list = std_configurations_get_configuration_attributes(
-					      config_report.config_report_id);
-
-			mds_configure_operating(ctx, object_list, 1);
-			free(object_list);
-			del_configreport(&config_report);
-		} else if (ext_configurations_is_supported_standard(system_id,
-				config_report.config_report_id)) {
-			DEBUG(" configuring: using previous known extended configuration");
-			// tem malloc
-			object_list = ext_configurations_get_configuration_attributes(system_id,
-					config_report.config_report_id);
-
-			mds_configure_operating(ctx, object_list, 1);
-			free(object_list);
-			del_configreport(&config_report);
-		} else {
-			DEBUG(" configuring: using new extended configuration");
-			object_list = &config_report.config_obj_list;
-
-			ext_configurations_register_conf(system_id, config_report.config_report_id, object_list);
-			mds_configure_operating(ctx, object_list, 1);
-		}
-
-		event = fsm_evt_req_agent_supplied_known_configuration;
-	} else if (result == STANDARD_CONFIG_UNKNOWN) {
-		DEBUG("   -> STANDARD_CONFIG_UNKNOWN");
-		event = fsm_evt_req_agent_supplied_unknown_configuration;
-	} else {
-		DEBUG("   -> UNSUPPORTED_CONFIG");
-		event = fsm_evt_req_agent_supplied_unknown_configuration;
-	}
-
-	FSMEventData data;
-	data.received_apdu = apdu;
-	data.choice = FSM_EVT_DATA_CONFIGURATION_RESULT;
-	data.u.configuration_result = result;
-
-	communication_fire_evt(ctx, event, &data);
+	configuring_perform_configuration_in(ctx, config_report, apdu, 0);
 
 	free(config_stream);
 }

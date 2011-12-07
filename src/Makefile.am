@@ -1,4 +1,4 @@
-SUBDIRS = dim util communication specializations api
+SUBDIRS = dim util communication specializations api trans
 
 INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
 
@@ -10,6 +10,7 @@ libantidote_la_LIBADD =  \
                             communication/libcom.la \
                             communication/plugin/libcommplugin.la \
                             communication/parser/libparser.la \
+			    trans/libtrans.la \
                             dim/libdim.la \
                             util/libutil.la \
                             specializations/libspecializations.la
@@ -47,7 +48,7 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_util_HEADERS = util/bytelib.h
 
 #Bin Programs
-bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd
+bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd healthd_trans
 
 # Minimal sample app to use the IEEE protocol facade
 ieee_manager_SOURCES = sample_manager.c
@@ -87,3 +88,16 @@ healthd_LDADD = \
              @DBUS_LIBS@ \
              @DBUS_GLIB_LIBS@ \
 	     @USB1_LIBS@
+
+#healthd: D-BUS Service for IEEE protocol facade              
+healthd_trans_SOURCES = healthd_service_trans.c
+healthd_trans_CFLAGS = @DBUS_CFLAGS@ @GLIB_CFLAGS@ @GIO_CFLAGS@
+
+healthd_trans_LDADD = \
+             communication/plugin/trans/libtransplugin.la \
+             trans/plugin/libtransexampleoximeterplugin.la \
+             libantidote.la \
+             @GLIB_LIBS@ \
+             @GIO_LIBS@ \
+             @DBUS_LIBS@ \
+             @DBUS_GLIB_LIBS@ 

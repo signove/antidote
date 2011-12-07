@@ -146,6 +146,8 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_waiting_for_config,	fsm_evt_rx_rors,						fsm_state_waiting_for_config,	&communication_check_invoke_id_abort_tx}, // 6.26
 	{fsm_state_waiting_for_config,	fsm_evt_rx_roer,						fsm_state_waiting_for_config,	NULL}, // 6.26 - remark on page 147
 	{fsm_state_waiting_for_config,	fsm_evt_rx_rorj,						fsm_state_waiting_for_config,	NULL}, // 6.26 - remark on page 147
+	{fsm_state_waiting_for_config,	fsm_evt_req_agent_supplied_unknown_configuration,		fsm_state_waiting_for_config,	NULL}, // transcoding
+	{fsm_state_waiting_for_config,	fsm_evt_req_agent_supplied_known_configuration,			fsm_state_operating,		NULL}, // transcoding
 
 
 	{fsm_state_checking_config,	fsm_evt_ind_transport_disconnect,				fsm_state_disconnected,		&communication_disconnect_tx}, // 7.2

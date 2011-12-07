@@ -8,4 +8,5 @@ include $(BASE_PATH)/src/specializations/Android.mk
 include $(BASE_PATH)/src/util/Android.mk
 include $(BASE_PATH)/src/dim/Android.mk
 include $(BASE_PATH)/src/api/Android.mk
+include $(BASE_PATH)/src/trans/Android.mk
 include $(BASE_PATH)/src/Android.mk

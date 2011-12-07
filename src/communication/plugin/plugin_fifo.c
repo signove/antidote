@@ -68,8 +68,8 @@ static int network_init(unsigned int plugin_label)
 	int type = communication_get_plugin(plugin_id)->type;
 
 	// exchange FIFOs between manager and agent
-	const char *rd = type == MANAGER_CONTEXT ? "read_fifo" : "write_fifo";
-	const char *wr = type == MANAGER_CONTEXT ? "write_fifo" : "read_fifo";
+	const char *rd = (type & MANAGER_CONTEXT) ? "read_fifo" : "write_fifo";
+	const char *wr = (type & MANAGER_CONTEXT) ? "write_fifo" : "read_fifo";
 
 	read_fd = open(rd, O_RDWR | O_NONBLOCK);
 
