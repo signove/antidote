@@ -42,64 +42,18 @@ LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommpl
 
 include $(BUILD_SHARED_LIBRARY)
 
-# sample agent
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := sample_agent.c
-LOCAL_CFLAGS := $(common_CFLAGS)
-LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
-
-LOCAL_STATIC_LIBRARIES := libantidotecommpluginimpl libantidote
-
-LOCAL_MODULE:= ieee_agent
-LOCAL_MODULE_TAGS := debug eng
-
-include $(BUILD_EXECUTABLE)
-
-# sample manager
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := sample_manager.c
-LOCAL_CFLAGS := $(common_CFLAGS)
-LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
-
-LOCAL_STATIC_LIBRARIES := libantidotecommpluginimpl libantidote
-
-LOCAL_MODULE:= ieee_manager
-LOCAL_MODULE_TAGS := debug eng
-
-include $(BUILD_EXECUTABLE)
-
 # Bluetooth HDP manager and healthd service
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := healthd_service.c
-LOCAL_CFLAGS := $(common_CFLAGS) -DANDROID_HEALTHD
-LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. \
-	$(call include-path-for, glib) \
-	$(call include-path-for, glib)/glib \
-	$(call include-path-for, glib)/gmodule \
-	$(call include-path-for, gio) \
-	$(call include-path-for, dbus) \
-	$(call include-path-for, dbus-glib) \
-	$(call include-path-for, dbus-glib)/dbus
+LOCAL_SRC_FILES := healthd_android.c
+LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
-LOCAL_STATIC_LIBRARIES := libantidotecommpluginbluez libantidote \
-			libdbus-glib_static \
-			libgio_static \
-			libgobject_static \
-			libgthread_static \
-			libglib_static
+LOCAL_STATIC_LIBRARIES := libantidotecommpluginandroid libantidote
 
 LOCAL_SHARED_LIBRARIES := libdbus
 
 LOCAL_MODULE:= healthd
 LOCAL_MODULE_TAGS := debug eng
 
-#dbusstuffdir = $(libdir)/../share/dbus-1/system-services/
-#dbusstuff_DATA = src/resources/com.signove.health.service
-
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SHARED_LIBRARY)
