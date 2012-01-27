@@ -75,4 +75,8 @@ public class JniBridge {
 	public native void reqdeactivationscanner(int context);
 
 	// FIXME implement PM-Store calls
+
+	static {
+		System.loadLibrary("healthd");
+	}
 };

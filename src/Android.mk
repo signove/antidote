@@ -24,24 +24,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommpl
 
 include $(BUILD_STATIC_LIBRARY)
 
-# shared lib
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(common_SRC_FILES)
-LOCAL_CFLAGS := $(common_CFLAGS)
-LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
-
-LOCAL_MODULE:= libantidote
-LOCAL_MODULE_TAGS := debug eng
-LOCAL_PRELINK_MODULE:= false
-
-LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
-		        libantidotecommparser \
-			libantidotedim libantidoteutil libantidotespecializations
-
-include $(BUILD_SHARED_LIBRARY)
-
 # Bluetooth HDP manager and healthd service
 
 include $(CLEAR_VARS)
@@ -50,8 +32,6 @@ LOCAL_SRC_FILES := healthd_android.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
 LOCAL_STATIC_LIBRARIES := libantidotecommpluginandroid libantidote
-
-LOCAL_SHARED_LIBRARIES := libdbus
 
 LOCAL_MODULE:= healthd
 LOCAL_MODULE_TAGS := debug eng
