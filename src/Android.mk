@@ -2,8 +2,7 @@ LOCAL_PATH:= $(call my-dir)
 
 LOCAL_CFLAGS:= -Wall
 
-common_SRC_FILES := \
-	manager.c agent.c
+common_SRC_FILES := manager.c agent.c
 
 common_CFLAGS := -Wall
 
@@ -18,7 +17,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 LOCAL_MODULE:= libantidote
 LOCAL_MODULE_TAGS := debug eng
 
-LOCAL_WHOLE_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
+LOCAL_STATIC_LIBRARIES := libantidoteapi libantidotecomm libantidotecommplugin \
 				libantidotecommparser \
 				libantidotedim libantidoteutil libantidotespecializations
 
@@ -32,6 +31,7 @@ LOCAL_SRC_FILES := healthd_android.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
 LOCAL_STATIC_LIBRARIES := libantidotecommpluginandroid libantidote
+LOCAL_LDLIBS := -llog -landroid
 
 LOCAL_MODULE:= healthd
 LOCAL_MODULE_TAGS := debug eng

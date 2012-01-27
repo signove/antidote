@@ -43,8 +43,6 @@
 static char *current_data = NULL;
 static int data_len = 0;
 
-static int send_data(guint64 handle, unsigned char *data, int len);
-
 static int init();
 static int finalize();
 static ByteStreamReader *get_apdu(struct Context *ctx);
@@ -97,7 +95,7 @@ void plugin_android_setup(CommunicationPlugin *plugin, JNIEnv *bridge_env, jobje
  */
 static int force_disconnect_channel(Context *c)
 {
-	return (*env)->CallVoidMethod(env, obj, jni_up_disconnect_channel, (jint) c->id);
+	(*env)->CallVoidMethod(env, obj, jni_up_disconnect_channel, (jint) c->id);
 	return 1;
 }
 
@@ -129,7 +127,7 @@ static int finalize()
  */
 static ByteStreamReader *get_apdu(struct Context *ctx)
 {
-	guchar *buffer;
+	unsigned char *buffer;
 	DEBUG("\ndbus get APDU stream");
 
 	// Create bytestream

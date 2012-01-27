@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <ieee11073.h>
 #include <jni.h>
-#include "src/communication/plugin/bluez/plugin_android.h"
+#include "src/communication/plugin/android/plugin_android.h"
 #include "src/util/log.h"
 #include "src/communication/service.h"
 #include "src/dim/pmstore_req.h"
@@ -47,8 +47,8 @@
 JNIEnv *env = 0;
 jclass cls = 0;
 jobject obj = 0;
-jmethodID jni_up_canceltimer = 0;
-jmethodID jni_up_createtimer = 0;
+jmethodID jni_up_cancel_timer = 0;
+jmethodID jni_up_create_timer = 0;
 jmethodID jni_up_associated = 0;
 jmethodID jni_up_disassociated = 0;
 jmethodID jni_up_deviceattributes = 0;
@@ -142,6 +142,8 @@ typedef struct {
  * @param data pointer to event struct
  * @return always FALSE
  */
+/*
+// FIXME
 static void segment_data_received_phase2(gpointer revt)
 {
 	segment_data_evt *evt = revt;
@@ -159,6 +161,8 @@ static void segment_data_received_phase2(gpointer revt)
 	free(revt);
 	return FALSE;
 }
+*/
+
 
 /**
  * Callback for when PM-Segment data has been received.
@@ -379,7 +383,6 @@ void Java_com_signove_health_healthservice_JniBridge_reqmdsattr(JNIEnv *env, job
 {
 	DEBUG("device_reqmdsattr");
 	manager_request_get_all_mds_attributes(handle, device_reqmdsattr_callback);
-	return TRUE;
 }
 
 /*interface to get device configuration
@@ -417,7 +420,6 @@ void Java_com_signove_health_healthservice_JniBridge_reqmeasurement(JNIEnv *env,
 {
 	DEBUG("device_reqmeasurement");
 	manager_request_measurement_data_transmission(handle, NULL);
-	return TRUE;
 }
 
 /*interface to activate scanner
@@ -429,7 +431,6 @@ void Java_com_signove_health_healthservice_JniBridge_reqactivationscanner(JNIEnv
 {
 	DEBUG("device_reqactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_enabled, NULL);
-	return TRUE;
 }
 
 /*interface to deactivate scanner
@@ -441,7 +442,6 @@ void Java_com_signove_health_healthservice_JniBridge_reqdeactivationscanner(JNIE
 {
 	DEBUG("device_reqdeactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_disabled, NULL);
-	return TRUE;
 }
 
 /*interface to release association
@@ -453,7 +453,6 @@ void Java_com_signove_health_healthservice_JniBridge_releaseassoc(JNIEnv *env, j
 {
 	DEBUG("device_releaseassoc");
 	manager_request_association_release(handle);
-	return TRUE;
 }
 
 /*interface to abort association
@@ -465,7 +464,6 @@ void Java_com_signove_health_healthservice_JniBridge_abortassoc(JNIEnv *env, job
 {
 	DEBUG("device_abortassoc");
 	manager_request_association_release(handle);
-	return TRUE;
 }
 
 /*Callback for PM-Store GET
@@ -499,7 +497,8 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_get_pmstore(JNIEnv *env, jobject obj, jint handle, jint handle)
+jint Java_com_signove_health_healthservice_JniBridge_get_pmstore(JNIEnv *env,
+						jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_get_pmstore");
 	manager_request_get_pmstore(handle, ihandle, device_get_pmstore_cb);
@@ -585,15 +584,15 @@ jint Java_com_signove_health_healthservice_JniBridge_get_segminfo(JNIEnv *env, j
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_get_segmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle,
-							jint instnumber)
+jint Java_com_signove_health_healthservice_JniBridge_get_segmdata(JNIEnv *env,
+			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
 	Request *req;
 
 	DEBUG("device_get_segmdata");
 	req = manager_request_get_segment_data(handle, ihandle,
 				instnumber, device_get_segmdata_cb);
-	return = req ? 0 : 1;
+	return req ? 0 : 1;
 }
 
 /*interface to clear a PM-store segment
@@ -611,8 +610,7 @@ jint Java_com_signove_health_healthservice_JniBridge_clearsegmdata(JNIEnv *env, 
 	DEBUG("device_clearsegmdata");
 	req = manager_request_clear_segment(handle, ihandle,
 				instnumber, device_clear_segm_cb);
-	*ret = req ? 0 : 1;
-	return TRUE;
+	return req ? 0 : 1;
 }
 
 /* facade to clear all segments of a PM-Store

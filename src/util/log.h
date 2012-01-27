@@ -44,6 +44,7 @@
  * @see printf
  */
 #ifdef ANDROID
+#include <android/log.h>
 #define LOG(level, ...) \
 	{ \
 		__android_log_print(ANDROID_LOG_WARN, "antidote", level); \
