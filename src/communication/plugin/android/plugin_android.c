@@ -33,9 +33,8 @@
  * @{
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <jni.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
 #include "src/util/log.h"
@@ -51,14 +50,19 @@ static int finalize();
 static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static int force_disconnect_channel(struct Context *ctx);
-static int disconnect_channel(guint64 handle);
+
+JNIEnv *env;
+jclass cls;
+jobject obj;
+jmethodID jni_up_disconnect_channel;
+jmethodID jni_up_send_data;
 
 /**
  * Callback called from Android, when device connects (BT-wise)
  *
  * @param handle
  */
-static void jni_cb_channel_connected(guint64 handle)
+void Java_com_signove_health_healthservice_JniBridge_channel_connected(JNIEnv *env, jobject obj, jint handle)
 {
 	communication_transport_connect_indication(handle);
 }
@@ -68,44 +72,33 @@ static void jni_cb_channel_connected(guint64 handle)
  *
  * @param handle
  */
-static void jni_cb_channel_disconnected(guint64 handle)
+void Java_com_signove_health_healthservice_JniBridge_channel_disconnected(JNIEnv *env, jobject obj, jint handle)
 {
 	communication_transport_disconnect_indication(handle);
 }
 
-void plugin_android_setup(CommunicationPlugin *plugin)
+void plugin_android_setup(CommunicationPlugin *plugin, JNIEnv *bridge_env, jobject bridge_obj)
 {
 	plugin->network_init = init;
 	plugin->network_get_apdu_stream = get_apdu;
 	plugin->network_send_apdu_stream = send_apdu_stream;
 	plugin->network_disconnect = force_disconnect_channel;
 	plugin->network_finalize = finalize;
+
+	env = bridge_env;
+	obj = bridge_obj;
+	cls = (*env)->GetObjectClass(env, obj);
+	jni_up_send_data = (*env)->GetMethodID(env, cls, "send_data", "(I[B)V");
+	jni_up_disconnect_channel = (*env)->GetMethodID(env, cls, "disconnect_channel", "(I)V");
 }
-
-/**
- * Forces closure of a channel
- */
-static int disconnect_channel(guint64 handle)
-{
-	channel_object *c = get_channel_by_handle(handle);
-
-	if (c) {
-		DEBUG("removing channel");
-		remove_channel(c->path);
-		return 1;
-	} else {
-		DEBUG("unknown handle/channel");
-		return 0;
-	}
-}
-
 
 /**
  * Forces closure of a channel
  */
 static int force_disconnect_channel(Context *c)
 {
-	return jni_up_disconnect_channel(c->id);
+	return (*env)->CallVoidMethod(env, obj, jni_up_disconnect_channel, (jint) c->id);
+	return 1;
 }
 
 /**
@@ -159,14 +152,19 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 /**
  * Socket data receiving callback
  */
-static void jni_cb_data_received(unsigned long long handle, char *buf, int len)
-{
-	data_len = len;
-	current_data = malloc(len + 1);
-	memcpy(current_data, buf, len);
-	current_data[len] = '\0';
+void Java_com_signove_health_healthservice_JniBridge_data_received(JNIEnv *env, jobject obj, jint handle, jbyteArray buf)
+{	
+	int len = (*env)->GetArrayLength(env, buf);
+	char *data = malloc(len);
+	(*env)->GetByteArrayRegion(env, buf, 0, len, (jbyte *) data);
 
-	communication_read_input_stream(context_get(handle));
+	if (data) {
+		data_len = len;
+		current_data = malloc(len + 1);
+		memcpy(current_data, buf, len);
+		current_data[len] = '\0';
+		communication_read_input_stream(context_get(handle));
+	}
 }
 
 
@@ -177,13 +175,10 @@ static void jni_cb_data_received(unsigned long long handle, char *buf, int len)
  */
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
-	int ret = jni_up_send_data(ctx->id, stream->buffer, stream->size);
+	jbyteArray ba = (*env)->NewByteArray(env, stream->size);
+	(*env)->SetByteArrayRegion(env, ba, 0, stream->size, (jbyte*) stream->buffer);
 
-	if (ret != stream->size) {
-		DEBUG("Error sending APDU. %d bytes sent. Should have sent %d.",
-		      ret, stream->size);
-		return NETWORK_ERROR;
-	}
+	(*env)->CallVoidMethod(env, obj, jni_up_send_data, (jint) ctx->id, ba);
 
 	return NETWORK_ERROR_NONE;
 }

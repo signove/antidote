@@ -43,6 +43,13 @@
  * @param ... va_args like in printf.
  * @see printf
  */
+#ifdef ANDROID
+#define LOG(level, ...) \
+	{ \
+		__android_log_print(ANDROID_LOG_WARN, "antidote", level); \
+		__android_log_print(ANDROID_LOG_WARN, "antidote",  __VA_ARGS__); \
+	}
+#else
 #define LOG(level, ...) \
 	{ \
 		fprintf(LOG_OUTPUT, level); \
@@ -51,6 +58,7 @@
 		fprintf(LOG_OUTPUT, "\n"); \
 		fflush(LOG_OUTPUT); \
 	}
+#endif
 
 /**
  * @brief Logs a debug level message at the log output.

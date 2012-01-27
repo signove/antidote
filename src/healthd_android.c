@@ -38,19 +38,36 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ieee11073.h>
+#include <jni.h>
 #include "src/communication/plugin/bluez/plugin_android.h"
 #include "src/util/log.h"
 #include "src/communication/service.h"
 #include "src/dim/pmstore_req.h"
 
+JNIEnv *env = 0;
+jclass cls = 0;
+jobject obj = 0;
+jmethodID jni_up_canceltimer = 0;
+jmethodID jni_up_createtimer = 0;
+jmethodID jni_up_associated = 0;
+jmethodID jni_up_disassociated = 0;
+jmethodID jni_up_deviceattributes = 0;
+jmethodID jni_up_measurementdata = 0;
+// FIXME fill up
+jmethodID jni_up_pmstoredata = 0;
+jmethodID jni_up_segmentinfo = 0;
+jmethodID jni_up_segmentdataresponse = 0;
+jmethodID jni_up_segmentdata = 0;
+jmethodID jni_up_segmentcleared = 0;
+
 static void notif_java_measurementdata(unsigned long long, char *);
 static void notif_java_disassociated(unsigned long long);
 static void notif_java_associated(unsigned long long, char *);
-static void notif_java_segmentinfo(unsigned long long, guint, char *);
-static void notif_java_segmentdataresponse(unsigned long long, guint, guint, guint);
-static void notif_java_segmentdata(unsigned long long, guint, guint, char *);
-static void notif_java_segmentcleared(unsigned long long, guint, guint, guint);
-static void notif_java_pmstoredata(unsigned long long, guint, char *);
+static void notif_java_segmentinfo(unsigned long long, int, char *);
+static void notif_java_segmentdataresponse(unsigned long long, int, int, int);
+static void notif_java_segmentdata(unsigned long long, int, int, char *);
+static void notif_java_segmentcleared(unsigned long long, int, int, int);
+static void notif_java_pmstoredata(unsigned long long, int, char *);
 
 
 /* Called by IEEE library */
@@ -61,23 +78,25 @@ static void notif_java_pmstoredata(unsigned long long, guint, char *);
 static void timer_reset_timeout(Context *ctx)
 {
 	if (ctx->timeout_action.id) {
-		jni_cb_mgr_cancel_timer(ctx->timeout_action.id);
+		jint handle = ctx->timeout_action.id;
+		(*env)->CallVoidMethod(env, obj, jni_up_cancel_timer, handle);
 	}
 }
 /**
  * Timer callback.
  * Calls the supplied callback when timer reaches timeout, and cancels timer.
  *
- * @return FALSE (to cancel the timeout)
  */
-static void jni_cb_mgr_timer_alarm(gpointer data) FIXME
+void Java_com_signove_health_healthservice_JniBridge_timer_alarm(JNIEnv *env, jobject obj, jint id)
 {
 	DEBUG("timer_alarm");
-	Context *ctx = data;
-	void (*f)() = ctx->timeout_action.func;
-	if (f)
-		f(ctx);
-	return FALSE;
+	Context *ctx = context_get(id);
+	if (ctx) {
+		void (*f)() = ctx->timeout_action.func;
+		if (f) {
+			f(ctx);
+		}
+	}
 }
 
 /**
@@ -87,8 +106,8 @@ static void jni_cb_mgr_timer_alarm(gpointer data) FIXME
  */
 static int timer_count_timeout(Context *ctx)
 {
-	ctx->timeout_action.id = jni_cb_mgr_create_timer(ctx->timeout_action.timeout
-					                 * 1000, ctx); FIXME
+	ctx->timeout_action.id = (int) (*env)->CallIntMethod(env, obj, jni_up_create_timer,
+					ctx->timeout_action.timeout * 1000, ctx->id);
 	return ctx->timeout_action.id;
 }
 
@@ -169,8 +188,8 @@ void segment_data_received(Context *ctx, int handle, int instnumber, DataList *l
 	evt->instnumber = instnumber;
 	evt->list = list;
 
-	g_idle_add(segment_data_received_phase2, evt);
-	FIXME
+	// g_idle_add(segment_data_received_phase2, evt);
+	// FIXME
 }
 
 
@@ -210,7 +229,8 @@ void device_disassociated(Context *ctx)
  */
 static void notif_java_associated(unsigned long long conn_handle, char *xml)
 {
-	jni_cb_mgr_associated(conn_handle, xml);
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, obj, jni_up_associated, (jint) conn_handle, jxml);
 }
 
 /**
@@ -220,9 +240,10 @@ static void notif_java_associated(unsigned long long conn_handle, char *xml)
  * @param xml Data in xml format
  * @return success status
  */
-static void notif_java_measurementdata(unsigned long long conn_handle, gchar *xml)
+static void notif_java_measurementdata(unsigned long long conn_handle, char *xml)
 {
-	jni_cb_mgr_measurementdata(conn_handle, xml);
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, obj, jni_up_measurementdata, (jint) conn_handle, jxml);
 }
 
 /**
@@ -232,9 +253,10 @@ static void notif_java_measurementdata(unsigned long long conn_handle, gchar *xm
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentinfo(unsigned long long conn_handle, guint handle, gchar *xml)
+static void notif_java_segmentinfo(unsigned long long conn_handle, int handle, char *xml)
 {
-	jni_cb_mgr_segmentinfo(conn_handle, handle, xml);
+	// (*env)->CallVoidMethod(env, obj, jni_up_segmentinfo(conn_handle, handle, xml);
+	// FIXME
 }
 
 
@@ -248,9 +270,10 @@ static void notif_java_segmentinfo(unsigned long long conn_handle, guint handle,
  * @return success status
  */
 static void notif_java_segmentdataresponse(unsigned long long conn_handle,
-			guint handle, guint instnumber, guint retstatus)
+			int handle, int instnumber, int retstatus)
 {
-	jni_cb_mgr_segmentdataresponse(conn_handle, handle, instnumber, retstatus);
+	// (*env)->CallVoidMethod(env, obj, jni_up_segmentdataresponse(conn_handle, handle, instnumber, retstatus);
+	// FIXME
 }
 
 
@@ -263,10 +286,11 @@ static void notif_java_segmentdataresponse(unsigned long long conn_handle,
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentdata(unsigned long long conn_handle, guint handle,
-					guint instnumber, gchar *xml)
+static void notif_java_segmentdata(unsigned long long conn_handle, int handle,
+					int instnumber, char *xml)
 {
-	jni_cb_mgr_segmentdata(conn_handle, handle, instnumber, xml);
+	// (*env)->CallVoidMethod(env, obj, jni_up_segmentdata(conn_handle, handle, instnumber, jxml);
+	// FIXME
 }
 
 
@@ -278,9 +302,10 @@ static void notif_java_segmentdata(unsigned long long conn_handle, guint handle,
  * @param xml PM-Store data attributes in XML format
  * @return success status
  */
-static void notif_java_pmstoredata(unsigned long long conn_handle, guint handle, gchar *xml)
+static void notif_java_pmstoredata(unsigned long long conn_handle, int handle, char *xml)
 {
-	jni_cb_mgr_pmstoredata(conn_handle, handle, xml);
+	// (*env)->CallVoidMethod(env, obj, jni_up_pmstoredata(conn_handle, handle, jxml);
+	// FIXME
 }
 
 
@@ -292,11 +317,12 @@ static void notif_java_pmstoredata(unsigned long long conn_handle, guint handle,
  * @param PM-Segment instance number
  * @return success status
  */
-static void notif_java_segmentcleared(unsigned long long conn_handle, guint handle,
-							guint instnumber,
-							guint retstatus)
+static void notif_java_segmentcleared(unsigned long long conn_handle, int handle,
+							int instnumber,
+							int retstatus)
 {
-	jni_cb_mgr_segmentcleared(conn_handle, handle, instnumber, retstatus);
+	// (*env)->CallVoidMethod(env, obj, jni_up_segmentcleared(conn_handle, handle, instnumber, retstatus);
+	// FIXME
 }
 
 
@@ -305,9 +331,10 @@ static void notif_java_segmentcleared(unsigned long long conn_handle, guint hand
  *
  * @return success status
  */
-static void notif_java_deviceattributes(unsigned long long conn_handle, gchar *xml)
+static void notif_java_deviceattributes(unsigned long long conn_handle, char *xml)
 {
-	jni_cb_mgr_deviceattributes(conn_handle, handle, xml);
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, obj, jni_up_deviceattributes, (jint) conn_handle, jxml);
 }
 
 /**
@@ -317,7 +344,7 @@ static void notif_java_deviceattributes(unsigned long long conn_handle, gchar *x
  */
 static void notif_java_disassociated(unsigned long long conn_handle)
 {
-	jni_cb_mgr_disassociated(conn_handle);
+	(*env)->CallVoidMethod(env, obj, jni_up_disassociated, (jint) conn_handle);
 }
 
 
@@ -348,7 +375,7 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
  *\param obj
  *\param err
  * */
-void jni_mgr_reqmdsattr(unsigned long long handle)
+void Java_com_signove_health_healthservice_JniBridge_reqmdsattr(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmdsattr");
 	manager_request_get_all_mds_attributes(handle, device_reqmdsattr_callback);
@@ -360,21 +387,25 @@ void jni_mgr_reqmdsattr(unsigned long long handle)
  *\param obj
  *\param err
  * */
-void jni_mgr_getconfig(unsigned long long handle, char** xml_out)
+jstring Java_com_signove_health_healthservice_JniBridge_getconfig(JNIEnv *env, jobject obj, jint handle)
 {
 	DataList *list;
+	char *xml_out;
 
 	DEBUG("device_getconfig");
 	list = manager_get_configuration(handle);
 
 	if (list) {
-		*xml_out = xml_encode_data_list(list);
+		xml_out = xml_encode_data_list(list);
 		data_list_del(list);
 	} else {
-		*xml_out = strdup("");
+		xml_out = strdup("");
 	}
 
-	return TRUE;
+	jstring jxml = (*env)->NewStringUTF(env, xml_out);
+	free(xml_out);
+
+	return jxml;
 }
 
 /*interface to request measuremens
@@ -382,7 +413,7 @@ void jni_mgr_getconfig(unsigned long long handle, char** xml_out)
  *\param obj
  *\param err
  * */
-void jni_mgr_reqmeasurement(unsigned long long handle)
+void Java_com_signove_health_healthservice_JniBridge_reqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmeasurement");
 	manager_request_measurement_data_transmission(handle, NULL);
@@ -394,7 +425,7 @@ void jni_mgr_reqmeasurement(unsigned long long handle)
  *\param obj
  *\param err
  * */
-void jni_mgr_reqactivationscanner(unsigned long long handle, int ihandle)
+void Java_com_signove_health_healthservice_JniBridge_reqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_enabled, NULL);
@@ -406,7 +437,7 @@ void jni_mgr_reqactivationscanner(unsigned long long handle, int ihandle)
  *\param obj
  *\param err
  * */
-void jni_mgr_reqdeactivationscanner(unsigned long long handle, int ihandle)
+void Java_com_signove_health_healthservice_JniBridge_reqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqdeactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_disabled, NULL);
@@ -418,7 +449,7 @@ void jni_mgr_reqdeactivationscanner(unsigned long long handle, int ihandle)
  *\param obj
  *\param err
  * */
-void jni_mgr_releaseassoc(unsigned long long handle)
+void Java_com_signove_health_healthservice_JniBridge_releaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_releaseassoc");
 	manager_request_association_release(handle);
@@ -430,7 +461,7 @@ void jni_mgr_releaseassoc(unsigned long long handle)
  *\param obj
  *\param err
  * */
-void jni_mgr_abortassoc(unsigned long long handle)
+void Java_com_signove_health_healthservice_JniBridge_abortassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_abortassoc");
 	manager_request_association_release(handle);
@@ -468,13 +499,11 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-void jni_mgr_get_pmstore(unsigned long long handle, int ihandle,
-				int* ret)
+jint Java_com_signove_health_healthservice_JniBridge_get_pmstore(JNIEnv *env, jobject obj, jint handle, jint handle)
 {
 	DEBUG("device_get_pmstore");
 	manager_request_get_pmstore(handle, ihandle, device_get_pmstore_cb);
-	*ret = 0;
-	return TRUE;
+	return 0;
 }
 
 /*Callback for PM-Store get segment info response
@@ -538,16 +567,14 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-void jni_mgr_get_segminfo(unsigned long long handle, int ihandle,
-				int* ret)
+jint Java_com_signove_health_healthservice_JniBridge_get_segminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	Request *req;
 
 	DEBUG("device_get_segminfo");
 	req = manager_request_get_segment_info(handle, ihandle,
 						device_get_segminfo_cb);
-	*ret = req ? 0 : 1;
-	return TRUE;
+	return req ? 0 : 1;
 }
 
 /*interface to get segments data from a PM-Segment
@@ -558,16 +585,15 @@ void jni_mgr_get_segminfo(unsigned long long handle, int ihandle,
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-void jni_mgr_get_segmdata(unsigned long long handle, int ihandle, int instnumber,
-				int* ret)
+jint Java_com_signove_health_healthservice_JniBridge_get_segmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle,
+							jint instnumber)
 {
 	Request *req;
 
 	DEBUG("device_get_segmdata");
 	req = manager_request_get_segment_data(handle, ihandle,
 				instnumber, device_get_segmdata_cb);
-	*ret = req ? 0 : 1;
-	return TRUE;
+	return = req ? 0 : 1;
 }
 
 /*interface to clear a PM-store segment
@@ -578,8 +604,7 @@ void jni_mgr_get_segmdata(unsigned long long handle, int ihandle, int instnumber
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-void jni_mgr_clearsegmdata(unsigned long long handle, int ihandle, int instnumber,
-				int *ret)
+jint Java_com_signove_health_healthservice_JniBridge_clearsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle, jint instnumber)
 {
 	Request *req;
 
@@ -597,29 +622,37 @@ void jni_mgr_clearsegmdata(unsigned long long handle, int ihandle, int instnumbe
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-void jni_mgr_clearallsegmdata(unsigned long long handle, int ihandle,
-				int *ret)
+jint Java_com_signove_health_healthservice_JniBridge_clearallsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	Request *req;
 
 	DEBUG("device_clearsegmdata");
 	req = manager_request_clear_segments(handle, ihandle,
 				device_clear_segm_cb);
-	*ret = req ? 0 : 1;
-	return TRUE;
+	return req ? 0 : 1;
 }
 
 /**
  * Main function
  * @return int
  */
-void jni_mgr_healthd_init()
+void Java_com_signove_health_healthservice_JniBridge_healthd_init(JNIEnv *bridge_env, jobject bridge_obj)
 {
-	CommunicationPlugin plugin;
+	env = bridge_env;
+	obj = bridge_obj;
+	cls = (*env)->GetObjectClass(env, obj);
+	jni_up_cancel_timer = (*env)->GetMethodID(env, cls, "cancel_timer", "(I)V");
+	jni_up_create_timer = (*env)->GetMethodID(env, cls, "create_timer", "(II)I");
+	jni_up_associated = (*env)->GetMethodID(env, cls, "associated", "(ILjava/lang/String;)V");
+	jni_up_disassociated = (*env)->GetMethodID(env, cls, "disassociated", "(I)V");
+	jni_up_deviceattributes = (*env)->GetMethodID(env, cls, "deviceattributes", "(ILjava/lang/String;)V");
+	jni_up_measurementdata = (*env)->GetMethodID(env, cls, "measurementdata", "(ILjava/lang/String;)V");
+	// FIXME PM-Store methods
 
+	CommunicationPlugin plugin;
 	plugin = communication_plugin();
 
-	plugin_android_setup(&plugin);
+	plugin_android_setup(&plugin, env, obj);
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
@@ -635,7 +668,7 @@ void jni_mgr_healthd_init()
 	manager_start();
 }
 
-void jni_mgr_healthd_finalize()
+void Java_com_signove_health_healthservice_JniBridge_healthd_finalize(JNIEnv *env, jobject obj)
 {
 	manager_finalize();
 }

@@ -27,4 +27,5 @@
  * \date Jan 25, 2012
  */
 
-void plugin_android_setup(CommunicationPlugin *plugin);
+void plugin_android_setup(CommunicationPlugin *plugin,
+				JNIEnv *env, jobject bridge_obj);
