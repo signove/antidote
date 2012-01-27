@@ -66,13 +66,14 @@ public class JniBridge {
 	// manager part: called from service
 	public native void timer_alarm(int handle);
 	public native void healthd_init();
-	public native void healthd_fanlize();
+	public native void healthd_finalize();
 	public native void releaseassoc(int context);
 	public native void abortassoc(int context);
 	public native String getconfig(int context);
 	public native void reqmdsattr(int context);
-	public native void reqactivationscanner(int context);
-	public native void reqdeactivationscanner(int context);
+	public native void reqactivationscanner(int context, int handle);
+	public native void reqdeactivationscanner(int context, int handle);
+	public native void reqmeasurement(int context);
 
 	// FIXME implement PM-Store calls
 
