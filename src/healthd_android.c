@@ -87,7 +87,7 @@ static void timer_reset_timeout(Context *ctx)
  * Calls the supplied callback when timer reaches timeout, and cancels timer.
  *
  */
-void Java_com_signove_health_healthservice_JniBridge_timer_alarm(JNIEnv *env, jobject obj, jint id)
+void Java_com_signove_health_service_JniBridge_timer_alarm(JNIEnv *env, jobject obj, jint id)
 {
 	DEBUG("timer_alarm");
 	Context *ctx = context_get(id);
@@ -379,7 +379,7 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_reqmdsattr(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_reqmdsattr(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmdsattr");
 	manager_request_get_all_mds_attributes(handle, device_reqmdsattr_callback);
@@ -390,7 +390,7 @@ void Java_com_signove_health_healthservice_JniBridge_reqmdsattr(JNIEnv *env, job
  *\param obj
  *\param err
  * */
-jstring Java_com_signove_health_healthservice_JniBridge_getconfig(JNIEnv *env, jobject obj, jint handle)
+jstring Java_com_signove_health_service_JniBridge_getconfig(JNIEnv *env, jobject obj, jint handle)
 {
 	DataList *list;
 	char *xml_out;
@@ -416,7 +416,7 @@ jstring Java_com_signove_health_healthservice_JniBridge_getconfig(JNIEnv *env, j
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_reqmeasurement(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_reqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmeasurement");
 	manager_request_measurement_data_transmission(handle, NULL);
@@ -427,7 +427,7 @@ void Java_com_signove_health_healthservice_JniBridge_reqmeasurement(JNIEnv *env,
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_reqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
+void Java_com_signove_health_service_JniBridge_reqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_enabled, NULL);
@@ -438,7 +438,7 @@ void Java_com_signove_health_healthservice_JniBridge_reqactivationscanner(JNIEnv
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_reqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
+void Java_com_signove_health_service_JniBridge_reqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqdeactivationscanner");
 	manager_set_operational_state_of_the_scanner(handle, (HANDLE) ihandle, os_disabled, NULL);
@@ -449,7 +449,7 @@ void Java_com_signove_health_healthservice_JniBridge_reqdeactivationscanner(JNIE
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_releaseassoc(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_releaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_releaseassoc");
 	manager_request_association_release(handle);
@@ -460,7 +460,7 @@ void Java_com_signove_health_healthservice_JniBridge_releaseassoc(JNIEnv *env, j
  *\param obj
  *\param err
  * */
-void Java_com_signove_health_healthservice_JniBridge_abortassoc(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_abortassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_abortassoc");
 	manager_request_association_release(handle);
@@ -497,7 +497,7 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_get_pmstore(JNIEnv *env,
+jint Java_com_signove_health_service_JniBridge_get_pmstore(JNIEnv *env,
 						jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_get_pmstore");
@@ -566,7 +566,7 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_get_segminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
+jint Java_com_signove_health_service_JniBridge_get_segminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	Request *req;
 
@@ -584,7 +584,7 @@ jint Java_com_signove_health_healthservice_JniBridge_get_segminfo(JNIEnv *env, j
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_get_segmdata(JNIEnv *env,
+jint Java_com_signove_health_service_JniBridge_get_segmdata(JNIEnv *env,
 			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
 	Request *req;
@@ -603,7 +603,7 @@ jint Java_com_signove_health_healthservice_JniBridge_get_segmdata(JNIEnv *env,
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_clearsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle, jint instnumber)
+jint Java_com_signove_health_service_JniBridge_clearsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle, jint instnumber)
 {
 	Request *req;
 
@@ -620,7 +620,7 @@ jint Java_com_signove_health_healthservice_JniBridge_clearsegmdata(JNIEnv *env, 
  *\param ret Preliminary return status (actual data goes via Agent callback)
  *\param err
  * */
-jint Java_com_signove_health_healthservice_JniBridge_clearallsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle)
+jint Java_com_signove_health_service_JniBridge_clearallsegmdata(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	Request *req;
 
@@ -634,7 +634,7 @@ jint Java_com_signove_health_healthservice_JniBridge_clearallsegmdata(JNIEnv *en
  * Main function
  * @return int
  */
-void Java_com_signove_health_healthservice_JniBridge_healthd_init(JNIEnv *bridge_env, jobject bridge_obj)
+void Java_com_signove_health_service_JniBridge_healthd_init(JNIEnv *bridge_env, jobject bridge_obj)
 {
 	env = bridge_env;
 	obj = bridge_obj;
@@ -666,7 +666,7 @@ void Java_com_signove_health_healthservice_JniBridge_healthd_init(JNIEnv *bridge
 	manager_start();
 }
 
-void Java_com_signove_health_healthservice_JniBridge_healthd_finalize(JNIEnv *env, jobject obj)
+void Java_com_signove_health_service_JniBridge_healthd_finalize(JNIEnv *env, jobject obj)
 {
 	manager_finalize();
 }

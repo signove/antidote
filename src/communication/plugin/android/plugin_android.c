@@ -60,7 +60,7 @@ jmethodID jni_up_send_data;
  *
  * @param handle
  */
-void Java_com_signove_health_healthservice_JniBridge_channel_connected(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_channel_connected(JNIEnv *env, jobject obj, jint handle)
 {
 	communication_transport_connect_indication(handle);
 }
@@ -70,7 +70,7 @@ void Java_com_signove_health_healthservice_JniBridge_channel_connected(JNIEnv *e
  *
  * @param handle
  */
-void Java_com_signove_health_healthservice_JniBridge_channel_disconnected(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_channel_disconnected(JNIEnv *env, jobject obj, jint handle)
 {
 	communication_transport_disconnect_indication(handle);
 }
@@ -150,7 +150,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 /**
  * Socket data receiving callback
  */
-void Java_com_signove_health_healthservice_JniBridge_data_received(JNIEnv *env, jobject obj, jint handle, jbyteArray buf)
+void Java_com_signove_health_service_JniBridge_data_received(JNIEnv *env, jobject obj, jint handle, jbyteArray buf)
 {	
 	int len = (*env)->GetArrayLength(env, buf);
 	char *data = malloc(len);
