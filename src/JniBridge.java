@@ -1,6 +1,6 @@
-package com.signove.health.healthservice;
+package com.signove.health.service;
 
-import com.signove.health.healthservice.HealthService;
+import com.signove.health.service.HealthService;
 
 public class JniBridge {
 	HealthService cb;
@@ -26,9 +26,22 @@ public class JniBridge {
 	}
 
 	// communication part: called from service
-	public native channel_connected(int context);
-	public native channel_disconnected(int context);
-	public native data_received(int context, byte [] data);
+	public synchronized void channel_connected(int context) {
+		Cchannel_connected(context);
+	}
+
+	public synchronized void channel_disconnected(int context) {
+		Cchannel_disconnected(context);
+	}
+
+	public synchronized void data_received(int context, byte [] data)
+	{
+		Cdata_received(context);
+	}
+
+	public native void Cchannel_connected(int context);
+	public native void Cchannel_disconnected(int context);
+	public native void Cdata_received(int context, byte [] data);
 
 	// manager part: called from C
 	public void cancel_timer(int handle)
@@ -64,16 +77,66 @@ public class JniBridge {
 	// FIXME implement PM-Store calls
 
 	// manager part: called from service
-	public native void timer_alarm(int handle);
-	public native void healthd_init();
-	public native void healthd_finalize();
-	public native void releaseassoc(int context);
-	public native void abortassoc(int context);
-	public native String getconfig(int context);
-	public native void reqmdsattr(int context);
-	public native void reqactivationscanner(int context, int handle);
-	public native void reqdeactivationscanner(int context, int handle);
-	public native void reqmeasurement(int context);
+	public synchronized void timer_alarm(int handle)
+	{
+		Ctimer_alarm(handle);
+	}
+
+	public synchronized void healthd_init()
+	{
+		Chealthd_init();
+	}
+
+	public synchronized void healthd_finalize()
+	{
+		Chealthd_finalize();
+	}
+
+	public synchronized void releaseassoc(int context)
+	{
+		Creleaseassoc(context);
+	}
+
+	public synchronized void abortassoc(int context)
+	{
+		Cabortassoc(context);
+	}
+
+	public synchronized String getconfig(int context)
+	{
+		return Cgetconfig(context);
+	}
+
+	public synchronized void reqmdsattr(int context)
+	{
+		Creqmdsattr(context);
+	}
+
+	public synchronized void reqactivationscanner(int context, int handle)
+	{
+		Creqactivationscanner(context, handle);
+	}
+
+	public synchronized void reqdeactivationscanner(int context, int handle)
+	{
+		Creqdeactivationscanner(context, handle);
+	}
+
+	public synchronized void reqmeasurement(int context)
+	{
+		Creqmeasurement(context);
+	}
+
+	public native void Ctimer_alarm(int handle);
+	public native void Chealthd_init();
+	public native void Chealthd_finalize();
+	public native void Creleaseassoc(int context);
+	public native void Cabortassoc(int context);
+	public native String Cgetconfig(int context);
+	public native void Creqmdsattr(int context);
+	public native void Creqactivationscanner(int context, int handle);
+	public native void Creqdeactivationscanner(int context, int handle);
+	public native void Creqmeasurement(int context);
 
 	// FIXME implement PM-Store calls
 
