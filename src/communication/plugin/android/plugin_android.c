@@ -49,9 +49,9 @@ static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static int force_disconnect_channel(struct Context *ctx);
 
-JNIEnv *env;
-jclass cls;
-jobject obj;
+extern JNIEnv *bridge_env;
+extern jobject bridge_obj;
+
 jmethodID jni_up_disconnect_channel;
 jmethodID jni_up_send_data;
 
@@ -60,8 +60,12 @@ jmethodID jni_up_send_data;
  *
  * @param handle
  */
-void Java_com_signove_health_service_JniBridge_channel_connected(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_channel_Cconnected(JNIEnv *env,
+								jobject obj, jint handle)
 {
+	// Warning: this implies 1 thread at a time
+	bridge_env = env;
+	bridge_obj = obj;
 	communication_transport_connect_indication(handle);
 }
 
@@ -70,12 +74,16 @@ void Java_com_signove_health_service_JniBridge_channel_connected(JNIEnv *env, jo
  *
  * @param handle
  */
-void Java_com_signove_health_service_JniBridge_channel_disconnected(JNIEnv *env, jobject obj, jint handle)
+void Java_com_signove_health_service_JniBridge_channel_Cdisconnected(JNIEnv *env, jobject obj,
+								jint handle)
 {
+	// Warning: this implies 1 thread at a time
+	bridge_env = env;
+	bridge_obj = obj;
 	communication_transport_disconnect_indication(handle);
 }
 
-void plugin_android_setup(CommunicationPlugin *plugin, JNIEnv *bridge_env, jobject bridge_obj)
+void plugin_android_setup(CommunicationPlugin *plugin)
 {
 	plugin->network_init = init;
 	plugin->network_get_apdu_stream = get_apdu;
@@ -83,11 +91,11 @@ void plugin_android_setup(CommunicationPlugin *plugin, JNIEnv *bridge_env, jobje
 	plugin->network_disconnect = force_disconnect_channel;
 	plugin->network_finalize = finalize;
 
-	env = bridge_env;
-	obj = bridge_obj;
-	cls = (*env)->GetObjectClass(env, obj);
-	jni_up_send_data = (*env)->GetMethodID(env, cls, "send_data", "(I[B)V");
-	jni_up_disconnect_channel = (*env)->GetMethodID(env, cls, "disconnect_channel", "(I)V");
+	jclass cls = (*bridge_env)->GetObjectClass(bridge_env, bridge_obj);
+	jni_up_send_data = (*bridge_env)->GetMethodID(bridge_env, cls,
+							"send_data", "(I[B)V");
+	jni_up_disconnect_channel = (*bridge_env)->GetMethodID(bridge_env, cls,
+							"disconnect_channel", "(I)V");
 }
 
 /**
@@ -95,7 +103,8 @@ void plugin_android_setup(CommunicationPlugin *plugin, JNIEnv *bridge_env, jobje
  */
 static int force_disconnect_channel(Context *c)
 {
-	(*env)->CallVoidMethod(env, obj, jni_up_disconnect_channel, (jint) c->id);
+	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+					jni_up_disconnect_channel, (jint) c->id);
 	return 1;
 }
 
@@ -150,11 +159,16 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 /**
  * Socket data receiving callback
  */
-void Java_com_signove_health_service_JniBridge_data_received(JNIEnv *env, jobject obj, jint handle, jbyteArray buf)
+void Java_com_signove_health_service_JniBridge_Cdata_received(JNIEnv *env, jobject obj,
+							jint handle, jbyteArray buf)
 {	
-	int len = (*env)->GetArrayLength(env, buf);
+	// Warning: this implies 1 thread at a time
+	bridge_env = env;
+	bridge_obj = obj;
+
+	int len = (*bridge_env)->GetArrayLength(bridge_env, buf);
 	char *data = malloc(len);
-	(*env)->GetByteArrayRegion(env, buf, 0, len, (jbyte *) data);
+	(*bridge_env)->GetByteArrayRegion(bridge_env, buf, 0, len, (jbyte *) data);
 
 	if (data) {
 		data_len = len;
@@ -173,10 +187,9 @@ void Java_com_signove_health_service_JniBridge_data_received(JNIEnv *env, jobjec
  */
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
-	jbyteArray ba = (*env)->NewByteArray(env, stream->size);
-	(*env)->SetByteArrayRegion(env, ba, 0, stream->size, (jbyte*) stream->buffer);
-
-	(*env)->CallVoidMethod(env, obj, jni_up_send_data, (jint) ctx->id, ba);
+	jbyteArray ba = (*bridge_env)->NewByteArray(bridge_env, stream->size);
+	(*bridge_env)->SetByteArrayRegion(bridge_env, ba, 0, stream->size, (jbyte*) stream->buffer);
+	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_send_data, (jint) ctx->id, ba);
 
 	return NETWORK_ERROR_NONE;
 }
