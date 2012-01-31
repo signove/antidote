@@ -60,7 +60,7 @@ jmethodID jni_up_send_data;
  *
  * @param handle
  */
-void Java_com_signove_health_service_JniBridge_channel_Cconnected(JNIEnv *env,
+void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 								jobject obj, jint handle)
 {
 	// Warning: this implies 1 thread at a time
@@ -74,7 +74,7 @@ void Java_com_signove_health_service_JniBridge_channel_Cconnected(JNIEnv *env,
  *
  * @param handle
  */
-void Java_com_signove_health_service_JniBridge_channel_Cdisconnected(JNIEnv *env, jobject obj,
+void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env, jobject obj,
 								jint handle)
 {
 	// Warning: this implies 1 thread at a time
@@ -159,7 +159,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 /**
  * Socket data receiving callback
  */
-void Java_com_signove_health_service_JniBridge_Cdata_received(JNIEnv *env, jobject obj,
+void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobject obj,
 							jint handle, jbyteArray buf)
 {	
 	// Warning: this implies 1 thread at a time
