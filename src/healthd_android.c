@@ -46,6 +46,7 @@
 
 JNIEnv *bridge_env = 0;
 jobject bridge_obj = 0;
+char *android_tmp_location = 0;
 
 jmethodID jni_up_cancel_timer = 0;
 jmethodID jni_up_create_timer = 0;
@@ -694,12 +695,20 @@ jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jo
  * Main function
  * @return int
  */
-void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject obj)
+void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject obj, jstring tmp_path)
 {
 	DEBUG("healthd C: initializing %p %p", env, obj);
 	// Warning: this trick works assuming 1 thread at a time
 	bridge_env = env;
 	bridge_obj = obj;
+
+	DEBUG("healthd C: storing tmp dir");
+	
+	jboolean is_copy = JNI_TRUE;
+	const char *cpath = (*bridge_env)->GetStringUTFChars(bridge_env, tmp_path, &is_copy);
+	asprintf(&android_tmp_location, "%s", cpath);
+
+	DEBUG("healthd C: tmp dir is %s", android_tmp_location);
 
 	DEBUG("healthd C: getting class and methods");
 

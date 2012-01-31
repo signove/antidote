@@ -160,10 +160,14 @@ void ioutil_print_buffer(intu8 *buffer, int size)
 	str = NULL;
 }
 
+#ifdef ANDROID
 
+extern char *android_tmp_location;
+
+#else
 static const char *tmp_locations[] = { "HEALTHD_TMP", "TMPDIR", "TEMP", "TMP",
-				       NULL
-				     };
+				       NULL };
+#endif
 
 /**
  * @brief Gets the temporary files directory location.
@@ -184,6 +188,10 @@ char *ioutil_get_tmp()
 	char *result = NULL;
 	int tmp_len = 0;
 
+#ifdef ANDROID
+	tmp = android_tmp_location;
+	mkdir(tmp, 0770);
+#else
 	while (tmp_locations[i]) {
 		tmp = getenv(tmp_locations[i]);
 
@@ -197,6 +205,7 @@ char *ioutil_get_tmp()
 	if (!tmp || (strcmp(tmp, "") == 0)) {
 		tmp = "/tmp/";
 	}
+#endif
 
 	tmp_len = strlen(tmp);
 

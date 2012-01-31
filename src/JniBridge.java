@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2012 Signove Tecnologia
+ */
+
 package com.signove.health.service;
 
 import com.signove.health.service.HealthService;
@@ -10,7 +14,7 @@ public class JniBridge {
 		healthd_init();
 	}
 
-	~JniBridge() {
+	protected void finalize() {
 		healthd_finalize();
 	}
 
@@ -27,21 +31,21 @@ public class JniBridge {
 
 	// communication part: called from service
 	public synchronized void channel_connected(int context) {
-		Cchannel_connected(context);
+		Cchannelconnected(context);
 	}
 
 	public synchronized void channel_disconnected(int context) {
-		Cchannel_disconnected(context);
+		Cchanneldisconnected(context);
 	}
 
 	public synchronized void data_received(int context, byte [] data)
 	{
-		Cdata_received(context);
+		Cdatareceived(context, data);
 	}
 
-	public native void Cchannel_connected(int context);
-	public native void Cchannel_disconnected(int context);
-	public native void Cdata_received(int context, byte [] data);
+	public native void Cchannelconnected(int context);
+	public native void Cchanneldisconnected(int context);
+	public native void Cdatareceived(int context, byte [] data);
 
 	// manager part: called from C
 	public void cancel_timer(int handle)
@@ -79,17 +83,17 @@ public class JniBridge {
 	// manager part: called from service
 	public synchronized void timer_alarm(int handle)
 	{
-		Ctimer_alarm(handle);
+		Ctimeralarm(handle);
 	}
 
 	public synchronized void healthd_init()
 	{
-		Chealthd_init();
+		Chealthdinit(cb.getApplicationContext().getFilesDir().toString());
 	}
 
 	public synchronized void healthd_finalize()
 	{
-		Chealthd_finalize();
+		Chealthdfinalize();
 	}
 
 	public synchronized void releaseassoc(int context)
@@ -127,9 +131,9 @@ public class JniBridge {
 		Creqmeasurement(context);
 	}
 
-	public native void Ctimer_alarm(int handle);
-	public native void Chealthd_init();
-	public native void Chealthd_finalize();
+	public native void Ctimeralarm(int handle);
+	public native void Chealthdinit(String tmp_path);
+	public native void Chealthdfinalize();
 	public native void Creleaseassoc(int context);
 	public native void Cabortassoc(int context);
 	public native String Cgetconfig(int context);
