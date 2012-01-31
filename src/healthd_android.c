@@ -705,11 +705,17 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 
 	jclass cls = (*bridge_env)->GetObjectClass(bridge_env, bridge_obj);
 	jni_up_cancel_timer = (*bridge_env)->GetMethodID(bridge_env, cls, "cancel_timer", "(I)V");
+	DEBUG("healthd C: method %p", jni_up_cancel_timer);
 	jni_up_create_timer = (*bridge_env)->GetMethodID(bridge_env, cls, "create_timer", "(II)I");
+	DEBUG("healthd C: method %p", jni_up_create_timer);
 	jni_up_associated = (*bridge_env)->GetMethodID(bridge_env, cls, "associated", "(ILjava/lang/String;)V");
+	DEBUG("healthd C: method ass %p", jni_up_associated);
 	jni_up_disassociated = (*bridge_env)->GetMethodID(bridge_env, cls, "disassociated", "(I)V");
+	DEBUG("healthd C: method dis %p", jni_up_disassociated);
 	jni_up_deviceattributes = (*bridge_env)->GetMethodID(bridge_env, cls, "deviceattributes", "(ILjava/lang/String;)V");
+	DEBUG("healthd C: method devattr %p", jni_up_deviceattributes);
 	jni_up_measurementdata = (*bridge_env)->GetMethodID(bridge_env, cls, "measurementdata", "(ILjava/lang/String;)V");
+	DEBUG("healthd C: method meas %p", jni_up_measurementdata);
 	// FIXME PM-Store methods
 
 	DEBUG("healthd C: init comm plugin");

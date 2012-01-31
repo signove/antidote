@@ -98,6 +98,8 @@ void plugin_android_setup(CommunicationPlugin *plugin)
 							"send_data", "(I[B)V");
 	jni_up_disconnect_channel = (*bridge_env)->GetMethodID(bridge_env, cls,
 							"disconnect_channel", "(I)V");
+	DEBUG("healthd C: method send_data %p", jni_up_send_data);
+	DEBUG("healthd C: method disconnect_channel %p", jni_up_disconnect_channel);
 }
 
 /**
@@ -190,6 +192,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
 	jbyteArray ba = (*bridge_env)->NewByteArray(bridge_env, stream->size);
 	(*bridge_env)->SetByteArrayRegion(bridge_env, ba, 0, stream->size, (jbyte*) stream->buffer);
+	DEBUG("healthd c: calling send_data");
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_send_data, (jint) ctx->id, ba);
 
 	return NETWORK_ERROR_NONE;
