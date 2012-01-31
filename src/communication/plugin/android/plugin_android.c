@@ -64,6 +64,7 @@ void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 								jobject obj, jint handle)
 {
 	// Warning: this implies 1 thread at a time
+	DEBUG("channel connected at plugin");
 	bridge_env = env;
 	bridge_obj = obj;
 	communication_transport_connect_indication(handle);
@@ -78,6 +79,7 @@ void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env,
 								jint handle)
 {
 	// Warning: this implies 1 thread at a time
+	DEBUG("channel disconnected at plugin");
 	bridge_env = env;
 	bridge_obj = obj;
 	communication_transport_disconnect_indication(handle);
@@ -162,21 +164,20 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobject obj,
 							jint handle, jbyteArray buf)
 {	
+	DEBUG("data received at plugin");
+
 	// Warning: this implies 1 thread at a time
 	bridge_env = env;
 	bridge_obj = obj;
 
 	int len = (*bridge_env)->GetArrayLength(bridge_env, buf);
-	char *data = malloc(len);
+	char *data = malloc(len + 1);
 	(*bridge_env)->GetByteArrayRegion(bridge_env, buf, 0, len, (jbyte *) data);
 
-	if (data) {
-		data_len = len;
-		current_data = malloc(len + 1);
-		memcpy(current_data, buf, len);
-		current_data[len] = '\0';
-		communication_read_input_stream(context_get(handle));
-	}
+	data_len = len;
+	current_data = data;
+	current_data[len] = '\0';
+	communication_read_input_stream(context_get(handle));
 }
 
 
