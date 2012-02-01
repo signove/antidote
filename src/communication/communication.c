@@ -133,6 +133,23 @@ static int state_transition_listener_size = 0;
 static int communication_fire_transport_disconnect_evt(Context *ctx);
 
 /**
+ * Get Plugin ID based on pointer
+ */
+unsigned int communication_plugin_id(CommunicationPlugin *plugin)
+{
+	int i;
+	for (i = 1; i <= plugin_count; ++i) {
+		if (comm_plugins[i] == plugin) {
+			return i;
+		}
+	}
+
+	DEBUG("Plugin %p not found in registry", plugin);
+
+	return 0;
+}
+
+/**
  * Set communication plugin implementation. It should be called
  * before any other communication function.
  */

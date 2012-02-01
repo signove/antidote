@@ -61,6 +61,8 @@ typedef void (*communication_state_transition_handler_function)(Context *ctx, fs
 
 void communication_add_plugin(CommunicationPlugin *plugin);
 
+unsigned int communication_plugin_id(CommunicationPlugin *plugin);
+
 CommunicationPlugin *communication_get_plugin(unsigned int label);
 
 int communication_init();

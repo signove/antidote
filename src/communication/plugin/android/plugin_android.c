@@ -63,13 +63,14 @@ jmethodID jni_up_send_data;
  * @param handle
  */
 void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
-								jobject obj, jint handle)
+						jobject obj, jint handle)
 {
 	// Warning: this implies 1 thread at a time
 	DEBUG("channel connected at plugin");
 	bridge_env = env;
 	bridge_obj = obj;
-	communication_transport_connect_indication(handle);
+	ContextId cid = {plugin_id, handle};
+	communication_transport_connect_indication(cid);
 }
 
 /**
@@ -84,7 +85,8 @@ void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env,
 	DEBUG("channel disconnected at plugin");
 	bridge_env = env;
 	bridge_obj = obj;
-	communication_transport_disconnect_indication(handle);
+	ContextId cid = {plugin_id, handle};
+	communication_transport_disconnect_indication(cid);
 }
 
 void plugin_android_setup(CommunicationPlugin *plugin)
@@ -183,7 +185,8 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
 	data_len = len;
 	current_data = data;
 	current_data[len] = '\0';
-	communication_read_input_stream(context_get(plugin_id, handle));
+	ContextId cid = {plugin_id, handle};
+	communication_read_input_stream(context_get(cid));
 }
 
 
