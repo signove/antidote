@@ -59,6 +59,9 @@ static GMainLoop *mainloop = NULL;
 static int alarms = 0;
 static guint alrm_handle = 0;
 
+// WARNING TODO limits to 1 manager connection at a time
+static ContextId cid;
+
 /**
  * App clean-up in termination phase
  */
@@ -117,7 +120,8 @@ static void schedule_alarm(ContextId id, int to)
 	if (alrm_handle) {
 		g_source_remove(alrm_handle);
 	}
-	alrm_handle = g_timeout_add(to * 1000, sigalrm, GUINT_TO_POINTER((guint) id));
+	cid = id;
+	alrm_handle = g_timeout_add(to * 1000, sigalrm, 0);
 }
 
 /**
@@ -125,21 +129,19 @@ static void schedule_alarm(ContextId id, int to)
  */
 static gboolean sigalrm(gpointer data)
 {
-	unsigned int id = GPOINTER_TO_UINT(data);
-
 	fprintf(stderr, "==== alarm %d ====\n", alarms);
 
 	alrm_handle = 0;
 	
 	if (alarms > 2) {
-		agent_send_data(id);
-		schedule_alarm(id, 3);
+		agent_send_data(cid);
+		schedule_alarm(cid, 3);
 	} else if (alarms == 2) {
-		agent_request_association_release(id);
-		schedule_alarm(id, 2);
+		agent_request_association_release(cid);
+		schedule_alarm(cid, 2);
 	} else if (alarms == 1) {
-		agent_disconnect(id);
-		schedule_alarm(id, 2);
+		agent_disconnect(cid);
+		schedule_alarm(cid, 2);
 	} else {
 		g_main_loop_quit(mainloop);
 	}
@@ -195,7 +197,7 @@ void device_connected(Context *ctx)
 /**
  * Callback when a Bluetooth device connects
  */
-static gboolean bt_connected(guint64 conn_handle, const char *btaddr)
+static gboolean bt_connected(ContextId context, const char *btaddr)
 {
 	fprintf(stderr, "bt_connected %s\n", btaddr);
 	return TRUE;
@@ -204,7 +206,7 @@ static gboolean bt_connected(guint64 conn_handle, const char *btaddr)
 /**
  * Callback when a Bluetooth device disconnects
  */
-static gboolean bt_disconnected(guint64 conn_handle, const char *btaddr)
+static gboolean bt_disconnected(ContextId context, const char *btaddr)
 {
 	fprintf(stderr, "bt_disconnected %s\n", btaddr);
 	return TRUE;
@@ -267,12 +269,15 @@ int main(int argc, char **argv)
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
 
+	CommunicationPlugin *plugins[] = {&comm_plugin, 0};
+
 	plugin_bluez_setup(&comm_plugin);
+
 	bluez_listener.peer_connected = bt_connected;
 	bluez_listener.peer_disconnected = bt_disconnected;
 	plugin_bluez_set_listener(&bluez_listener);
 
-	agent_init(&comm_plugin, oximeter_specialization,
+	agent_init(plugins, oximeter_specialization,
 			event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
@@ -290,9 +295,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	// wait 10 seconds for connection
 	alarms = 0;
-	schedule_alarm(0, 5);
 
 	fprintf(stderr, "Main loop started\n");
 	mainloop = g_main_loop_new(NULL, FALSE);

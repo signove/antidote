@@ -79,14 +79,14 @@ static const int COMM_USB = 1;
 static int opmode;
 static int commmode;
 
-static gboolean call_agent_measurementdata(guint64, char *);
-static gboolean call_agent_disassociated(guint64);
-static gboolean call_agent_associated(guint64, char *);
-static gboolean call_agent_segmentinfo(guint64, guint, char *);
-static gboolean call_agent_segmentdataresponse(guint64, guint, guint, guint);
-static gboolean call_agent_segmentdata(guint64, guint, guint, char *);
-static gboolean call_agent_segmentcleared(guint64, guint, guint, guint);
-static gboolean call_agent_pmstoredata(guint64, guint, char *);
+static gboolean call_agent_measurementdata(ContextId, char *);
+static gboolean call_agent_disassociated(ContextId);
+static gboolean call_agent_associated(ContextId, char *);
+static gboolean call_agent_segmentinfo(ContextId, guint, char *);
+static gboolean call_agent_segmentdataresponse(ContextId, guint, guint, guint);
+static gboolean call_agent_segmentdata(ContextId, guint, guint, char *);
+static gboolean call_agent_segmentcleared(ContextId, guint, guint, guint);
+static gboolean call_agent_pmstoredata(ContextId, guint, char *);
 
 
 /* TCP clients */
@@ -433,7 +433,7 @@ typedef struct {
 
 typedef struct {
 	GObject parent;
-	guint64 handle;
+	ContextId handle;
 	char *path;
 	char *addr;
 } Device;
@@ -496,8 +496,10 @@ G_DEFINE_TYPE(Device, device_object, G_TYPE_OBJECT);
 
 static void device_object_init(Device *obj)
 {
+	ContextId z = {0, 0};
+
 	g_assert(obj != NULL);
-	obj->handle = 0;
+	obj->handle = z;
 	obj->path = NULL;
 	obj->addr = NULL;
 }
@@ -511,7 +513,7 @@ static GSList *devices = NULL;
 DBusGConnection *bus = NULL;
 DBusGProxy *agent_proxy = NULL;
 
-static const char *get_device_object(const char *, guint64);
+static const char *get_device_object(const char *, ContextId);
 static void get_agent_proxy();
 
 /**
@@ -609,7 +611,7 @@ void self_configure()
  *
  * @return device pointer or NULL if not found
  */
-static Device *device_by_handle(guint64 handle)
+static Device *device_by_handle(ContextId handle)
 {
 	GSList *i;
 	Device *device = NULL;
@@ -618,7 +620,8 @@ static Device *device_by_handle(guint64 handle)
 	for (i = devices; i; i = i->next) {
 		Device *candidate = i->data;
 
-		if (candidate->handle == handle) {
+		if (candidate->handle.plugin == handle.plugin &&
+		    candidate->handle.connid == handle.connid) {
 			device = candidate;
 			break;
 		}
@@ -656,11 +659,13 @@ static void destroy_device(Device *device)
 	if (opmode != AUTOTESTING)
 		dbus_g_connection_unregister_g_object(bus, G_OBJECT(device));
 
+	ContextId z = {0, 0};
+
 	g_free(device->path);
 	g_free(device->addr);
 	device->path = NULL;
 	device->addr = NULL;
-	device->handle = 0;
+	device->handle = z;
 
 	g_object_unref(device);
 	devices = g_slist_remove(devices, device);
@@ -697,7 +702,7 @@ void client_disconnected()
  *
  * @return a copy of object path (does not transfer ownership)
  */
-static const char *get_device_object(const char *low_addr, guint64 conn_handle)
+static const char *get_device_object(const char *low_addr, ContextId conn_handle)
 {
 	static long int dev_counter = 0;
 
@@ -711,8 +716,9 @@ static const char *get_device_object(const char *low_addr, guint64 conn_handle)
 		device = device_by_handle(conn_handle);
 
 		if (!device) {
-			DEBUG("SHOULD NOT HAPPEN: handle %"G_GUINT64_FORMAT" not found among devices",
-				conn_handle);
+			DEBUG("SHOULD NOT HAPPEN: handle %u:%"G_GUINT64_FORMAT
+				" not found among devices",
+				conn_handle.plugin, conn_handle.connid);
 			return NULL;
 		}
 	}
@@ -795,7 +801,7 @@ static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointe
 /**
  * Function that calls D-Bus agent.Connected method.
  */
-static gboolean call_agent_connected(guint64 conn_handle, const char *low_addr)
+static gboolean call_agent_connected(ContextId conn_handle, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -841,7 +847,7 @@ static gboolean call_agent_connected(guint64 conn_handle, const char *low_addr)
  *
  * @return success status
  */
-static gboolean call_agent_associated(guint64 conn_handle, char *xml)
+static gboolean call_agent_associated(ContextId conn_handle, char *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -890,7 +896,7 @@ static gboolean call_agent_associated(guint64 conn_handle, char *xml)
  * @param xml Data in xml format
  * @return success status
  */
-static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
+static gboolean call_agent_measurementdata(ContextId conn_handle, gchar *xml)
 {
 	/* Called back by new_data_received() */
 
@@ -940,7 +946,7 @@ static gboolean call_agent_measurementdata(guint64 conn_handle, gchar *xml)
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static gboolean call_agent_segmentinfo(guint64 conn_handle, guint handle, gchar *xml)
+static gboolean call_agent_segmentinfo(ContextId conn_handle, guint handle, gchar *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -995,7 +1001,7 @@ static gboolean call_agent_segmentinfo(guint64 conn_handle, guint handle, gchar 
  * @param status Return status
  * @return success status
  */
-static gboolean call_agent_segmentdataresponse(guint64 conn_handle,
+static gboolean call_agent_segmentdataresponse(ContextId conn_handle,
 			guint handle, guint instnumber, guint retstatus)
 {
 	DBusGProxyCall *call;
@@ -1053,7 +1059,7 @@ static gboolean call_agent_segmentdataresponse(guint64 conn_handle,
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static gboolean call_agent_segmentdata(guint64 conn_handle, guint handle,
+static gboolean call_agent_segmentdata(ContextId conn_handle, guint handle,
 					guint instnumber, gchar *xml)
 {
 	DBusGProxyCall *call;
@@ -1110,7 +1116,7 @@ static gboolean call_agent_segmentdata(guint64 conn_handle, guint handle,
  * @param xml PM-Store data attributes in XML format
  * @return success status
  */
-static gboolean call_agent_pmstoredata(guint64 conn_handle, guint handle, gchar *xml)
+static gboolean call_agent_pmstoredata(ContextId conn_handle, guint handle, gchar *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -1165,7 +1171,7 @@ static gboolean call_agent_pmstoredata(guint64 conn_handle, guint handle, gchar 
  * @param PM-Segment instance number
  * @return success status
  */
-static gboolean call_agent_segmentcleared(guint64 conn_handle, guint handle,
+static gboolean call_agent_segmentcleared(ContextId conn_handle, guint handle,
 							guint instnumber,
 							guint retstatus)
 {
@@ -1220,7 +1226,7 @@ static gboolean call_agent_segmentcleared(guint64 conn_handle, guint handle,
  *
  * @return success status
  */
-static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
+static gboolean call_agent_deviceattributes(ContextId conn_handle, gchar *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -1266,7 +1272,7 @@ static gboolean call_agent_deviceattributes(guint64 conn_handle, gchar *xml)
  *
  * @return success status
  */
-static gboolean call_agent_disassociated(guint64 conn_handle)
+static gboolean call_agent_disassociated(ContextId conn_handle)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -1311,7 +1317,7 @@ static gboolean call_agent_disassociated(guint64 conn_handle)
  *
  * @return success status
  */
-static gboolean call_agent_disconnected(guint64 conn_handle, const char *low_addr)
+static gboolean call_agent_disconnected(ContextId conn_handle, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -1835,7 +1841,9 @@ init_plugin:
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
-	manager_init(&plugin);
+	CommunicationPlugin *plugins[] = {&plugin, 0};
+
+	manager_init(plugins);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;

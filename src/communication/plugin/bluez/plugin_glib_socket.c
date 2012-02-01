@@ -46,6 +46,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+static unsigned int plugin_id = 0;
+
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
@@ -100,7 +102,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	DEBUG(" glib socket: network_read_apdu");
 
 	Context *ctx = (Context *) data;
-	NetworkSocket *sk = get_socket(ctx->id);
+	NetworkSocket *sk = get_socket(ctx->id.connid);
 
 	if (g_socket_is_connected(sk->socket)) {
 		GError *error;
@@ -177,8 +179,9 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 	gint fd = g_socket_get_fd(socket);
 	GIOChannel *channel = g_io_channel_unix_new(fd);
 
-	Context *ctx = communication_transport_connect_indication(
-			       (ContextId) sk->tcp_port);
+	ContextId cid = {plugin_id, sk->tcp_port};
+
+	Context *ctx = communication_transport_connect_indication(cid);
 
 	if (ctx != NULL && channel != NULL) {
 		sk->socket = socket;
@@ -233,8 +236,10 @@ static int init_socket(void *element)
  *
  * @return TCP_ERROR_NONE if operation succeeds
  */
-static int network_init()
+static int network_init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
+
 	if (llist_iterate(sockets, init_socket)) {
 		return TCP_ERROR_NONE;
 	}
@@ -273,7 +278,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
  */
 static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
-	NetworkSocket *sk = get_socket(ctx->id);
+	NetworkSocket *sk = get_socket(ctx->id.connid);
 
 	if (sk != NULL && g_socket_is_connected(sk->socket)) {
 		DEBUG(" glib socket: sending APDU...");

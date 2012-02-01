@@ -72,7 +72,7 @@ typedef struct ManagerListener {
 			.timeout = NULL\
 			}
 
-void manager_init(CommunicationPlugin *plugin);
+void manager_init(CommunicationPlugin **plugins);
 
 void manager_finalize();
 

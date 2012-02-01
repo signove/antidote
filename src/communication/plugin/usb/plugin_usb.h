@@ -36,12 +36,12 @@ typedef struct PluginUsbListener {
 	/**
 	 * Called when agent connects
 	 */
-	gboolean (*agent_connected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*agent_connected)(ContextId conn_handle, const char *addr);
 
 	/**
 	 * Called when agent disconnects
 	 */
-	gboolean (*agent_disconnected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*agent_disconnected)(ContextId conn_handle, const char *addr);
 } PluginUsbListener;
 
 void plugin_usb_setup(CommunicationPlugin *plugin);

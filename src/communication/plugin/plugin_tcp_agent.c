@@ -54,6 +54,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+unsigned int plugin_id = 0;
+
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
@@ -102,7 +104,8 @@ static int init_socket()
 		return 0;
 	}
 
-	communication_transport_connect_indication(port);
+	ContextId cid = {plugin_id, port};
+	communication_transport_connect_indication(cid);
 
 	return 1;
 }
@@ -113,9 +116,10 @@ static int init_socket()
  *
  * @return TCP_ERROR_NONE if operation succeeds
  */
-static int network_init()
+static int network_init(unsigned int plugin_label)
 {
 	if (init_socket()) {
+		plugin_id = plugin_label;
 		return TCP_ERROR_NONE;
 	}
 
@@ -184,15 +188,17 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	intu8 tmp_buffer[4];
 	int ret = read(sk, &tmp_buffer, 4);
 
+	ContextId cid = {plugin_id, port};
+
 	if (ret <= -1) {
 		close(sk);
-		communication_transport_disconnect_indication(port);
+		communication_transport_disconnect_indication(cid);
 		DEBUG(" network:tcp error");
 		sk = -1;
 		return NULL;
 	} else if (ret == 0) {
 		close(sk);
-		communication_transport_disconnect_indication(port);
+		communication_transport_disconnect_indication(cid);
 		DEBUG(" network:tcp closed");
 		sk = -1;
 		return NULL;

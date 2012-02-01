@@ -48,6 +48,8 @@
 #include "plugin_usb.h"
 #include "usb_phdc_drive.h"
 
+static unsigned int plugin_id = 0;
+
 static char *current_data = NULL;
 static int data_len = 0;
 
@@ -92,10 +94,13 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
  */
 void device_connected(guint64 handle, const char *device)
 {
+	ContextId cid = {plugin_id, handle};
+
 	if (listener) {
-		listener->agent_connected(handle, device);
+		listener->agent_connected(cid, device);
 	}
-	communication_transport_connect_indication(handle);
+
+	communication_transport_connect_indication(cid);
 }
 
 /**
@@ -106,9 +111,11 @@ void device_connected(guint64 handle, const char *device)
  */
 static void device_disconnected(guint64 handle, const char *device)
 {
-	communication_transport_disconnect_indication(handle);
+	ContextId cid = {plugin_id, handle};
+
+	communication_transport_disconnect_indication(cid);
 	if (listener) {
-		listener->agent_disconnected(handle, device);
+		listener->agent_disconnected(cid, device);
 	}
 }
 
@@ -346,7 +353,9 @@ static void data_received(usb_phdc_device *dev, unsigned char *buf, int len)
 		return;
 	}
 
-	communication_read_input_stream(context_get((ContextId)c->handle));
+	ContextId cid = {plugin_id, c->handle};
+
+	communication_read_input_stream(context_get(cid));
 }
 
 static void data_error_received(usb_phdc_device *dev)
@@ -484,10 +493,11 @@ static gboolean search_devices(gpointer dummy)
  *
  * @return success status
  */
-static int init()
+static int init(unsigned int plugin_label)
 {
 	DEBUG("Starting USB...");
 
+	plugin_id = plugin_label;
 	phdc_context = (usb_phdc_context *) calloc(1, sizeof(usb_phdc_context));
 
 	init_phdc_usb_plugin(phdc_context, added_fd, removed_fd, schedule_usb_timeout);
@@ -567,7 +577,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
 	DEBUG("Send APDU");
 
-	channel_object *c = get_channel_by_handle(ctx->id);
+	channel_object *c = get_channel_by_handle(ctx->id.connid);
 
 	if (c) {
 		return usb_send_apdu(c->impl, stream->buffer, stream->size);

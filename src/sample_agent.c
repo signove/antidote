@@ -55,7 +55,7 @@ static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 /**
  * Port used by agent to send network data
  */
-static ContextId CONTEXT_ID = 0;
+static ContextId CONTEXT_ID = {0, 0};
 
 /**
  * PLugin definition
@@ -172,7 +172,10 @@ static void fifo_mode()
 static void tcp_mode()
 {
 	int port = 6024;
-	CONTEXT_ID = port;
+	// NOTE we know that plugin id = 1 here, but
+	// might not be the case!
+	CONTEXT_ID.plugin = 1;
+	CONTEXT_ID.connid = port;
 	plugin_network_tcp_agent_setup(&comm_plugin, port);
 }
 
@@ -250,7 +253,10 @@ int main(int argc, char **argv)
 
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
-	agent_init(&comm_plugin, 0x0190 /* oximeter */,
+
+	CommunicationPlugin *plugins[] = {&comm_plugin, 0};
+
+	agent_init(plugins, 0x0190 /* oximeter */,
 			event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;

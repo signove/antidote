@@ -36,12 +36,12 @@ typedef struct PluginBluezListener {
 	/**
 	 * Called when agent connects
 	 */
-	gboolean (*peer_connected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*peer_connected)(ContextId cid, const char *btaddr);
 
 	/**
 	 * Called when agent disconnects
 	 */
-	gboolean (*peer_disconnected)(guint64 conn_handle, const char *btaddr);
+	gboolean (*peer_disconnected)(ContextId cid, const char *btaddr);
 } PluginBluezListener;
 
 void plugin_bluez_setup(CommunicationPlugin *plugin);

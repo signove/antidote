@@ -63,14 +63,14 @@ jmethodID jni_up_segmentcleared = 0;
 
 // FIXME create extented configuration file in proper Android path
 
-static void notif_java_measurementdata(unsigned long long, char *);
-static void notif_java_disassociated(unsigned long long);
-static void notif_java_associated(unsigned long long, char *);
-static void notif_java_segmentinfo(unsigned long long, int, char *);
-static void notif_java_segmentdataresponse(unsigned long long, int, int, int);
-static void notif_java_segmentdata(unsigned long long, int, int, char *);
-static void notif_java_segmentcleared(unsigned long long, int, int, int);
-static void notif_java_pmstoredata(unsigned long long, int, char *);
+static void notif_java_measurementdata(ContextId, char *);
+static void notif_java_disassociated(ContextId);
+static void notif_java_associated(ContextId, char *);
+static void notif_java_segmentinfo(ContextId, int, char *);
+static void notif_java_segmentdataresponse(ContextId, int, int, int);
+static void notif_java_segmentdata(ContextId, int, int, char *);
+static void notif_java_segmentcleared(ContextId, int, int, int);
+static void notif_java_pmstoredata(ContextId, int, char *);
 
 CommunicationPlugin plugin;
 
@@ -240,7 +240,7 @@ void device_disassociated(Context *ctx)
  *
  * @return success status
  */
-static void notif_java_associated(unsigned long long conn_handle, char *xml)
+static void notif_java_associated(ContextId conn_handle, char *xml)
 {
 	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_associated,
@@ -254,7 +254,7 @@ static void notif_java_associated(unsigned long long conn_handle, char *xml)
  * @param xml Data in xml format
  * @return success status
  */
-static void notif_java_measurementdata(unsigned long long conn_handle, char *xml)
+static void notif_java_measurementdata(ContextId conn_handle, char *xml)
 {
 	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
@@ -268,7 +268,7 @@ static void notif_java_measurementdata(unsigned long long conn_handle, char *xml
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentinfo(unsigned long long conn_handle, int handle, char *xml)
+static void notif_java_segmentinfo(ContextId conn_handle, int handle, char *xml)
 {
 	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,jni_up_segmentinfo(conn_handle, handle, xml);
 	// FIXME
@@ -284,7 +284,7 @@ static void notif_java_segmentinfo(unsigned long long conn_handle, int handle, c
  * @param status Return status
  * @return success status
  */
-static void notif_java_segmentdataresponse(unsigned long long conn_handle,
+static void notif_java_segmentdataresponse(ContextId conn_handle,
 			int handle, int instnumber, int retstatus)
 {
 	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_segmentdataresponse(conn_handle, handle, instnumber, retstatus);
@@ -301,7 +301,7 @@ static void notif_java_segmentdataresponse(unsigned long long conn_handle,
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentdata(unsigned long long conn_handle, int handle,
+static void notif_java_segmentdata(ContextId conn_handle, int handle,
 					int instnumber, char *xml)
 {
 	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_segmentdata(conn_handle, handle, instnumber, jxml);
@@ -317,7 +317,7 @@ static void notif_java_segmentdata(unsigned long long conn_handle, int handle,
  * @param xml PM-Store data attributes in XML format
  * @return success status
  */
-static void notif_java_pmstoredata(unsigned long long conn_handle, int handle, char *xml)
+static void notif_java_pmstoredata(ContextId conn_handle, int handle, char *xml)
 {
 	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_pmstoredata(conn_handle, handle, jxml);
 	// FIXME
@@ -332,7 +332,7 @@ static void notif_java_pmstoredata(unsigned long long conn_handle, int handle, c
  * @param PM-Segment instance number
  * @return success status
  */
-static void notif_java_segmentcleared(unsigned long long conn_handle, int handle,
+static void notif_java_segmentcleared(ContextId conn_handle, int handle,
 							int instnumber,
 							int retstatus)
 {
@@ -346,7 +346,7 @@ static void notif_java_segmentcleared(unsigned long long conn_handle, int handle
  *
  * @return success status
  */
-static void notif_java_deviceattributes(unsigned long long conn_handle, char *xml)
+static void notif_java_deviceattributes(ContextId conn_handle, char *xml)
 {
 	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
@@ -358,7 +358,7 @@ static void notif_java_deviceattributes(unsigned long long conn_handle, char *xm
  *
  * @return success status
  */
-static void notif_java_disassociated(unsigned long long conn_handle)
+static void notif_java_disassociated(ContextId conn_handle)
 {
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
 			jni_up_disassociated, (jint) conn_handle);

@@ -53,6 +53,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+static unsigned int plugin_id = 0;
+
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
@@ -164,7 +166,8 @@ static int init_socket(void *element)
 		return 0;
 	}
 
-	communication_transport_connect_indication((ContextId) sk->tcp_port);
+	ContextId cid = {plugin_id, sk->tcp_port};
+	communication_transport_connect_indication(cid);
 
 	if (error < 0) {
 		DEBUG(" network:tcp Error in listen %d", sk->server_sk);
@@ -182,8 +185,10 @@ static int init_socket(void *element)
  *
  * @return TCP_ERROR_NONE if operation succeeds
  */
-static int network_init()
+static int network_init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
+
 	if (llist_iterate(sockets, init_socket)) {
 		return TCP_ERROR_NONE;
 	}
@@ -199,7 +204,7 @@ static int network_init()
  */
 static int network_tcp_wait_for_data(Context *ctx)
 {
-	NetworkSocket *sk = get_socket(ctx->id);
+	NetworkSocket *sk = get_socket(ctx->id.connid);
 
 	if (sk != NULL) {
 		if (sk->connected == 0) {
@@ -241,7 +246,8 @@ static int network_tcp_wait_for_data(Context *ctx)
  */
 static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 {
-	NetworkSocket *sk = get_socket(ctx->id);
+	NetworkSocket *sk = get_socket(ctx->id.connid);
+	ContextId cid = {plugin_id, sk->tcp_port};
 
 	if (sk != NULL) {
 		// Needed to get buffer_cur size
@@ -250,15 +256,15 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 
 		if (ret == -1) {
 			sk->connected = 0;
-			communication_transport_disconnect_indication((ContextId) sk->tcp_port);
+			communication_transport_disconnect_indication(cid);
 			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication((ContextId) sk->tcp_port);
+			communication_transport_connect_indication(cid);
 			return NULL;
 		} else if (ret == 0) {
 			sk->connected = 0;
-			communication_transport_disconnect_indication((ContextId) sk->tcp_port);
+			communication_transport_disconnect_indication(cid);
 			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication((ContextId) sk->tcp_port);
+			communication_transport_connect_indication(cid);
 			return NULL;
 		} else if (ret != 4) {
 			DEBUG(" network:tcp Stream should have at least 4 bytes: %d.", ret);
@@ -319,7 +325,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
  */
 static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
-	NetworkSocket *sk = get_socket(ctx->id);
+	NetworkSocket *sk = get_socket(ctx->id.connid);
 
 	if (sk != NULL) {
 

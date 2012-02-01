@@ -40,6 +40,8 @@
 #include "src/util/log.h"
 #include "plugin_android.h"
 
+unsigned int plugin_id = 0;
+
 static char *current_data = NULL;
 static int data_len = 0;
 
@@ -108,7 +110,8 @@ void plugin_android_setup(CommunicationPlugin *plugin)
 static int force_disconnect_channel(Context *c)
 {
 	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
-					jni_up_disconnect_channel, (jint) c->id);
+					jni_up_disconnect_channel,
+					(jint) c->id.connid);
 	return 1;
 }
 
@@ -117,8 +120,9 @@ static int force_disconnect_channel(Context *c)
  *
  * @return success status
  */
-static int init()
+static int init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
 	return NETWORK_ERROR_NONE;
 }
 
@@ -179,7 +183,7 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
 	data_len = len;
 	current_data = data;
 	current_data[len] = '\0';
-	communication_read_input_stream(context_get(handle));
+	communication_read_input_stream(context_get(plugin_id, handle));
 }
 
 
@@ -193,7 +197,9 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 	jbyteArray ba = (*bridge_env)->NewByteArray(bridge_env, stream->size);
 	(*bridge_env)->SetByteArrayRegion(bridge_env, ba, 0, stream->size, (jbyte*) stream->buffer);
 	DEBUG("healthd c: calling send_data");
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_send_data, (jint) ctx->id, ba);
+	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+					jni_up_send_data,
+					(jint) ctx->id.connid, ba);
 
 	return NETWORK_ERROR_NONE;
 }

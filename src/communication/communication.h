@@ -59,9 +59,9 @@ extern struct mds_system_data *(*agent_mds_data_cb)();
  */
 typedef void (*communication_state_transition_handler_function)(Context *ctx, fsm_states previous, fsm_states next);
 
-void communication_set_plugin(CommunicationPlugin *plugin);
+void communication_add_plugin(CommunicationPlugin *plugin);
 
-CommunicationPlugin *communication_get_plugin();
+CommunicationPlugin *communication_get_plugin(unsigned int label);
 
 int communication_init();
 

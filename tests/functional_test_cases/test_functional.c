@@ -53,7 +53,8 @@ int functional_test_init()
 	FUNCTIONAL_TEST_COMM_PLUGIN = communication_plugin();
 	plugin_network_fifo_setup(&FUNCTIONAL_TEST_COMM_PLUGIN, FUNC_TEST_SINGLE_CONTEXT, 0);
 	plugin_pthread_setup(&FUNCTIONAL_TEST_COMM_PLUGIN);
-	manager_init(&FUNCTIONAL_TEST_COMM_PLUGIN);
+	CommunicationPlugin *plugins[] = {&FUNCTIONAL_TEST_COMM_PLUGIN, 0};
+	manager_init(plugins);
 	return 0;
 }
 

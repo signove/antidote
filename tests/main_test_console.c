@@ -60,14 +60,12 @@ static DBusConnection *connection = NULL;
 /**
  * Context ID DEFAULT
  */
-static int DEFAULT_CONTEXT_ID = 0;
+static ContextId DEFAULT_CONTEXT_ID = {1, 97};
 
 /**
  * PLugin definition
  */
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
-
-
 
 /**
  * New data has been received
@@ -75,7 +73,8 @@ static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
  */
 void new_data_received(Context *ctx, DataList *list)
 {
-	fprintf(stderr, "Medical Device System Data Updated (Context %llx):\n", ctx->id);
+	fprintf(stderr, "Medical Device System Data Updated (Context %u:%llx):\n",
+			ctx->id.plugin, ctx->id.connid);
 
 	char *data = xml_encode_data_list(list);
 
@@ -91,7 +90,8 @@ void new_data_received(Context *ctx, DataList *list)
 
 void device_associated(Context *ctx, DataList *list)
 {
-	fprintf(stderr, " Medical Device System Associated (Context %llx):\n", ctx->id);
+	fprintf(stderr, " Medical Device System Associated (Context %u:%llx):\n",
+			ctx->id.plugin, ctx->id.connid);
 }
 
 
@@ -160,7 +160,8 @@ static void fifo_mode()
 static void tcp_mode()
 {
 	int port = 6024;
-	DEFAULT_CONTEXT_ID = port;
+	ContextId cid = {1, port};
+	DEFAULT_CONTEXT_ID = cid;
 	// Four concurrent Agent support
 	plugin_network_tcp_setup(&comm_plugin, 4, DEFAULT_CONTEXT_ID, 6025, 6026, 6027);
 }
@@ -212,7 +213,8 @@ int main(int argc, char **argv)
 
 	plugin_pthread_setup(&comm_plugin);
 
-	manager_init(&comm_plugin);
+	CommunicationPlugin *plugins[] = {&comm_plugin, 0};
+	manager_init(plugins);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;

@@ -119,7 +119,7 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  * @param event_report_cb The event report callback
  * @param mds_data_cb Data callback
  */
-void agent_init(CommunicationPlugin *plugin, int specialization,
+void agent_init(CommunicationPlugin **plugins, int specialization,
 		void *(*event_report_cb)(),
 		struct mds_system_data *(*mds_data_cb)())
 {
@@ -128,10 +128,12 @@ void agent_init(CommunicationPlugin *plugin, int specialization,
 	agent_specialization = specialization;
 	agent_event_report_cb = event_report_cb;
 	agent_mds_data_cb = mds_data_cb;
-
-	plugin->type = AGENT_CONTEXT;
-
-	communication_set_plugin(plugin);
+	
+	while (*plugins) {
+		(*plugins)->type = AGENT_CONTEXT;
+		communication_add_plugin(*plugins);
+		++plugins;
+	}
 
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &agent_handle_transition_evt);

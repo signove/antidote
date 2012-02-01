@@ -32,7 +32,11 @@
 #ifndef CONTEXT_H_
 #define CONTEXT_H_
 
-typedef unsigned long long ContextId;
+typedef struct ContextId {
+	unsigned int plugin;
+	unsigned long long connid;
+} ContextId;
+
 typedef struct Context Context;
 
 /**

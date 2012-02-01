@@ -73,7 +73,8 @@ static communication_network_status network_status;
 /**
  * CommunicationPlugin connection abstraction.
  */
-static CommunicationPlugin *comm_plugin = NULL;
+static unsigned int plugin_count = 0;
+static CommunicationPlugin **comm_plugins = NULL;
 
 /**
  * Mask to remote operation (ro*) type checking
@@ -135,17 +136,32 @@ static int communication_fire_transport_disconnect_evt(Context *ctx);
  * Set communication plugin implementation. It should be called
  * before any other communication function.
  */
-void communication_set_plugin(CommunicationPlugin *plugin)
+void communication_add_plugin(CommunicationPlugin *plugin)
 {
-	comm_plugin = plugin;
+	++plugin_count;
+	int size = sizeof(CommunicationPlugin *) * (plugin_count + 1);
+
+	if (!comm_plugins) {
+		// keep zero as invalid
+		comm_plugins = malloc(size);
+		comm_plugins[0] = 0;
+	} else {
+		comm_plugins = realloc(comm_plugins, size);
+	}
+
+	comm_plugins[plugin_count] = plugin;
 }
 
 /**
  * Get communication plugin impl structure
  */
-CommunicationPlugin *communication_get_plugin()
+CommunicationPlugin *communication_get_plugin(unsigned int label)
 {
-	return comm_plugin;
+	if (!label || (label > plugin_count)) {
+		ERROR("Plugin id %d unknown", label);
+		return 0;
+	}
+	return comm_plugins[label];
 }
 
 /**
@@ -153,6 +169,12 @@ CommunicationPlugin *communication_get_plugin()
  */
 int communication_finalize_thread_context(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	comm_plugin->thread_finalize(ctx);
 	return 1;
 }
@@ -166,6 +188,12 @@ int communication_force_disconnect(Context *ctx)
 		return 0;
 	}
 
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	comm_plugin->network_disconnect(ctx);
 	return 1;
 }
@@ -178,6 +206,7 @@ int communication_force_disconnect(Context *ctx)
  */
 void communication_finalize()
 {
+	int i;
 	DEBUG(" communication: Finalizing. ");
 
 	// Reset all timeouts
@@ -185,18 +214,26 @@ void communication_finalize()
 	// Finalizes all threads in execution
 
 	if (communication_is_network_started()) {
-		if (comm_plugin->network_finalize() == NETWORK_ERROR_NONE) {
-			network_status = NETWORK_STATUS_NOT_INITIALIZED;
+		for (i = 1; i <= plugin_count; ++i) {
+			CommunicationPlugin *comm_plugin = comm_plugins[i];
+			if (comm_plugin->network_finalize() != NETWORK_ERROR_NONE) {
+				DEBUG("Trouble finalizing plugin %d", i);
+			}
 		}
+
+		network_status = NETWORK_STATUS_NOT_INITIALIZED;
 
 		context_iterate(&communication_fire_transport_disconnect_evt);
 	}
 
-
 	communication_remove_all_state_transition_listeners();
 	context_remove_all();
 
-	communication_plugin_clear(comm_plugin);
+	for (i = 1; i <= plugin_count; ++i) {
+		CommunicationPlugin *comm_plugin = comm_plugins[i];
+		communication_plugin_clear(comm_plugin);
+	}
+
 	// thread-safe block - end
 }
 
@@ -265,13 +302,18 @@ void communication_remove_all_state_transition_listeners()
 void communication_network_start()
 {
 	if (network_status == NETWORK_STATUS_NOT_INITIALIZED) {
-		int ret_code = comm_plugin->network_init();
+		int i;
 
-		if (ret_code == NETWORK_ERROR_NONE) {
-			network_status = NETWORK_STATUS_INITIALIZED;
-		} else {
-			ERROR(" Cannot initialize network plugin.");
+		for (i = 1; i <= plugin_count; ++i) {
+			CommunicationPlugin *comm_plugin = comm_plugins[i];
+			int ret_code = comm_plugin->network_init(i);
+
+			if (ret_code != NETWORK_ERROR_NONE) {
+				ERROR(" Cannot initialize plugin %d", i);
+			}
 		}
+
+		network_status = NETWORK_STATUS_INITIALIZED;
 
 	} else if (network_status == NETWORK_STATUS_INITIALIZED) {
 		INFO(" Network is already initialized.");
@@ -315,9 +357,16 @@ int communication_network_stop()
 {
 	DEBUG("communication: shutting down network.");
 
-	if (comm_plugin->network_finalize() == NETWORK_ERROR_NONE) {
-		network_status = NETWORK_STATUS_NOT_INITIALIZED;
+	int i;
+
+	for (i = 1; i <= plugin_count; ++i) {
+		CommunicationPlugin *comm_plugin = comm_plugins[i];
+		if (comm_plugin->network_finalize() != NETWORK_ERROR_NONE) {
+			DEBUG("Trouble finalizing plugin %d", i);
+		}
 	}
+
+	network_status = NETWORK_STATUS_NOT_INITIALIZED;
 
 	context_iterate(&communication_fire_transport_disconnect_evt);
 
@@ -333,6 +382,12 @@ int communication_network_stop()
  */
 Context *communication_transport_connect_indication(ContextId id)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	Context *ctx = context_create(id, comm_plugin->type);
 
 	// thread-safe block - begin
@@ -372,6 +427,12 @@ void communication_transport_disconnect_indication(ContextId id)
  */
 void communication_lock(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return;
+
 	comm_plugin->thread_lock(ctx);
 }
 
@@ -383,6 +444,12 @@ void communication_lock(Context *ctx)
  */
 void communication_unlock(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return;
+
 	comm_plugin->thread_unlock(ctx);
 }
 
@@ -392,6 +459,12 @@ void communication_unlock(Context *ctx)
  */
 int communication_wait_for_data_input(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	return comm_plugin->network_wait_for_data(ctx);
 }
 
@@ -440,6 +513,12 @@ void communication_process_input_data(Context *ctx, ByteStreamReader *stream)
  */
 ByteStreamReader *communication_get_apdu_stream(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	return comm_plugin->network_get_apdu_stream(ctx);
 }
 
@@ -565,6 +644,12 @@ void communication_process_apdu(Context *ctx, APDU *apdu)
  */
 int communication_send_apdu(Context *ctx, APDU *apdu)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	// thread-safe block - start
 	communication_lock(ctx);
 
@@ -588,7 +673,6 @@ int communication_send_apdu(Context *ctx, APDU *apdu)
 		return 1;
 
 	return 0;
-
 }
 
 /**
@@ -599,6 +683,12 @@ int communication_send_apdu(Context *ctx, APDU *apdu)
  */
 void communication_abort(Context *ctx, Abort_reason reason)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return;
+
 	// thread-safe block - start
 	communication_lock(ctx);
 
@@ -961,6 +1051,12 @@ void communication_cancel_connection_loop(Context *ctx)
  */
 int communication_count_timeout(Context *ctx, timer_callback_function func, intu32 timeout)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return 0;
+
 	communication_reset_timeout(ctx);
 	ctx->timeout_action.func = func;
 	ctx->timeout_action.timeout = timeout;
@@ -973,6 +1069,12 @@ int communication_count_timeout(Context *ctx, timer_callback_function func, intu
  */
 void communication_reset_timeout(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return;
+
 	comm_plugin->timer_reset_timeout(ctx);
 	ctx->timeout_action.func = NULL;
 	ctx->timeout_action.timeout = 0;
@@ -986,6 +1088,12 @@ void communication_reset_timeout(Context *ctx)
  */
 void communication_wait_for_timeout(Context *ctx)
 {
+	CommunicationPlugin *comm_plugin =
+		communication_get_plugin(ctx->id.plugin);
+
+	if (!comm_plugin)
+		return;
+
 	comm_plugin->timer_wait_for_timeout(ctx);
 }
 

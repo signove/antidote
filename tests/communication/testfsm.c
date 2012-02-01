@@ -63,7 +63,8 @@ void testfsm_add_suite()
 void test_fsm()
 {
 	// Create connection context which include the state machine
-	Context *ctx = context_create(99, MANAGER_CONTEXT);
+	ContextId cid = {1, 99};
+	Context *ctx = context_create(cid, MANAGER_CONTEXT);
 
 	FSM *fsm = ctx->fsm;
 
@@ -93,7 +94,7 @@ void test_fsm()
 	fsm_set_manager_state_table(fsm);
 	CU_ASSERT_EQUAL(fsm->state, fsm_state_disconnected);
 
-	context_remove(99);
+	context_remove(cid);
 }
 
 void testfsm_action1(Context *ctx, fsm_events evt, FSMEventData *data)

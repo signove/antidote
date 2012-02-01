@@ -82,7 +82,7 @@ typedef void (*thread_finalize_ptr)(PluginContext *ctx);
 /**
  * Function prototype for Network support
  */
-typedef int (*network_init_ptr)();
+typedef int (*network_init_ptr)(unsigned int plugin_label);
 /**
  * Function prototype for Network support
  */

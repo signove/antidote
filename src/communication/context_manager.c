@@ -65,7 +65,8 @@ static int destroy_context(void *element)
 	Context *context = (Context *) element;
 
 	if (context != NULL) {
-		DEBUG(" communication: destroying context %llx", context->id);
+		DEBUG(" communication: destroying context %u:%llx",
+				context->id.plugin, context->id.connid);
 
 		if (context->fsm != NULL) {
 			fsm_destroy(context->fsm);
@@ -109,7 +110,7 @@ static int context_search_by_id(void *arg, void *element)
 		return 0;
 	}
 
-	return *id == c->id;
+	return (id->plugin == c->id.plugin) && (id->connid == c->id.connid);
 }
 
 /**
@@ -133,7 +134,7 @@ Context *context_create(ContextId id, int type)
 	Context *context = calloc(1, sizeof(struct Context));
 
 	if (context == NULL || !llist_add(context_list, context)) {
-		ERROR("Cannot create context  %llx", context->id);
+		ERROR("Cannot create context %u:%llx", context->id.plugin, context->id.connid);
 		return NULL;
 	}
 
@@ -151,7 +152,7 @@ Context *context_create(ContextId id, int type)
 
 	context->id = id;
 
-	DEBUG("Created context id %llx", context->id);
+	DEBUG("Created context id %u:%llx", context->id.plugin, context->id.connid);
 
 	return context;
 }
@@ -192,7 +193,7 @@ Context *context_get(ContextId id)
 			&context_search_by_id);
 
 	if (ctx == NULL) {
-		WARNING("Cannot find context id %llx", id);
+		WARNING("Cannot find context id %u:%llx", id.plugin, id.connid);
 	}
 
 	return ctx;

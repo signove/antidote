@@ -51,6 +51,8 @@
 #include "src/util/log.h"
 #include "plugin_bluez.h"
 
+static unsigned int plugin_id = 0;
+
 static DBusGConnection *conn = NULL;
 static DBusGProxy *manager = NULL;
 
@@ -91,9 +93,9 @@ static guint64 last_handle = 0;
 
 static PluginBluezListener *listener = NULL;
 
-static int send_data(guint64 handle, unsigned char *data, int len);
+static int send_data(uint64_t connid, unsigned char *data, int len);
 
-static int init();
+static int init(unsigned int plugin_label);
 static int finalize();
 static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
@@ -109,10 +111,11 @@ static int disconnect_channel(guint64 handle);
  */
 static void device_connected(guint64 handle, const char *device)
 {
+	ContextId cid = {plugin_id, handle};
 	if (listener) {
-		listener->peer_connected(handle, device);
+		listener->peer_connected(cid, device);
 	}
-	communication_transport_connect_indication(handle);
+	communication_transport_connect_indication(cid);
 }
 
 /**
@@ -123,9 +126,10 @@ static void device_connected(guint64 handle, const char *device)
  */
 static void device_disconnected(guint64 handle, const char *device)
 {
-	communication_transport_disconnect_indication(handle);
+	ContextId cid = {plugin_id, handle};
+	communication_transport_disconnect_indication(cid);
 	if (listener) {
-		listener->peer_disconnected(handle, device);
+		listener->peer_disconnected(cid, device);
 	}
 }
 
@@ -579,7 +583,7 @@ static int disconnect_channel(guint64 handle)
  */
 static int force_disconnect_channel(Context *c)
 {
-	return disconnect_channel(c->id);
+	return disconnect_channel(c->id.connid);
 }
 
 
@@ -1171,8 +1175,10 @@ static void disconnect_manager_signals()
  *
  * @return success status
  */
-static int init()
+static int init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
+
 	GError *error = NULL;
 
 	if (conn)
@@ -1319,7 +1325,8 @@ static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy
 			memcpy(current_data, buf, len);
 			current_data[len] = '\0';
 
-			communication_read_input_stream(context_get((ContextId)c->handle));
+			ContextId cid = {plugin_id, c->handle};
+			communication_read_input_stream(context_get(cid));
 		}
 	}
 
@@ -1341,7 +1348,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
 	DEBUG("\nSend APDU");
 
-	int ret = send_data(ctx->id, stream->buffer, stream->size);
+	int ret = send_data(ctx->id.connid, stream->buffer, stream->size);
 
 	if (ret != stream->size) {
 		DEBUG("Error sending APDU. %d bytes sent. Should have sent %d.",
@@ -1360,12 +1367,12 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
  * @param *data
  * @param len
  */
-static int send_data(guint64 handle, unsigned char *data, int len)
+static int send_data(uint64_t connid, unsigned char *data, int len)
 {
 	int sent, just_sent;
 	channel_object *c;
 
-	c = get_channel_by_handle(handle);
+	c = get_channel_by_handle(connid);
 
 	if (!c) {
 		DEBUG("unknown channel by handle");

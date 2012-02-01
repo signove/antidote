@@ -42,6 +42,8 @@
 #include "src/util/log.h"
 #include "src/util/ioutil.h"
 
+static unsigned int plugin_id = 0;
+
 static const int FIFO_ERROR = NETWORK_ERROR;
 static const int FIFO_ERROR_NONE = NETWORK_ERROR_NONE;
 
@@ -56,12 +58,14 @@ static ContextId ctx_id;
  *
  * @return FIFO_ERROR_NONE if operation succeeds.
  */
-static int network_init()
+static int network_init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
+
 	DEBUG(" network:fd Initializing network layer ");
 	DEBUG(" opening file descriptors for Data I/O ");
 
-	int type = communication_get_plugin()->type;
+	int type = communication_get_plugin(plugin_id)->type;
 
 	// exchange FIFOs between manager and agent
 	const char *rd = type == MANAGER_CONTEXT ? "read_fifo" : "write_fifo";

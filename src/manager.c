@@ -152,11 +152,15 @@ static void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm
  *
  * @param plugin the configured plugin to define communication behaviour
  */
-void manager_init(CommunicationPlugin *plugin)
+void manager_init(CommunicationPlugin **plugins)
 {
 	DEBUG("Manager Initialization");
-	plugin->type = MANAGER_CONTEXT;
-	communication_set_plugin(plugin);
+
+	while (*plugins) {
+		(*plugins)->type = MANAGER_CONTEXT;
+		communication_add_plugin(*plugins);
+		++plugins;
+	}
 
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &manager_handle_transition_evt);

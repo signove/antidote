@@ -34,7 +34,7 @@
 #include "src/communication/service.h"
 #include "src/dim/mds.h"
 
-static const ContextId FUNC_TEST_SINGLE_CONTEXT = 1;
+static const ContextId FUNC_TEST_SINGLE_CONTEXT = {1, 1};
 
 #define apdu_blood_pressure_aarq "tests/resources/apdu/blood_pressure/aarq"
 #define apdu_blood_pressure_aare_accept_unknown_conf "tests/resources/apdu/blood_pressure/aare_accept_unknown_conf"

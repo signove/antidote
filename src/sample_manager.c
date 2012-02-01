@@ -48,7 +48,7 @@
 /**
  * Port used by agent to send network data
  */
-static ContextId CONTEXT_ID = 0;
+static ContextId CONTEXT_ID = {0, 0};
 
 /**
  * PLugin definition
@@ -186,7 +186,10 @@ static void fifo_mode()
 static void tcp_mode()
 {
 	int port = 6024;
-	CONTEXT_ID = port;
+	// NOTE we know that plugin id=1 here,
+	// but might not be the case if there were many plugins!
+	CONTEXT_ID.plugin = 1;
+	CONTEXT_ID.connid = port;
 	plugin_network_tcp_setup(&comm_plugin, 1, port);
 }
 
@@ -226,7 +229,9 @@ int main(int argc, char **argv)
 
 	comm_plugin.timer_count_timeout = timer_count_timeout;
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
-	manager_init(&comm_plugin);
+
+	CommunicationPlugin *comm_plugins[] = {&comm_plugin, 0};
+	manager_init(comm_plugins);
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;

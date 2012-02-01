@@ -68,7 +68,7 @@ typedef struct AgentListener {
 
 struct mds_system_data;
 
-void agent_init(CommunicationPlugin *plugin, int specialization,
+void agent_init(CommunicationPlugin **plugins, int specialization,
 		void *(*event_report_cb)(),
 		struct mds_system_data *(*mds_data_cb)());
 
