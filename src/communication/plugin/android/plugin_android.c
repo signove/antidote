@@ -141,7 +141,7 @@ static int finalize()
 static ByteStreamReader *get_apdu(struct Context *ctx)
 {
 	unsigned char *buffer;
-	DEBUG("\ndbus get APDU stream");
+	DEBUG("\nandplug get APDU stream");
 
 	// Create bytestream
 	buffer = malloc(data_len);
@@ -150,11 +150,11 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 	ByteStreamReader *stream = byte_stream_reader_instance(buffer, data_len);
 
 	if (stream == NULL) {
-		ERROR("\n network:dbus Error creating bytelib");
+		ERROR("\n andplug Error creating bytelib");
 		return NULL;
 	}
 
-	DEBUG(" network:dbus APDU received ");
+	DEBUG(" andplug APDU received ");
 
 	return stream;
 }
