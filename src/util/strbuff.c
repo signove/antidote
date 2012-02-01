@@ -31,6 +31,7 @@
 #include "strbuff.h"
 #include <string.h>
 #include <stdlib.h>
+#include "src/util/log.h"
 
 
 /**
@@ -160,5 +161,53 @@ void strbuff_del(StringBuffer *sb)
 	}
 }
 
+
+static inline char *xmlescapec(char *orig, char *s, char c, char *repl, int repl_len)
+{
+	unsigned int i = 0;
+	unsigned int len = 0;
+	char *cpos;
+	
+	while ((cpos = strchr(s + i, c))) {
+		if (!len)
+			len = strlen(s);
+		unsigned int pos = cpos - s;
+
+		if (s == orig) {
+			// untouched
+			s = malloc(len + repl_len - 1 + 1);
+			memcpy(s, orig, len + 1);
+		} else {
+			// already malloc'ed
+			s = realloc(s, len + repl_len - 1 + 1);
+		}
+
+		memmove(s + pos + repl_len, s + pos + 1, len - pos);
+		memcpy(s + pos, repl, repl_len);
+
+		i = pos + repl_len;
+		len += repl_len - 1;
+	}
+
+	return s;
+}
+
+static inline char *xmlescape(char *s)
+{
+	char *se = xmlescapec(s, s, '&', "&amp;", 5);
+	se = xmlescapec(s, se, '<', "&lt;", 4);
+	se = xmlescapec(s, se, '>', "&gt;", 4);
+	return se;
+}
+
+int strbuff_xcat(StringBuffer *sb, char *s)
+{
+	char *se = xmlescape(s);
+	int ret = strbuff_cat(sb, se);
+	if (s != se) {
+		free(se);
+	}
+	return ret;
+}
 
 /*! @} */

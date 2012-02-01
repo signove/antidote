@@ -1,8 +1,4 @@
-/* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
-/**
- * \file strbuff.h
- * \brief String Buffer header.
- *
+/**********************************************************************
  * Copyright (C) 2010 Signove Tecnologia Corporation.
  * All rights reserved.
  * Contact: Signove Tecnologia Corporation (contact@signove.com)
@@ -24,23 +20,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  * $LICENSE_TEXT:END$
  *
- * \date Aug 3, 2010
- * \author Fabricio Silva
- */
+ * testencoder.h
+ *
+ * Created on: Jun 16, 2010
+ *     Author: mateus.lima
+ **********************************************************************/
 
-#ifndef STRBUFF_H_
-#define STRBUFF_H_
+#ifndef TESTXML_H_
+#define TESTXML_H_
 
-typedef struct StringBuffer {
-	char *str;
-	int size;
-} StringBuffer;
+#ifdef TEST_ENABLED
 
-StringBuffer *strbuff_new(int initial_size);
-int strbuff_cat(StringBuffer *buf, char *str);
-int strbuff_xcat(StringBuffer *buf, char *str);
-void strbuff_del(StringBuffer *sb);
+void testxml_add_suite(void);
+void testxml_test();
+void test_xml_1();
 
+#endif /* TEST_ENABLED */
 
+#endif /* TESTXML_H_ */
 
-#endif /* STRBUFF_H_ */

@@ -75,6 +75,7 @@ AC_CONFIG_FILES([Makefile \
           src/specializations/Makefile \
           src/antidote.pc
           tests/Makefile \
+          tests/api/Makefile \
           tests/dim/Makefile \
           tests/communication/Makefile \
           tests/communication/parser/Makefile \

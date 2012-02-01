@@ -46,6 +46,7 @@
 
 static void read_entries(DataEntry *values, int size, StringBuffer *sb);
 
+
 /**
  * Converts the simple data entry to XML format and saves the value into a string buffer.
  *
@@ -56,13 +57,13 @@ static void describe_simple_entry(SimpleDataEntry *simple, StringBuffer *sb)
 {
 	strbuff_cat(sb, "<simple>");
 	strbuff_cat(sb, "<name>");
-	strbuff_cat(sb, simple->name);
+	strbuff_xcat(sb, simple->name);
 	strbuff_cat(sb, "</name>");
 	strbuff_cat(sb, "<type>");
-	strbuff_cat(sb, simple->type);
+	strbuff_xcat(sb, simple->type);
 	strbuff_cat(sb, "</type>");
 	strbuff_cat(sb, "<value>");
-	strbuff_cat(sb, simple->value);
+	strbuff_xcat(sb, simple->value);
 	strbuff_cat(sb, "</value>");
 	strbuff_cat(sb, "</simple>");
 }
@@ -77,7 +78,7 @@ static void describe_cmp_entry(CompoundDataEntry *cmp, StringBuffer *sb)
 {
 	strbuff_cat(sb, "<compound>");
 	strbuff_cat(sb, "<name>");
-	strbuff_cat(sb, cmp->name);
+	strbuff_xcat(sb, cmp->name);
 	strbuff_cat(sb, "</name>");
 	strbuff_cat(sb, "<entries>");
 
@@ -107,9 +108,9 @@ static void describe_meta_data(DataEntry *data, StringBuffer *sb)
 
 			if (meta != NULL && meta->name != NULL) {
 				strbuff_cat(sb, "<meta name=\"");
-				strbuff_cat(sb, meta->name);
+				strbuff_xcat(sb, meta->name);
 				strbuff_cat(sb, "\">");
-				strbuff_cat(sb, meta->value);
+				strbuff_xcat(sb, meta->value);
 				strbuff_cat(sb, "</meta>");
 			}
 		}

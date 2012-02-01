@@ -42,6 +42,7 @@
 #include "communication/parser/testparser.h"
 #include "communication/parser/testbytelib.h"
 #include "communication/encoder/testencoder.h"
+#include "api/testxml.h"
 #include "communication/testcontextmanager.h"
 #include "communication/testfsm.h"
 #include "communication/testservice.h"
@@ -76,6 +77,7 @@ void add_test_suites()
 	/* Add All test suites here - Start */
 
 	// Unit tests
+	testxml_add_suite();
 	testdim_add_suite();
 	testmds_add_suite();
 	testpmstore_add_suite();
