@@ -118,8 +118,9 @@ static int init_socket()
  */
 static int network_init(unsigned int plugin_label)
 {
+	plugin_id = plugin_label;
+
 	if (init_socket()) {
-		plugin_id = plugin_label;
 		return TCP_ERROR_NONE;
 	}
 
