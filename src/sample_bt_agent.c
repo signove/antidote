@@ -226,7 +226,7 @@ static void *event_report_cb()
 
 	data->beats = 60.5 + random() % 20;
 	data->oximetry = 90.5 + random() % 10;
-	data->century = nowtm.tm_year / 100;
+	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;
 	data->day = nowtm.tm_mday;

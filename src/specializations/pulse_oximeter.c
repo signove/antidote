@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "pulse_oximeter.h"
 #include "src/util/bytelib.h"
+#include "src/util/dateutil.h"
 #include "communication/parser/encoder_ASN1.h"
 #include "src/dim/nomenclature.h"
 #include "src/dim/mds.h"
@@ -227,14 +228,13 @@ static DATA_apdu *pulse_oximeter_populate_event_report(void *edata)
 	data = calloc(sizeof(DATA_apdu), 1);
 	evtdata = (struct oximeter_event_report_data*) edata;
 
-	nu_time.century = evtdata->century;
-	nu_time.year = evtdata->year;
-	nu_time.month = evtdata->month;
-	nu_time.day = evtdata->day;
-	nu_time.hour = evtdata->hour;
-	nu_time.minute = evtdata->minute;
-	nu_time.second = evtdata->second;
-	nu_time.sec_fractions = evtdata->sec_fractions;
+	nu_time = date_util_create_absolute_time(evtdata->century * 100 + evtdata->year,
+						evtdata->month,
+						evtdata->day,
+						evtdata->hour,
+						evtdata->minute,
+						evtdata->second,
+						evtdata->sec_fractions);
 
 	nu_oximetry = evtdata->oximetry;
 	nu_beats = evtdata->beats;
