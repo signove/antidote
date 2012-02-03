@@ -11,7 +11,7 @@ typedef struct TransPlugin
 {
 	int (*init)();
 	int (*finalize)();
-	void (*force_disconnect)(char *);
+	void (*force_disconnect)(const char *);
 	agent_connected_cb conn_cb;
 	agent_disconnected_cb disconn_cb;
 } TransPlugin;

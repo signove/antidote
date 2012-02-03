@@ -281,7 +281,7 @@ static void disconnected_cb()
 	trans_disconnected(this_plugin, lladdr);
 }
 
-static void force_disconnect(char *lladdr)
+static void force_disconnect(const char *lladdr)
 {
 	disconnected_cb();
 }
