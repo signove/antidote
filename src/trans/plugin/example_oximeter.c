@@ -8,6 +8,7 @@
 
 #include <src/util/bytelib.h>
 #include <src/util/log.h>
+#include <src/util/dateutil.h>
 #include <src/dim/nomenclature.h>
 #include <src/dim/mds.h>
 #include <communication/parser/encoder_ASN1.h>
@@ -168,30 +169,19 @@ static ScanReportInfoFixed populate_event_report(int oximetry, int pulse)
 	BasicNuObsValue nu_beats;
 	time_t now;
 	struct tm nowtm;
-	int century, year, month, day, hour, minute, second, sec_fractions;
 
 	measure = calloc(2, sizeof(ObservationScanFixed));
 
 	time(&now);
 	localtime_r(&now, &nowtm);
 
-	century = nowtm.tm_year / 100;
-	year = nowtm.tm_year % 100;
-	month = nowtm.tm_mon + 1;
-	day = nowtm.tm_mday;
-	hour = nowtm.tm_hour;
-	minute = nowtm.tm_min;
-	second = nowtm.tm_sec;
-	sec_fractions = 0;
-
-	nu_time.century = century;
-	nu_time.year = year;
-	nu_time.month = month;
-	nu_time.day = day;
-	nu_time.hour = hour;
-	nu_time.minute = minute;
-	nu_time.second = second;
-	nu_time.sec_fractions = sec_fractions;
+	nu_time = date_util_create_absolute_time(nowtm.tm_year + 1900,
+						nowtm.tm_mon + 1,
+						nowtm.tm_mday,
+						nowtm.tm_hour,
+						nowtm.tm_min,
+						nowtm.tm_sec,
+						0);
 
 	// SFLOAT is just a float in internal representation
 	nu_oximetry = oximetry;
