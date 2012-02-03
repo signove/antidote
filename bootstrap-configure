@@ -1,0 +1,5 @@
+#!/bin/sh
+./autogen.sh
+# --disable-shared omits libtool wrapper shells, so
+# it is easier to gdb `name` directly
+./configure --disable-shared
