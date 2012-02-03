@@ -291,15 +291,20 @@ int association_accept_data_protocol_20601_in(Context *ctx,
 					 &agent_assoc_information.system_id, id);
 		}
 
-		if (config != NULL) {
-			mds_configure_operating(ctx, config, 1);
-			free(config);
-		}
-
 		evt.u.association_result = ACCEPTED;
 		communication_fire_evt(ctx,
 				       fsm_evt_rx_aarq_acceptable_and_known_configuration,
 				       evtp);
+
+		if (config != NULL) {
+			// must be called AFTER communication_fire_evt()
+			// because the manager may do something like request
+			// MDS attributes and the request must go after
+			// "configuration accepted" packet.
+			mds_configure_operating(ctx, config, 1);
+			free(config);
+		}
+
 		return 2;
 	}
 
