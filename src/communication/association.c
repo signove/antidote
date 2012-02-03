@@ -365,8 +365,6 @@ static int association_check_config_id(PhdAssociationInformation *info)
 void association_accept_config_tx(Context *ctx, fsm_events evt,
 				  FSMEventData *data)
 {
-	int ret_code = 0;
-
 	if (data != NULL && data->choice == FSM_EVT_DATA_ASSOCIATION_RESULT_CHOSEN) {
 
 		if (data->u.association_result == ACCEPTED) {
@@ -396,14 +394,14 @@ void association_accept_config_tx(Context *ctx, fsm_events evt,
 		response_apdu.u.aare.selected_data_proto.data_proto_info.value
 		= encoded_value->buffer;
 
-		ret_code = communication_send_apdu(ctx, &response_apdu);
+		int ret_code = communication_send_apdu(ctx, &response_apdu);
 
 		del_phdassociationinformation(&response_info);
 		del_byte_stream_writer(encoded_value, 1);
-	}
 
-	if (ret_code == 0) {
-		ERROR("Could not send association response ");
+		if (ret_code == 0) {
+			ERROR("Could not send association response ");
+		}
 	}
 }
 

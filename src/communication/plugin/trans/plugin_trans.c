@@ -97,7 +97,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 	DEBUG("Error: transcoding context %"G_GUINT64_FORMAT" trying to send APDU", ctx->id);
 	DEBUG("##################");
 
-	return NETWORK_ERROR;
+	return NETWORK_ERROR_NONE;
 }
 
 /**
