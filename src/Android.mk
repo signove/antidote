@@ -13,6 +13,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/..
 
 LOCAL_STATIC_LIBRARIES := \
 				libantidotecomm \
+				libantidotetrans \
 				libantidotecommplugin \
 				libantidotecommparser \
 				libantidotedim \

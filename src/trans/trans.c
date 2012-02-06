@@ -11,6 +11,8 @@
 
 static LinkedList *_plugins = NULL;
 
+extern CommunicationPlugin *trans_comm_plugin;
+
 typedef struct TransDevice
 {
 	char *lladdr;
@@ -18,7 +20,7 @@ typedef struct TransDevice
 	TransPlugin *plugin;
 } TransDevice;
 
-static ContextId new_context = 991;
+static unsigned long long int new_context = 991;
 
 static LinkedList *_devices = NULL;
 
@@ -62,7 +64,8 @@ static int search_by_context(void *parg, void *pelement)
 	TransDevice *element = element;
 	ContextId context = *((ContextId*) parg);
 
-	if (element->context == context) {
+	if ((element->context.plugin == context.plugin) &&
+				element->context.connid == context.connid) {
 		return 1;
 	}
 
@@ -92,15 +95,21 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 	TransDevice *dev = get_device_by_addr(lladdr);
 	if (dev) {
 		return dev->context;
+	} else if (! trans_comm_plugin) {
+		ERROR("Transcoding comm plugin not loaded");
 	} else if (plugin) {
 		dev = malloc(sizeof(TransDevice));
-		dev->context = new_context++;
+		ContextId c = {communication_plugin_id(trans_comm_plugin),
+				new_context++};
+		new_context++;
+		dev->context = c;
 		dev->lladdr = strdup(lladdr);
 		dev->plugin = plugin;
 		llist_add(devices(), dev);
 		return dev->context;
 	}
-	return 0;
+	ContextId c = {0, 0};
+	return c;
 }
 
 void trans_register_plugin(TransPlugin *plugin)
@@ -137,7 +146,7 @@ int trans_event_report_fixed(TransPlugin *plugin,
 				ScanReportInfoFixed report)
 {
 	ContextId context = trans_context_get(lladdr, NULL);
-	if (!context) {
+	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for evt report", lladdr);
 	}
 	Context *ctx = context_get(context);
@@ -156,7 +165,7 @@ int trans_event_report_var(TransPlugin *plugin,
 			ScanReportInfoVar report)
 {
 	ContextId context = trans_context_get(lladdr, NULL);
-	if (!context) {
+	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for evt report (var)", lladdr);
 	}
 	Context *ctx = context_get(context);
@@ -173,7 +182,7 @@ int trans_event_report_var(TransPlugin *plugin,
 int trans_disconnected(TransPlugin *plugin, char *lladdr)
 {
 	ContextId context = trans_context_get(lladdr, NULL);
-	if (!context) {
+	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for disconnection", lladdr);
 	}
 	communication_transport_disconnect_indication(context);
