@@ -20,7 +20,8 @@ LOCAL_STATIC_LIBRARIES := \
 				libantidoteapi \
 				libantidoteutil \
 				libantidotespecializations \
-				libantidotecommpluginandroid
+				libantidotecommpluginandroid \
+				libantidotecommplugintrans
 LOCAL_LDLIBS := -llog -landroid
 
 include $(BUILD_SHARED_LIBRARY)

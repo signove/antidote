@@ -40,7 +40,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <glib.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
 #include "src/trans/trans.h"
@@ -81,7 +80,7 @@ static int finalize()
 static ByteStreamReader *get_apdu(struct Context *ctx)
 {
 	DEBUG("##################");
-	DEBUG("Error: transcoding context %"G_GUINT64_FORMAT" trying to read APDU", ctx->id);
+	DEBUG("Error: transcoding context %d trying to read APDU", (int) ctx->id.connid);
 	DEBUG("##################");
 
 	return NULL;
@@ -97,7 +96,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
 	DEBUG("##################");
-	DEBUG("Error: transcoding context %"G_GUINT64_FORMAT" trying to send APDU", ctx->id);
+	DEBUG("Error: transcoding context %d trying to send APDU", (int) ctx->id.connid);
 	DEBUG("##################");
 
 	return NETWORK_ERROR_NONE;
