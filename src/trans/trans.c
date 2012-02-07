@@ -125,7 +125,8 @@ int trans_connected(TransPlugin *plugin,
 {
 	// create context, if any
 	ContextId context = trans_context_get(lladdr, plugin);
-	plugin->conn_cb(context, lladdr);
+	if (plugin->conn_cb)
+		plugin->conn_cb(context, lladdr);
 	communication_transport_connect_indication(context);
 	Context *ctx = context_get(context);
 	if (!ctx) {
@@ -186,7 +187,8 @@ int trans_disconnected(TransPlugin *plugin, char *lladdr)
 		DEBUG("Transcoded %s no context for disconnection", lladdr);
 	}
 	communication_transport_disconnect_indication(context);
-	plugin->disconn_cb(context, lladdr);
+	if (plugin->disconn_cb)
+		plugin->disconn_cb(context, lladdr);
 	return 1;
 }
 
