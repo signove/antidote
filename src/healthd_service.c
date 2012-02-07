@@ -48,6 +48,8 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <ieee11073.h>
 #include "src/communication/plugin/bluez/plugin_bluez.h"
+#include "src/communication/plugin/trans/plugin_trans.h"
+#include "src/trans/plugin/example_oximeter.h"
 #ifndef ANDROID_HEALTHD
 #include "src/communication/plugin/usb/plugin_usb.h"
 #endif
@@ -1735,7 +1737,12 @@ int main(int argc, char *argv[])
 {
 	GError *error = NULL;
 	guint result;
+
 	CommunicationPlugin plugin;
+	CommunicationPlugin trans_plugin;
+	CommunicationPlugin *trans_plugin_p = 0;
+
+	int trans_support = 0;
 	int i;
 
 	opmode = DBUS_SERVER;
@@ -1759,6 +1766,9 @@ int main(int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "--bluez") == 0) {
 			commmode = COMM_BLUEZ;
+		}
+		if (strcmp(argv[i], "--trans") == 0) {
+			trans_support = 1;
 		}
 #ifndef ANDROID_HEALTHD
 		if (strcmp(argv[i], "--usb") == 0) {
@@ -1823,6 +1833,7 @@ int main(int argc, char *argv[])
 
 init_plugin:
 	plugin = communication_plugin();
+	trans_plugin = communication_plugin();
 
 	if (commmode == COMM_BLUEZ) {
 		plugin_bluez_setup(&plugin);
@@ -1841,7 +1852,14 @@ init_plugin:
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
-	CommunicationPlugin *plugins[] = {&plugin, 0};
+	if (trans_support) {
+		plugin_trans_setup(&trans_plugin);
+		trans_plugin.timer_count_timeout = timer_count_timeout;
+		trans_plugin.timer_reset_timeout = timer_reset_timeout;
+		trans_plugin_p = &trans_plugin;
+	}
+
+	CommunicationPlugin *plugins[] = {&plugin, trans_plugin_p, 0};
 
 	manager_init(plugins);
 
@@ -1853,6 +1871,11 @@ init_plugin:
 
 	manager_add_listener(listener);
 	manager_start();
+
+	if (trans_support) {
+		trans_plugin_oximeter_register(call_agent_connected,
+						call_agent_disconnected);
+	}
 
 	if (opmode != DBUS_SERVER)
 		self_configure();
