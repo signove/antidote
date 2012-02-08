@@ -107,6 +107,8 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 		dev->plugin = plugin;
 		llist_add(devices(), dev);
 		return dev->context;
+	} else {
+		ERROR("Transcoding plugin null");
 	}
 	ContextId c = {0, 0};
 	return c;
@@ -125,9 +127,17 @@ int trans_connected(TransPlugin *plugin,
 {
 	// create context, if any
 	ContextId context = trans_context_get(lladdr, plugin);
+
+	if (!context.plugin) {
+		DEBUG("Transcoding: context not found for %s", lladdr);
+		return 0;
+	}
+
 	if (plugin->conn_cb)
 		plugin->conn_cb(context, lladdr);
+
 	communication_transport_connect_indication(context);
+
 	Context *ctx = context_get(context);
 	if (!ctx) {
 		DEBUG("Transcoding: context struct not found");
@@ -146,9 +156,12 @@ int trans_event_report_fixed(TransPlugin *plugin,
 				char *lladdr,
 				ScanReportInfoFixed report)
 {
+	// passing plugin = NULL indirectly blocks creation
 	ContextId context = trans_context_get(lladdr, NULL);
+
 	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for evt report", lladdr);
+		return 0;
 	}
 	Context *ctx = context_get(context);
 	if (!ctx) {
@@ -165,9 +178,12 @@ int trans_event_report_var(TransPlugin *plugin,
 			char *lladdr,
 			ScanReportInfoVar report)
 {
+	// passing plugin = NULL indirectly blocks creation
 	ContextId context = trans_context_get(lladdr, NULL);
+
 	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for evt report (var)", lladdr);
+		return 0;
 	}
 	Context *ctx = context_get(context);
 	if (!ctx) {
@@ -182,11 +198,16 @@ int trans_event_report_var(TransPlugin *plugin,
 
 int trans_disconnected(TransPlugin *plugin, char *lladdr)
 {
+	// passing plugin = NULL indirectly blocks creation
 	ContextId context = trans_context_get(lladdr, NULL);
+
 	if (!context.plugin) {
 		DEBUG("Transcoded %s no context for disconnection", lladdr);
+		return 0;
 	}
+
 	communication_transport_disconnect_indication(context);
+
 	if (plugin->disconn_cb)
 		plugin->disconn_cb(context, lladdr);
 	return 1;
