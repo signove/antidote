@@ -214,6 +214,53 @@ Request *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout
 	return NULL;
 }
 
+void service_trans_request_cb(Context *ctx)
+{
+	int invoke_id = (16
+			+ ctx->service->last_invoke_id
+			- ctx->service->requests_count + 1)
+			% 16;
+
+	Request *req = &ctx->service->requests_list[invoke_id];
+	req->request_callback(ctx, req, 0);
+	req->is_valid = REQUEST_INVALID;
+	service_del_request(req);
+	ctx->service->requests_count--;
+}
+
+/**
+ * Returns Request* faking Remote Operation Invoke and schedules the callback
+ *
+ * All structures inside APDU must have been created on heap.
+ * @param ctx Current context.
+ * @param request_callback Request callback function.
+ *
+ * @return the request created
+ */
+Request *service_trans_request(Context *ctx, service_request_callback request_callback)
+{
+	if (ctx->service->requests_count >= 16) {
+		return 0;
+	}
+
+	int invoke_id = service_get_new_invoke_id(ctx);
+
+	// fabricate a request
+	Request *req = &ctx->service->requests_list[invoke_id];
+	req->apdu = 0;
+	req->timeout.func = NULL;
+	req->timeout.timeout = 0;
+	req->is_valid = REQUEST_VALID;
+	req->request_callback = request_callback;
+
+	ctx->service->requests_count++;
+
+	// make it wait for the next event loop cycle
+	communication_count_timeout(ctx, service_trans_request_cb, 0);
+
+	return req;
+}
+
 /**
  * Tries to send unconfirmed Remote Operation Invoke apdu through communication layer.
  *
@@ -293,6 +340,7 @@ void service_request_retired(Context *ctx, DATA_apdu *response_apdu)
 {
 	Service *service = ctx->service;
 
+	// FIXME check range
 	Request *req = &(service->requests_list[response_apdu->invoke_id]);
 
 	if (response_apdu->invoke_id != service->current_invoke_id) {

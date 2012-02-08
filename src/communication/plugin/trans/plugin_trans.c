@@ -117,6 +117,7 @@ static int force_disconnect_channel(Context *c)
 void plugin_trans_setup(CommunicationPlugin *plugin)
 {
 	trans_comm_plugin = plugin;
+	plugin->type |= TRANS_CONTEXT;
 
 	plugin->network_init = init;
 	plugin->network_get_apdu_stream = get_apdu;

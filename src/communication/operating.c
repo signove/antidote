@@ -638,6 +638,10 @@ Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributei
 				int attributeids_list_count, intu32 timeout,
 				service_request_callback request_callback)
 {
+	if (communication_is_trans(ctx)) {
+		return service_trans_request(ctx, request_callback);
+	}
+
 	APDU *apdu = calloc(1, sizeof(APDU));
 
 	if (apdu != NULL) {

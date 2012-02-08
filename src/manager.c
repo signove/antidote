@@ -157,7 +157,7 @@ void manager_init(CommunicationPlugin **plugins)
 	DEBUG("Manager Initialization");
 
 	while (*plugins) {
-		(*plugins)->type = MANAGER_CONTEXT; // FIXME TRANS?
+		(*plugins)->type |= MANAGER_CONTEXT;
 		communication_add_plugin(*plugins);
 		++plugins;
 	}

@@ -413,6 +413,7 @@ Request *mds_service_action_data_request(Context *ctx, DataReqMode data_req_mode
  */
 Request *mds_service_action_set_time(Context *ctx, SetTimeInvoke *time, service_request_callback request_callback)
 {
+	// FIXME transcoded device handling (not necessarily here)
 	return operating_action_set_time(ctx, time, MDS_TO_CONFIRM_ACTION, request_callback);
 }
 
@@ -449,6 +450,7 @@ Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attribut
  */
 Request *mds_get_pmstore(Context *ctx, int handle, service_request_callback request_callback)
 {
+	// FIXME transcoded device handling (not necessarily here)
 	return operating_service_get(ctx, handle, NULL, 0, MDS_TO_GET, request_callback);
 }
 

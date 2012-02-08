@@ -64,6 +64,7 @@ void communication_add_plugin(CommunicationPlugin *plugin);
 unsigned int communication_plugin_id(CommunicationPlugin *plugin);
 
 CommunicationPlugin *communication_get_plugin(unsigned int label);
+int communication_is_trans(Context *ctx);
 
 int communication_init();
 

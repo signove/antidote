@@ -130,7 +130,7 @@ void agent_init(CommunicationPlugin **plugins, int specialization,
 	agent_mds_data_cb = mds_data_cb;
 	
 	while (*plugins) {
-		(*plugins)->type = AGENT_CONTEXT;
+		(*plugins)->type |= AGENT_CONTEXT;
 		communication_add_plugin(*plugins);
 		++plugins;
 	}

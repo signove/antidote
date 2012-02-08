@@ -182,6 +182,18 @@ CommunicationPlugin *communication_get_plugin(unsigned int label)
 }
 
 /**
+ * Get communication plugin impl structure
+ */
+int communication_is_trans(Context *ctx)
+{
+	CommunicationPlugin *plugin = communication_get_plugin(ctx->id.plugin);
+	if (plugin)
+		if (plugin->type & TRANS_CONTEXT)
+			return 1;
+	return 0;
+}
+
+/**
  * Finalizes thread context
  */
 int communication_finalize_thread_context(Context *ctx)
@@ -641,7 +653,7 @@ void communication_process_apdu(Context *ctx, APDU *apdu)
 
 	DEBUG(" communication: current sm(%s) ", fsm_get_current_state_name(ctx->fsm));
 
-	if (ctx->type == AGENT_CONTEXT) {
+	if (ctx->type & AGENT_CONTEXT) {
 		communication_process_apdu_agent(ctx, apdu);
 	} else {
 		communication_process_apdu_manager(ctx, apdu);
@@ -860,7 +872,7 @@ void communication_timeout(Context *ctx)
 		communication_fire_evt(ctx, fsm_evt_ind_timeout, NULL);
 		if (ctx->type & MANAGER_CONTEXT)
 			manager_notify_evt_timeout(ctx);
-		else if (ctx->type == AGENT_CONTEXT)
+		else if (ctx->type & AGENT_CONTEXT)
 			agent_notify_evt_timeout(ctx);
 	}
 
@@ -1096,7 +1108,6 @@ void communication_reset_timeout(Context *ctx)
 	ctx->timeout_action.func = NULL;
 	ctx->timeout_action.timeout = 0;
 	ctx->timeout_action.id = 0;
-
 }
 
 /**
