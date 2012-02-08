@@ -737,9 +737,11 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 
 	DEBUG("healthd C: storing tmp dir");
 	
-	jboolean is_copy = JNI_TRUE;
-	const char *cpath = (*bridge_env)->GetStringUTFChars(bridge_env, tmp_path, &is_copy);
+	{
+	const char *cpath = (*bridge_env)->GetStringUTFChars(bridge_env, tmp_path, NULL);
 	asprintf(&android_tmp_location, "%s", cpath);
+	(*bridge_env)->ReleaseStringUTFChars(bridge_env, tmp_path, cpath);
+	}
 
 	DEBUG("healthd C: tmp dir is %s", android_tmp_location);
 
