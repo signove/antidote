@@ -51,7 +51,8 @@ static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static int force_disconnect_channel(struct Context *ctx);
 
-extern JNIEnv *bridge_env;
+extern JavaVM *cached_jvm;
+JNIEnv *java_get_env();
 extern jobject bridge_obj;
 
 jmethodID jni_up_disconnect_channel;
@@ -65,10 +66,7 @@ jmethodID jni_up_send_data;
 void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 						jobject obj, jint handle)
 {
-	// Warning: this implies 1 thread at a time
 	DEBUG("channel connected at plugin");
-	bridge_env = env;
-	bridge_obj = obj;
 	ContextId cid = {plugin_id, handle};
 	communication_transport_connect_indication(cid);
 }
@@ -81,10 +79,7 @@ void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env, jobject obj,
 								jint handle)
 {
-	// Warning: this implies 1 thread at a time
 	DEBUG("channel disconnected at plugin");
-	bridge_env = env;
-	bridge_obj = obj;
 	ContextId cid = {plugin_id, handle};
 	communication_transport_disconnect_indication(cid);
 }
@@ -97,10 +92,11 @@ void plugin_android_setup(CommunicationPlugin *plugin)
 	plugin->network_disconnect = force_disconnect_channel;
 	plugin->network_finalize = finalize;
 
-	jclass cls = (*bridge_env)->GetObjectClass(bridge_env, bridge_obj);
-	jni_up_send_data = (*bridge_env)->GetMethodID(bridge_env, cls,
+	JNIEnv *env = java_get_env();
+	jclass cls = (*env)->GetObjectClass(env, bridge_obj);
+	jni_up_send_data = (*env)->GetMethodID(env, cls,
 							"send_data", "(I[B)V");
-	jni_up_disconnect_channel = (*bridge_env)->GetMethodID(bridge_env, cls,
+	jni_up_disconnect_channel = (*env)->GetMethodID(env, cls,
 							"disconnect_channel", "(I)V");
 	DEBUG("healthd C: method send_data %p", jni_up_send_data);
 	DEBUG("healthd C: method disconnect_channel %p", jni_up_disconnect_channel);
@@ -111,7 +107,8 @@ void plugin_android_setup(CommunicationPlugin *plugin)
  */
 static int force_disconnect_channel(Context *c)
 {
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+	JNIEnv *env = java_get_env();
+	(*env)->CallVoidMethod(env, bridge_obj,
 					jni_up_disconnect_channel,
 					(jint) c->id.connid);
 	return 1;
@@ -174,13 +171,9 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
 {	
 	DEBUG("data received at plugin");
 
-	// Warning: this implies 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
-	int len = (*bridge_env)->GetArrayLength(bridge_env, buf);
+	int len = (*env)->GetArrayLength(env, buf);
 	char *data = malloc(len + 1);
-	(*bridge_env)->GetByteArrayRegion(bridge_env, buf, 0, len, (jbyte *) data);
+	(*env)->GetByteArrayRegion(env, buf, 0, len, (jbyte *) data);
 
 	data_len = len;
 	current_data = data;
@@ -197,10 +190,11 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
  */
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 {
-	jbyteArray ba = (*bridge_env)->NewByteArray(bridge_env, stream->size);
-	(*bridge_env)->SetByteArrayRegion(bridge_env, ba, 0, stream->size, (jbyte*) stream->buffer);
+	JNIEnv *env = java_get_env();
+	jbyteArray ba = (*env)->NewByteArray(env, stream->size);
+	(*env)->SetByteArrayRegion(env, ba, 0, stream->size, (jbyte*) stream->buffer);
 	DEBUG("healthd c: calling send_data");
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+	(*env)->CallVoidMethod(env, bridge_obj,
 					jni_up_send_data,
 					(jint) ctx->id.connid, ba);
 

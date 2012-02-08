@@ -44,8 +44,10 @@
 #include "src/communication/service.h"
 #include "src/dim/pmstore_req.h"
 
-JNIEnv *bridge_env = 0;
+JavaVM *cached_jvm = 0;
+JNIEnv *java_get_env();
 jobject bridge_obj = 0;
+
 char *android_tmp_location = 0;
 
 // TODO this assumes that there is only one communication plugin!
@@ -86,7 +88,8 @@ static void timer_reset_timeout(Context *ctx)
 {
 	if (ctx->timeout_action.id) {
 		jint handle = ctx->timeout_action.id;
-		(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_cancel_timer, handle);
+		JNIEnv *env = java_get_env();
+		(*env)->CallVoidMethod(env, bridge_obj, jni_up_cancel_timer, handle);
 	}
 }
 /**
@@ -96,10 +99,6 @@ static void timer_reset_timeout(Context *ctx)
  */
 void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject obj, jint id)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("timer_alarm");
 	ContextId cid = {plugin_id, id};
 	Context *ctx = context_get(cid);
@@ -118,7 +117,8 @@ void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject 
  */
 static int timer_count_timeout(Context *ctx)
 {
-	ctx->timeout_action.id = (int) (*bridge_env)->CallIntMethod(bridge_env, bridge_obj,
+	JNIEnv *env = java_get_env();
+	ctx->timeout_action.id = (int) (*env)->CallIntMethod(env, bridge_obj,
 					jni_up_create_timer,
 					ctx->timeout_action.timeout * 1000, ctx->id);
 	return ctx->timeout_action.id;
@@ -246,8 +246,9 @@ void device_disassociated(Context *ctx)
  */
 static void notif_java_associated(ContextId conn_handle, char *xml)
 {
-	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_associated,
+	JNIEnv *env = java_get_env();
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, bridge_obj, jni_up_associated,
 					(jint) conn_handle.connid, jxml);
 }
 
@@ -260,8 +261,9 @@ static void notif_java_associated(ContextId conn_handle, char *xml)
  */
 static void notif_java_measurementdata(ContextId conn_handle, char *xml)
 {
-	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+	JNIEnv *env = java_get_env();
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, bridge_obj,
 				jni_up_measurementdata,
 				(jint) conn_handle.connid, jxml);
 }
@@ -275,7 +277,8 @@ static void notif_java_measurementdata(ContextId conn_handle, char *xml)
  */
 static void notif_java_segmentinfo(ContextId conn_handle, int handle, char *xml)
 {
-	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,jni_up_segmentinfo(conn_handle, handle, xml);
+	// JNIEnv *env = java_get_env();
+	// (*env)->CallVoidMethod(env, bridge_obj,jni_up_segmentinfo(conn_handle, handle, xml);
 	// FIXME
 }
 
@@ -292,7 +295,8 @@ static void notif_java_segmentinfo(ContextId conn_handle, int handle, char *xml)
 static void notif_java_segmentdataresponse(ContextId conn_handle,
 			int handle, int instnumber, int retstatus)
 {
-	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_segmentdataresponse(conn_handle, handle, instnumber, retstatus);
+	// JNIEnv *env = java_get_env();
+	// (*env)->CallVoidMethod(env, bridge_obj, jni_up_segmentdataresponse(conn_handle, handle, instnumber, retstatus);
 	// FIXME
 }
 
@@ -309,7 +313,8 @@ static void notif_java_segmentdataresponse(ContextId conn_handle,
 static void notif_java_segmentdata(ContextId conn_handle, int handle,
 					int instnumber, char *xml)
 {
-	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_segmentdata(conn_handle, handle, instnumber, jxml);
+	// JNIEnv *env = java_get_env();
+	// (*env)->CallVoidMethod(env, bridge_obj, jni_up_segmentdata(conn_handle, handle, instnumber, jxml);
 	// FIXME
 }
 
@@ -324,7 +329,8 @@ static void notif_java_segmentdata(ContextId conn_handle, int handle,
  */
 static void notif_java_pmstoredata(ContextId conn_handle, int handle, char *xml)
 {
-	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_pmstoredata(conn_handle, handle, jxml);
+	// JNIEnv *env = java_get_env();
+	// (*env)->CallVoidMethod(env, bridge_obj, jni_up_pmstoredata(conn_handle, handle, jxml);
 	// FIXME
 }
 
@@ -341,7 +347,8 @@ static void notif_java_segmentcleared(ContextId conn_handle, int handle,
 							int instnumber,
 							int retstatus)
 {
-	// (*bridge_env)->CallVoidMethod(bridge_env, bridge_obj, jni_up_segmentcleared(conn_handle, handle, instnumber, retstatus);
+	// JNIEnv *env = java_get_env();
+	// (*env)->CallVoidMethod(env, bridge_obj, jni_up_segmentcleared(conn_handle, handle, instnumber, retstatus);
 	// FIXME
 }
 
@@ -353,8 +360,9 @@ static void notif_java_segmentcleared(ContextId conn_handle, int handle,
  */
 static void notif_java_deviceattributes(ContextId conn_handle, char *xml)
 {
-	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml);
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+	JNIEnv *env = java_get_env();
+	jstring jxml = (*env)->NewStringUTF(env, xml);
+	(*env)->CallVoidMethod(env, bridge_obj,
 			jni_up_deviceattributes,
 			(jint) conn_handle.connid, jxml);
 }
@@ -366,7 +374,8 @@ static void notif_java_deviceattributes(ContextId conn_handle, char *xml)
  */
 static void notif_java_disassociated(ContextId conn_handle)
 {
-	(*bridge_env)->CallVoidMethod(bridge_env, bridge_obj,
+	JNIEnv *env = java_get_env();
+	(*env)->CallVoidMethod(env, bridge_obj,
 			jni_up_disassociated,
 			(jint) conn_handle.connid);
 }
@@ -401,10 +410,6 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
  * */
 void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject obj, jint handle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_reqmdsattr");
 	ContextId cid = {plugin_id, handle};
 
@@ -418,10 +423,6 @@ void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject 
  * */
 jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobject obj, jint handle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DataList *list;
 	char *xml_out;
 
@@ -437,7 +438,7 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
 		xml_out = strdup("");
 	}
 
-	jstring jxml = (*bridge_env)->NewStringUTF(bridge_env, xml_out);
+	jstring jxml = (*env)->NewStringUTF(env, xml_out);
 	free(xml_out);
 
 	return jxml;
@@ -450,10 +451,6 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
  * */
 void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_reqmeasurement");
 	ContextId cid = {plugin_id, handle};
 
@@ -467,10 +464,6 @@ void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobj
  * */
 void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_reqactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
@@ -484,10 +477,6 @@ void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env
  * */
 void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_reqdeactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
@@ -501,10 +490,6 @@ void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *e
  * */
 void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_releaseassoc");
 	ContextId cid = {plugin_id, handle};
 
@@ -518,10 +503,6 @@ void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobjec
  * */
 void Java_com_signove_health_service_JniBridge_Cabortassoc(JNIEnv *env, jobject obj, jint handle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_abortassoc");
 	ContextId cid = {plugin_id, handle};
 
@@ -562,10 +543,6 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 						jobject obj, jint handle, jint ihandle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	DEBUG("device_get_pmstore");
 	ContextId cid = {plugin_id, handle};
 	manager_request_get_pmstore(cid, ihandle, device_get_pmstore_cb);
@@ -635,10 +612,6 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
  * */
 jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	Request *req;
 
 	DEBUG("device_get_segminfo");
@@ -660,10 +633,6 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject
 jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	Request *req;
 
 	DEBUG("device_get_segmdata");
@@ -685,10 +654,6 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobject obj,
 					jint handle, jint ihandle, jint instnumber)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	Request *req;
 
 	DEBUG("device_clearsegmdata");
@@ -709,10 +674,6 @@ jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobje
 jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jobject obj,
 								jint handle, jint ihandle)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	Request *req;
 
 	DEBUG("device_clearsegmdata");
@@ -731,34 +692,33 @@ jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jo
 void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject obj, jstring tmp_path)
 {
 	DEBUG("healthd C: initializing %p %p", env, obj);
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
+
+	bridge_obj = (*env)->NewGlobalRef(env, obj);
 
 	DEBUG("healthd C: storing tmp dir");
 	
 	{
-	const char *cpath = (*bridge_env)->GetStringUTFChars(bridge_env, tmp_path, NULL);
+	const char *cpath = (*env)->GetStringUTFChars(env, tmp_path, NULL);
 	asprintf(&android_tmp_location, "%s", cpath);
-	(*bridge_env)->ReleaseStringUTFChars(bridge_env, tmp_path, cpath);
+	(*env)->ReleaseStringUTFChars(env, tmp_path, cpath);
 	}
 
 	DEBUG("healthd C: tmp dir is %s", android_tmp_location);
 
 	DEBUG("healthd C: getting class and methods");
 
-	jclass cls = (*bridge_env)->GetObjectClass(bridge_env, bridge_obj);
-	jni_up_cancel_timer = (*bridge_env)->GetMethodID(bridge_env, cls, "cancel_timer", "(I)V");
+	jclass cls = (*env)->GetObjectClass(env, bridge_obj);
+	jni_up_cancel_timer = (*env)->GetMethodID(env, cls, "cancel_timer", "(I)V");
 	DEBUG("healthd C: method %p", jni_up_cancel_timer);
-	jni_up_create_timer = (*bridge_env)->GetMethodID(bridge_env, cls, "create_timer", "(II)I");
+	jni_up_create_timer = (*env)->GetMethodID(env, cls, "create_timer", "(II)I");
 	DEBUG("healthd C: method %p", jni_up_create_timer);
-	jni_up_associated = (*bridge_env)->GetMethodID(bridge_env, cls, "associated", "(ILjava/lang/String;)V");
+	jni_up_associated = (*env)->GetMethodID(env, cls, "associated", "(ILjava/lang/String;)V");
 	DEBUG("healthd C: method ass %p", jni_up_associated);
-	jni_up_disassociated = (*bridge_env)->GetMethodID(bridge_env, cls, "disassociated", "(I)V");
+	jni_up_disassociated = (*env)->GetMethodID(env, cls, "disassociated", "(I)V");
 	DEBUG("healthd C: method dis %p", jni_up_disassociated);
-	jni_up_deviceattributes = (*bridge_env)->GetMethodID(bridge_env, cls, "deviceattributes", "(ILjava/lang/String;)V");
+	jni_up_deviceattributes = (*env)->GetMethodID(env, cls, "deviceattributes", "(ILjava/lang/String;)V");
 	DEBUG("healthd C: method devattr %p", jni_up_deviceattributes);
-	jni_up_measurementdata = (*bridge_env)->GetMethodID(bridge_env, cls, "measurementdata", "(ILjava/lang/String;)V");
+	jni_up_measurementdata = (*env)->GetMethodID(env, cls, "measurementdata", "(ILjava/lang/String;)V");
 	DEBUG("healthd C: method meas %p", jni_up_measurementdata);
 	// FIXME PM-Store methods
 
@@ -793,11 +753,23 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 
 void Java_com_signove_health_service_JniBridge_Chealthdfinalize(JNIEnv *env, jobject obj)
 {
-	// Warning: this trick works assuming 1 thread at a time
-	bridge_env = env;
-	bridge_obj = obj;
-
 	manager_finalize();
+
+	(*env)->DeleteGlobalRef(env, bridge_obj);
+	bridge_obj = 0;
+}
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
+{
+	cached_jvm = jvm;
+	return JNI_VERSION_1_6;
+}
+
+JNIEnv *java_get_env()
+{
+	JNIEnv *env;
+	(*cached_jvm)->GetEnv(cached_jvm, (void **) &env, JNI_VERSION_1_6);
+	return env;
 }
 
 /** @} */
