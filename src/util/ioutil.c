@@ -119,15 +119,11 @@ int ioutil_buffer_to_file(const char *file_path,
 	FILE *file;
 
 	// Open file
-	file = fopen(file_path, "ab");
+	file = fopen(file_path, (append ? "a" : "w"));
 
 	if (!file) {
 		ERROR("Unable to open file %s", file_path);
 		return 1;
-	}
-
-	if (append == 0) {
-		fseek(file, 0, 0);
 	}
 
 	// Read file contents into buffer_cur
