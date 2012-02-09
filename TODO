@@ -1,17 +1,11 @@
 Roadmap/TODO
 ------------
 
-0) Now playing
-
 Transcoding:
 	Blocking/rerouting of requests like PM-Store
-	TRANS FIXMEs
 	Doxygen
 	Documenting
 	Proper fencing of include files
-
-
-1) High-priority
 
 Timer alarm review
 
@@ -28,18 +22,10 @@ test-healthd.py: detect service stop and restart
 test-healthd.py: add XML parsing to get PM-Store handles et al.
 
 
-2) Medium priority
 
 Document Agent, PM-Store and GetConfiguration ops
 
 Review documents
-
-Transcoding architecture
-
-Android: version of healthd that uses Ice Cream Sandwitch
-HDP API instead of BlueZ/D-Bus directly. Supply healthd
-service as a true Android Service, compiled with NDK
-(do not link with GLib, D-Bus & friends).
 
 Add unit testing cases for Agent and PM-Store.
 
@@ -65,9 +51,6 @@ reporting.
 
 State machine: evaluate the possibility of removing
 FSMEventData.
-
-Work with more than one communication plug-in
-simultaneously.
 
 
 3) Low priority
@@ -108,8 +91,6 @@ Clearer, simpler rules of ownership, in particular when
 involving APDU data. (This will be easier once the
 need of pre-encoding Any types is eliminated.)
 
-MDS: check opportunities of code refactoring in this area.
-
 Search for FIXMEs and TODOs in code and deal with them
 
 Try to reduce module coupling, with is currently very high.
@@ -118,9 +99,6 @@ Try to remove 'special' state machine handling code from
 manager.c and agent.c; state machines should operate as
 autonomously as possible. Create more states to achieve
 that, if needed.
-
-Think in a more numeric-object-centered model instead of
-communication- and event-centered like now.
 
 Improve timeout cases that could be handled by plug-in
 (e.g. HDP reconnections)

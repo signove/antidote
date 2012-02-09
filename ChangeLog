@@ -1,3 +1,35 @@
+Antidote 2.0
+------------
+
+* Added multiple communication plugins support
+
+* Added transcoding support
+  There is a separate transcoding plugin system
+  Example oximeter transcoder in src/trans/plugin
+
+* PM-Store full support
+  Added/improved healthd API methods regarding PM-Store
+
+* Added GetConfiguration method to healthd API
+  Needed by PM-Store operations and for proper event
+  report structure introspection
+
+* Many bugfixes
+
+* Port to Android ICS
+
+* USB PHDC device class plug-in (linux/libusb)
+
+* Improved test_healthd.py, many optional parameters
+
+* Improved healthd, USB and transcoding support
+  --auto for auto-testing and consumption of events
+  --usb for USB plugin activation
+  --tcp for TCP-based serving, in place of D-Bus
+  --trans for transcoding support
+
+* Much improved APDU error handling
+
 Antidote 1.1
 ------------
 
