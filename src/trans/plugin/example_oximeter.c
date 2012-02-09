@@ -23,7 +23,7 @@ static int server_sk = -1;
 static int sk = -1;
 static const int tcp_port = 10404;
 
-static const int config_id = 0x5190; // TRANS FIXME
+static const int config_id = 0x5190;
 
 static ConfigReport generate_config()
 {
