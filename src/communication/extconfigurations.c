@@ -199,8 +199,10 @@ static void ext_configurations_wipe()
 	ext_configurations_create_environment();
 	ByteStreamWriter *stream = byte_stream_writer_instance(0);
 	char *concat = ext_concat_path_file();
-	ioutil_buffer_to_file(concat, stream->size,stream->buffer, 0);
+	ioutil_buffer_to_file(concat, stream->size, stream->buffer, 0);
 	free(concat);
+	del_byte_stream_writer(stream, 1);
+	
 	DEBUG("wiped ext config file");
 }
 
