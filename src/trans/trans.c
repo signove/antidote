@@ -122,6 +122,7 @@ void trans_register_plugin(TransPlugin *plugin)
 
 int trans_connected(TransPlugin *plugin,
 			char *lladdr,
+			AttributeList spec,
 			PhdAssociationInformation assoc_info,
 			ConfigReport config)
 {
@@ -145,10 +146,19 @@ int trans_connected(TransPlugin *plugin,
 	}
 
 	association_accept_data_protocol_20601_in(ctx, assoc_info, 1);
+
 	// following call deletes config_report (if necessary)
 	configuring_perform_configuration_in(ctx, config, NULL, 1);
-
 	// del_phdassociationinformation(&assoc_info);
+
+	int i;
+	for (i = 0; i < spec.count; i++) {
+		AVA_Type *attribute = &spec.value[i];
+		mds_set_attribute(ctx->mds, attribute);
+	}
+
+	del_attributelist(&spec);
+
 	return 1;
 }
 

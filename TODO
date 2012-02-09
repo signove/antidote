@@ -7,6 +7,8 @@ Transcoding:
 	Documenting
 	Proper fencing of include files
 
+Add System-Type-Spec-List (and others) for Agent
+
 Timer alarm review
 
 Connection/disconnection callback: move from plugins to core

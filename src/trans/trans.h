@@ -21,6 +21,7 @@ void trans_register_plugin(TransPlugin *plugin);
 
 int trans_connected(TransPlugin *plugin,
 			char *lladdr,
+			AttributeList spec,
 			PhdAssociationInformation assoc_info,
 			ConfigReport config);
 

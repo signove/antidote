@@ -224,6 +224,35 @@ static ScanReportInfoFixed populate_event_report(int oximetry, int pulse)
 	return scan;
 }
 
+static AttributeList generate_spec()
+{
+	AttributeList spec;
+	TypeVerList vlist;
+
+	spec.value = calloc(1, sizeof(AVA_Type));
+	AVA_Type *attr = &spec.value[0];
+
+	vlist.count = 1;
+	vlist.length = vlist.count * 4;
+	vlist.value = calloc(vlist.count, 4);
+	// specialization, not config id
+	vlist.value[0].type = MDC_DEV_SPEC_PROFILE_PULS_OXIM;
+	vlist.value[0].version = 1;
+
+	ByteStreamWriter *encoded_vlist = byte_stream_writer_instance(4 + vlist.length);
+	encode_typeverlist(encoded_vlist, &vlist);
+
+	attr->attribute_id = MDC_ATTR_SYS_TYPE_SPEC_LIST;
+	attr->attribute_value.length = encoded_vlist->size;
+	attr->attribute_value.value = encoded_vlist->buffer;
+	free(encoded_vlist);
+
+	spec.count = 1;
+	spec.length = 4 + attr->attribute_value.length;
+
+	return spec;
+}
+
 static gboolean data_received_cb(GIOChannel *src, GIOCondition cond, gpointer data);
 
 static gboolean connected_cb(GIOChannel *src, GIOCondition cond, gpointer data)
@@ -257,7 +286,9 @@ static gboolean connected_cb(GIOChannel *src, GIOCondition cond, gpointer data)
 	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 			data_received_cb, 0);
 
-	trans_connected(this_plugin, lladdr, generate_assoc_data(),
+	trans_connected(this_plugin, lladdr,
+			generate_spec(),
+			generate_assoc_data(),
 			generate_config());
 
 	return TRUE;
