@@ -80,6 +80,7 @@ void testparser_add_suite()
 
 void test_parser_h211_apdu_parser()
 {
+	int error = 0;
 
 	// Create a ByteStreamReader
 	unsigned long buffer_size = 0;
@@ -94,7 +95,7 @@ void test_parser_h211_apdu_parser()
 	APDU *apdu = (APDU *) malloc(sizeof(APDU));
 	CU_ASSERT_PTR_NOT_NULL(apdu);
 
-	decode_apdu(stream, apdu);
+	decode_apdu(stream, apdu, &error);
 
 	CU_ASSERT(apdu->choice == 0xe200);
 	CU_ASSERT(apdu->length == 50);
@@ -114,7 +115,7 @@ void test_parser_h211_apdu_parser()
 
 		ByteStreamReader *stream2 = byte_stream_reader_instance(assoc_information_buffer, assoc_information_size);
 
-		decode_phdassociationinformation(stream2, &assoc_information);
+		decode_phdassociationinformation(stream2, &assoc_information, &error);
 
 		CU_ASSERT(assoc_information.protocolVersion == 0x80000000);
 		CU_ASSERT(assoc_information.encodingRules == 0xA000);
@@ -157,6 +158,7 @@ void test_parser_h211_apdu_parser()
 
 void test_parser_h221_apdu_parser()
 {
+	int error = 0;
 	unsigned long buffer_size = 0;
 	unsigned char  *buffer = ioutil_buffer_from_file(apdu_H221, &buffer_size);
 
@@ -171,7 +173,7 @@ void test_parser_h221_apdu_parser()
 	APDU *apdu = (APDU *) malloc(sizeof(APDU));
 	CU_ASSERT_PTR_NOT_NULL(apdu);
 
-	decode_apdu(stream, apdu);
+	decode_apdu(stream, apdu, &error);
 
 	CU_ASSERT(apdu->choice == 0xe700);
 	CU_ASSERT(apdu->length == 112);
@@ -193,7 +195,7 @@ void test_parser_h221_apdu_parser()
 		intu8 config_size = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info.length;
 
 		ByteStreamReader *stream2 = byte_stream_reader_instance(config_buffer, config_size);
-		decode_configreport(stream2, &config);
+		decode_configreport(stream2, &config, &error);
 
 		CU_ASSERT_EQUAL(config.config_report_id, 0x4000);
 		CU_ASSERT_EQUAL(config.config_obj_list.count, 2);
@@ -209,7 +211,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *ava_buffer = config.config_obj_list.value[0].attributes.value[0].attribute_value.value;
 		ByteStreamReader *stream3 = byte_stream_reader_instance(ava_buffer, ava_size);
 		TYPE type;
-		decode_type(stream3, &type);
+		decode_type(stream3, &type, &error);
 		CU_ASSERT_EQUAL(type.partition, MDC_PART_SCADA);
 		CU_ASSERT_EQUAL(type.code, MDC_MASS_BODY_ACTUAL);
 
@@ -219,7 +221,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *ava2_buffer = config.config_obj_list.value[0].attributes.value[1].attribute_value.value;
 		ByteStreamReader *stream4 = byte_stream_reader_instance(ava2_buffer, ava2_size);
 		MetricSpecSmall spec;
-		decode_metricspecsmall(stream4, &spec);
+		decode_metricspecsmall(stream4, &spec, &error);
 		CU_ASSERT_EQUAL(spec, 0xD040);
 
 		CU_ASSERT_EQUAL(config.config_obj_list.value[0].attributes.value[2].attribute_id, MDC_ATTR_UNIT_CODE);
@@ -228,7 +230,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *ava3_buffer = config.config_obj_list.value[0].attributes.value[2].attribute_value.value;
 		ByteStreamReader *stream5 = byte_stream_reader_instance(ava3_buffer, ava3_size);
 		intu16 unit_code;
-		decode_metricspecsmall(stream5, &unit_code);
+		decode_metricspecsmall(stream5, &unit_code, &error);
 		CU_ASSERT_EQUAL(unit_code, MDC_DIM_KILO_G);
 
 		CU_ASSERT_EQUAL(config.config_obj_list.value[0].attributes.value[3].attribute_id, MDC_ATTR_ATTRIBUTE_VAL_MAP);
@@ -237,7 +239,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *ava4_buffer = config.config_obj_list.value[0].attributes.value[3].attribute_value.value;
 		ByteStreamReader *stream6 = byte_stream_reader_instance(ava4_buffer, ava4_size);
 		AttrValMap valmap;
-		decode_attrvalmap(stream6, &valmap);
+		decode_attrvalmap(stream6, &valmap, &error);
 		CU_ASSERT_EQUAL(valmap.count, 2);
 		CU_ASSERT_EQUAL(valmap.length, 8);
 		CU_ASSERT_EQUAL(valmap.value[0].attribute_id, MDC_ATTR_NU_VAL_OBS_SIMP);
@@ -256,7 +258,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *buffer2 = config.config_obj_list.value[1].attributes.value[0].attribute_value.value;
 		ByteStreamReader *stream7 = byte_stream_reader_instance(buffer2, size2);
 		TYPE type2;
-		decode_type(stream7, &type2);
+		decode_type(stream7, &type2, &error);
 		CU_ASSERT_EQUAL(type2.partition, MDC_PART_SCADA);
 		CU_ASSERT_EQUAL(type2.code, MDC_BODY_FAT);
 
@@ -266,7 +268,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *buffer3 = config.config_obj_list.value[1].attributes.value[1].attribute_value.value;
 		ByteStreamReader *stream8 = byte_stream_reader_instance(buffer3, size3);
 		MetricSpecSmall spec2;
-		decode_metricspecsmall(stream8, &spec2);
+		decode_metricspecsmall(stream8, &spec2, &error);
 		CU_ASSERT_EQUAL(spec2, 0xD042);
 
 		CU_ASSERT_EQUAL(config.config_obj_list.value[1].attributes.value[2].attribute_id, MDC_ATTR_UNIT_CODE);
@@ -275,7 +277,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *buffer4 = config.config_obj_list.value[1].attributes.value[2].attribute_value.value;
 		ByteStreamReader *stream9 = byte_stream_reader_instance(buffer4, size4);
 		intu16 unit_code2;
-		decode_metricspecsmall(stream9, &unit_code2);
+		decode_metricspecsmall(stream9, &unit_code2, &error);
 		CU_ASSERT_EQUAL(unit_code2, MDC_DIM_PERCENT);
 
 		CU_ASSERT_EQUAL(config.config_obj_list.value[1].attributes.value[3].attribute_id, MDC_ATTR_ATTRIBUTE_VAL_MAP);
@@ -284,7 +286,7 @@ void test_parser_h221_apdu_parser()
 		intu8 *buffer5 = config.config_obj_list.value[1].attributes.value[3].attribute_value.value;
 		ByteStreamReader *stream10 = byte_stream_reader_instance(buffer5, size5);
 		AttrValMap valmap2;
-		decode_attrvalmap(stream10, &valmap2);
+		decode_attrvalmap(stream10, &valmap2, &error);
 		CU_ASSERT_EQUAL(valmap2.count, 2);
 		CU_ASSERT_EQUAL(valmap2.length, 8);
 		CU_ASSERT_EQUAL(valmap.value[0].attribute_id, MDC_ATTR_NU_VAL_OBS_SIMP);
@@ -325,6 +327,7 @@ void test_parser_h221_apdu_parser()
 void test_parser_h233_apdu_parser()
 {
 
+	int error = 0;
 	unsigned long buffer_size = 0;
 	unsigned char  *buffer = ioutil_buffer_from_file(apdu_H233, &buffer_size);
 
@@ -334,7 +337,7 @@ void test_parser_h233_apdu_parser()
 
 	// Create the APDU data type
 	APDU apdu;
-	decode_apdu(stream, &apdu);
+	decode_apdu(stream, &apdu, &error);
 
 	CU_ASSERT_EQUAL(apdu.choice, PRST_CHOSEN);
 	CU_ASSERT_EQUAL(apdu.length, 110);
@@ -360,7 +363,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream1);
 
 	TypeVerList type_ver_list;
-	decode_typeverlist(stream1, &type_ver_list);
+	decode_typeverlist(stream1, &type_ver_list, &error);
 
 	CU_ASSERT_EQUAL(type_ver_list.count, 1);
 	CU_ASSERT_EQUAL(type_ver_list.length, 4);
@@ -378,7 +381,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream2);
 
 	SystemModel system_model;
-	decode_systemmodel(stream2, &system_model);
+	decode_systemmodel(stream2, &system_model, &error);
 	CU_ASSERT_NSTRING_EQUAL(system_model.manufacturer.value, "TheCompany", 10);
 	CU_ASSERT_NSTRING_EQUAL(system_model.model_number.value, "TheScaleABC\0", 12);
 
@@ -393,7 +396,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream3);
 
 	octet_string system_ID;
-	decode_octet_string(stream3, &system_ID);
+	decode_octet_string(stream3, &system_ID, &error);
 
 	CU_ASSERT_EQUAL(system_ID.length, 8);
 	/* system_ID.value
@@ -419,7 +422,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream4);
 
 	ConfigId config_ID;
-	decode_configid(stream4, &config_ID);
+	decode_configid(stream4, &config_ID, &error);
 	CU_ASSERT_EQUAL(config_ID, 16384);
 
 	/************************************/
@@ -433,7 +436,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream5);
 
 	ProductionSpec prod_spec;
-	decode_productionspec(stream5, &prod_spec);
+	decode_productionspec(stream5, &prod_spec, &error);
 
 	CU_ASSERT_EQUAL(prod_spec.count, 1);
 	CU_ASSERT_EQUAL(prod_spec.length, 14);
@@ -453,7 +456,7 @@ void test_parser_h233_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(stream5);
 
 	AbsoluteTime abs_time;
-	decode_absolutetime(stream6, &abs_time);
+	decode_absolutetime(stream6, &abs_time, &error);
 
 	CU_ASSERT_EQUAL(abs_time.century, 0x20);
 	CU_ASSERT_EQUAL(abs_time.year, 0x07);
@@ -489,6 +492,7 @@ void test_parser_h233_apdu_parser()
 void test_parser_h241_apdu_parser()
 {
 
+	int error = 0;
 	unsigned long buffer_size = 0;
 	unsigned char  *buffer = ioutil_buffer_from_file(apdu_H241, &buffer_size);
 
@@ -498,7 +502,7 @@ void test_parser_h241_apdu_parser()
 
 	// Create the APDU data type
 	APDU apdu;
-	decode_apdu(stream, &apdu);
+	decode_apdu(stream, &apdu, &error);
 
 	CU_ASSERT_EQUAL(apdu.choice, PRST_CHOSEN);
 	CU_ASSERT_EQUAL(apdu.length, 58);
@@ -520,7 +524,7 @@ void test_parser_h241_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(event_info_stream);
 
 	ScanReportInfoFixed report;
-	decode_scanreportinfofixed(event_info_stream, &report);
+	decode_scanreportinfofixed(event_info_stream, &report, &error);
 
 	CU_ASSERT_EQUAL(report.data_req_id, 0xF000);
 	CU_ASSERT_EQUAL(report.scan_report_no, 0);
@@ -539,11 +543,11 @@ void test_parser_h241_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(obs_val_data_stream);
 
 	SimpleNuObsValue nu_float_value = 0;
-	decode_simplenuobsvalue(obs_val_data_stream, &nu_float_value);
+	decode_simplenuobsvalue(obs_val_data_stream, &nu_float_value, &error);
 	CU_ASSERT_DOUBLE_EQUAL(nu_float_value, 62.4, 0.00001);
 
 	AbsoluteTime absolute_time;
-	decode_absolutetime(obs_val_data_stream, &absolute_time);
+	decode_absolutetime(obs_val_data_stream, &absolute_time, &error);
 
 	CU_ASSERT_EQUAL(absolute_time.century, 0x20);
 	CU_ASSERT_EQUAL(absolute_time.year, 0x07);
@@ -564,11 +568,11 @@ void test_parser_h241_apdu_parser()
 	CU_ASSERT_PTR_NOT_NULL(obs_val_data_stream1);
 
 	SimpleNuObsValue nu_float_value1 = 0;
-	decode_simplenuobsvalue(obs_val_data_stream1, &nu_float_value1);
+	decode_simplenuobsvalue(obs_val_data_stream1, &nu_float_value1, &error);
 	CU_ASSERT_DOUBLE_EQUAL(nu_float_value1, 25.6, 0.00001);
 
 	AbsoluteTime absolute_time1;
-	decode_absolutetime(obs_val_data_stream1, &absolute_time1);
+	decode_absolutetime(obs_val_data_stream1, &absolute_time1, &error);
 
 	CU_ASSERT_EQUAL(absolute_time1.century, 0x20);
 	CU_ASSERT_EQUAL(absolute_time1.year, 0x07);
@@ -598,6 +602,7 @@ void test_parser_h241_apdu_parser()
 void test_parser_h244_apdu_parser(void)
 {
 
+	int error = 0;
 	unsigned long buffer_size = 0;
 	unsigned char  *buffer = ioutil_buffer_from_file(apdu_H244, &buffer_size);
 
@@ -609,7 +614,7 @@ void test_parser_h244_apdu_parser(void)
 
 	// Create the APDU data type
 	APDU apdu;
-	decode_apdu(stream, &apdu);
+	decode_apdu(stream, &apdu, &error);
 
 	CU_ASSERT_EQUAL(apdu.choice, PRST_CHOSEN);
 	CU_ASSERT_EQUAL(apdu.length, 64);
@@ -631,7 +636,7 @@ void test_parser_h244_apdu_parser(void)
 	CU_ASSERT_PTR_NOT_NULL(data_response_stream);
 
 	DataResponse data_response;
-	decode_dataresponse(data_response_stream, &data_response);
+	decode_dataresponse(data_response_stream, &data_response, &error);
 
 	RelativeTime time = 0;
 	CU_ASSERT_EQUAL(data_response.rel_time_stamp, time);
@@ -646,7 +651,7 @@ void test_parser_h244_apdu_parser(void)
 	CU_ASSERT_PTR_NOT_NULL(event_info_stream);
 
 	ScanReportInfoFixed report;
-	decode_scanreportinfofixed(event_info_stream, &report);
+	decode_scanreportinfofixed(event_info_stream, &report, &error);
 
 	CU_ASSERT_EQUAL(report.data_req_id, 0x0100);
 	CU_ASSERT_EQUAL(report.scan_report_no, 0);
@@ -665,11 +670,11 @@ void test_parser_h244_apdu_parser(void)
 	CU_ASSERT_PTR_NOT_NULL(obs_val_data_stream);
 
 	SimpleNuObsValue nu_float_value = 0;
-	decode_simplenuobsvalue(obs_val_data_stream, &nu_float_value);
+	decode_simplenuobsvalue(obs_val_data_stream, &nu_float_value, &error);
 	CU_ASSERT_DOUBLE_EQUAL(nu_float_value, 62.4, 0.00001);
 
 	AbsoluteTime absolute_time;
-	decode_absolutetime(obs_val_data_stream, &absolute_time);
+	decode_absolutetime(obs_val_data_stream, &absolute_time, &error);
 
 	CU_ASSERT_EQUAL(absolute_time.century, 0x20);
 	CU_ASSERT_EQUAL(absolute_time.year, 0x07);
@@ -690,11 +695,11 @@ void test_parser_h244_apdu_parser(void)
 	CU_ASSERT_PTR_NOT_NULL(obs_val_data_stream1);
 
 	SimpleNuObsValue nu_float_value1 = 0;
-	decode_simplenuobsvalue(obs_val_data_stream1, &nu_float_value1);
+	decode_simplenuobsvalue(obs_val_data_stream1, &nu_float_value1, &error);
 	CU_ASSERT_DOUBLE_EQUAL(nu_float_value1, 25.6, 0.00001);
 
 	AbsoluteTime absolute_time1;
-	decode_absolutetime(obs_val_data_stream1, &absolute_time1);
+	decode_absolutetime(obs_val_data_stream1, &absolute_time1, &error);
 
 	CU_ASSERT_EQUAL(absolute_time1.century, 0x20);
 	CU_ASSERT_EQUAL(absolute_time1.year, 0x07);
@@ -726,9 +731,10 @@ void test_parser_h244_apdu_parser(void)
 
 void test_float_parser()
 {
+	int error = 0;
 	intu8 test_data[4] = {0xFB, 0x12, 0xd6, 0x87};
 	ByteStreamReader *stream = byte_stream_reader_instance(test_data, 4);
-	double data = read_float(stream);
+	double data = read_float(stream, &error);
 	printf("%f", data);
 	CU_ASSERT_DOUBLE_EQUAL(data, 12.34567, 0.000001);
 	free(stream);
@@ -736,9 +742,10 @@ void test_float_parser()
 
 void test_sfloat_parser()
 {
+	int error = 0;
 	intu8 test_data[2] = {0xF3, 0xCF};
 	ByteStreamReader *stream = byte_stream_reader_instance(test_data, 2);
-	double data = read_sfloat(stream);
+	double data = read_sfloat(stream, &error);
 	printf("%f", data);
 	CU_ASSERT_DOUBLE_EQUAL(data, 97.5, 0.0001);
 	free(stream);

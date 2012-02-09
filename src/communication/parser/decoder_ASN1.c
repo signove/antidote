@@ -38,18 +38,23 @@
 #include "src/asn1/phd_types.h"
 #include "encoder_ASN1.h"
 #include "decoder_ASN1.h"
+#include "src/util/log.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+// TODO improve error handling (out of loops)
 
 /**
  * Decodes SegmentDataResult.
  *
  * @param stream the SegmentDataResult content decoded as ByteStreamReader.
  * @param pointer the SegmentDataResult to be decoded.
+ * @param error Error feedback
  */
-void decode_segmentdataresult(ByteStreamReader *stream, SegmentDataResult *pointer)
+void decode_segmentdataresult(ByteStreamReader *stream, SegmentDataResult *pointer, int *error)
 {
-	decode_segmdataeventdescr(stream, &pointer->segm_data_event_descr); // SegmDataEventDescr segm_data_event_descr
+	decode_segmdataeventdescr(stream, &pointer->segm_data_event_descr, error); // SegmDataEventDescr segm_data_event_descr
 }
 
 /**
@@ -57,11 +62,12 @@ void decode_segmentdataresult(ByteStreamReader *stream, SegmentDataResult *point
  *
  * @param stream the ScanReportPerVar content decoded as ByteStreamReader.
  * @param pointer the ScanReportPerVar to be decoded.
+ * @param error Error feedback
  */
-void decode_scanreportpervar(ByteStreamReader *stream, ScanReportPerVar *pointer)
+void decode_scanreportpervar(ByteStreamReader *stream, ScanReportPerVar *pointer, int *error)
 {
-	pointer->person_id = read_intu16(stream, NULL); // intu16 person_id
-	decode_observationscanlist(stream, &pointer->obs_scan_var); // ObservationScanList obs_scan_var
+	pointer->person_id = read_intu16(stream, error); // intu16 person_id
+	decode_observationscanlist(stream, &pointer->obs_scan_var, error); // ObservationScanList obs_scan_var
 }
 
 /**
@@ -69,11 +75,12 @@ void decode_scanreportpervar(ByteStreamReader *stream, ScanReportPerVar *pointer
  *
  * @param stream the TypeVer content decoded as ByteStreamReader.
  * @param pointer the TypeVer to be decoded.
+ * @param error Error feedback
  */
-void decode_typever(ByteStreamReader *stream, TypeVer *pointer)
+void decode_typever(ByteStreamReader *stream, TypeVer *pointer, int *error)
 {
-	pointer->type = read_intu16(stream, NULL); // OID_Type type
-	pointer->version = read_intu16(stream, NULL); // intu16 version
+	pointer->type = read_intu16(stream, error); // OID_Type type
+	pointer->version = read_intu16(stream, error); // intu16 version
 }
 
 /**
@@ -81,12 +88,18 @@ void decode_typever(ByteStreamReader *stream, TypeVer *pointer)
  *
  * @param stream the ModificationList content decoded as ByteStreamReader.
  * @param pointer the ModificationList to be decoded.
+ * @param error Error feedback
  */
-void decode_modificationlist(ByteStreamReader *stream, ModificationList *pointer)
+void decode_modificationlist(ByteStreamReader *stream, ModificationList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		int i;
@@ -94,7 +107,11 @@ void decode_modificationlist(ByteStreamReader *stream, ModificationList *pointer
 		pointer->value = calloc(pointer->count, sizeof(AttributeModEntry));
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_attributemodentry(stream, pointer->value + i);
+			decode_attributemodentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec notificationlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -104,12 +121,18 @@ void decode_modificationlist(ByteStreamReader *stream, ModificationList *pointer
  *
  * @param stream the ProductionSpec content decoded as ByteStreamReader.
  * @param pointer the ProductionSpec to be decoded.
+ * @param error Error feedback
  */
-void decode_productionspec(ByteStreamReader *stream, ProductionSpec *pointer)
+void decode_productionspec(ByteStreamReader *stream, ProductionSpec *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ProdSpecEntry));
@@ -121,7 +144,11 @@ void decode_productionspec(ByteStreamReader *stream, ProductionSpec *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_prodspecentry(stream, pointer->value + i);
+			decode_prodspecentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec productionspec underflow");
+				break;
+			}
 		}
 	}
 }
@@ -131,13 +158,14 @@ void decode_productionspec(ByteStreamReader *stream, ProductionSpec *pointer)
  *
  * @param stream the ActionArgumentSimple content decoded as ByteStreamReader.
  * @param pointer the ActionArgumentSimple to be decoded.
+ * @param error Error feedback
  */
 void decode_actionargumentsimple(ByteStreamReader *stream,
-				 ActionArgumentSimple *pointer)
+				 ActionArgumentSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	pointer->action_type = read_intu16(stream, NULL); // OID_Type action_type
-	decode_any(stream, &pointer->action_info_args); // Any action_info_args
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	pointer->action_type = read_intu16(stream, error); // OID_Type action_type
+	decode_any(stream, &pointer->action_info_args, error); // Any action_info_args
 }
 
 /**
@@ -145,13 +173,14 @@ void decode_actionargumentsimple(ByteStreamReader *stream,
  *
  * @param stream the ScaleRangeSpec32 content decoded as ByteStreamReader.
  * @param pointer the ScaleRangeSpec32 to be decoded.
+ * @param error Error feedback
  */
-void decode_scalerangespec32(ByteStreamReader *stream, ScaleRangeSpec32 *pointer)
+void decode_scalerangespec32(ByteStreamReader *stream, ScaleRangeSpec32 *pointer, int *error)
 {
-	pointer->lower_absolute_value = read_float(stream); // FLOAT_Type lower_absolute_value
-	pointer->upper_absolute_value = read_float(stream); // FLOAT_Type upper_absolute_value
-	pointer->lower_scaled_value = read_intu32(stream, NULL); // intu32 lower_scaled_value
-	pointer->upper_scaled_value = read_intu32(stream, NULL); // intu32 upper_scaled_value
+	pointer->lower_absolute_value = read_float(stream, error); // FLOAT_Type lower_absolute_value
+	pointer->upper_absolute_value = read_float(stream, error); // FLOAT_Type upper_absolute_value
+	pointer->lower_scaled_value = read_intu32(stream, error); // intu32 lower_scaled_value
+	pointer->upper_scaled_value = read_intu32(stream, error); // intu32 upper_scaled_value
 }
 
 /**
@@ -159,11 +188,16 @@ void decode_scalerangespec32(ByteStreamReader *stream, ScaleRangeSpec32 *pointer
  *
  * @param stream the AVA_Type content decoded as ByteStreamReader.
  * @param pointer the AVA_Type to be decoded.
+ * @param error Error feedback
  */
-void decode_ava_type(ByteStreamReader *stream, AVA_Type *pointer)
+void decode_ava_type(ByteStreamReader *stream, AVA_Type *pointer, int *error)
 {
-	pointer->attribute_id = read_intu16(stream, NULL); // OID_Type attribute_id
-	decode_any(stream, &pointer->attribute_value); // Any attribute_value
+	pointer->attribute_id = read_intu16(stream, error); // OID_Type attribute_id
+	if (*error) {
+		DEBUG("ava type: id error");
+		return;
+	}
+	decode_any(stream, &pointer->attribute_value, error); // Any attribute_value
 }
 
 /**
@@ -171,11 +205,13 @@ void decode_ava_type(ByteStreamReader *stream, AVA_Type *pointer)
  *
  * @param stream the ConfigReport content decoded as ByteStreamReader.
  * @param pointer the ConfigReport to be decoded.
+ * @param error Error feedback
  */
-void decode_configreport(ByteStreamReader *stream, ConfigReport *pointer)
+void decode_configreport(ByteStreamReader *stream, ConfigReport *pointer, int *error)
 {
-	pointer->config_report_id = read_intu16(stream, NULL); // ConfigId config_report_id
-	decode_configobjectlist(stream, &pointer->config_obj_list); // ConfigObjectList config_obj_list
+	pointer->config_report_id = read_intu16(stream, error); // ConfigId config_report_id
+	// ConfigObjectList config_obj_list
+	decode_configobjectlist(stream, &pointer->config_obj_list, error);
 }
 
 /**
@@ -183,11 +219,12 @@ void decode_configreport(ByteStreamReader *stream, ConfigReport *pointer)
  *
  * @param stream the AttrValMapEntry content decoded as ByteStreamReader.
  * @param pointer the AttrValMapEntry to be decoded.
+ * @param error Error feedback
  */
-void decode_attrvalmapentry(ByteStreamReader *stream, AttrValMapEntry *pointer)
+void decode_attrvalmapentry(ByteStreamReader *stream, AttrValMapEntry *pointer, int *error)
 {
-	pointer->attribute_id = read_intu16(stream, NULL); // OID_Type attribute_id
-	pointer->attribute_len = read_intu16(stream, NULL); // intu16 attribute_len
+	pointer->attribute_id = read_intu16(stream, error); // OID_Type attribute_id
+	pointer->attribute_len = read_intu16(stream, error); // intu16 attribute_len
 }
 
 /**
@@ -195,18 +232,18 @@ void decode_attrvalmapentry(ByteStreamReader *stream, AttrValMapEntry *pointer)
  *
  * @param stream the AbsoluteTime content decoded as ByteStreamReader.
  * @param pointer the AbsoluteTime to be decoded.
+ * @param error Error feedback
  */
-void decode_absolutetime(ByteStreamReader *stream, AbsoluteTime *pointer)
+void decode_absolutetime(ByteStreamReader *stream, AbsoluteTime *pointer, int *error)
 {
-	// TODO: Error handling
-	pointer->century = read_intu8(stream, NULL); // intu8 century
-	pointer->year = read_intu8(stream, NULL); // intu8 year
-	pointer->month = read_intu8(stream, NULL); // intu8 month
-	pointer->day = read_intu8(stream, NULL); // intu8 day
-	pointer->hour = read_intu8(stream, NULL); // intu8 hour
-	pointer->minute = read_intu8(stream, NULL); // intu8 minute
-	pointer->second = read_intu8(stream, NULL); // intu8 second
-	pointer->sec_fractions = read_intu8(stream, NULL); // intu8 sec_fractions
+	pointer->century = read_intu8(stream, error); // intu8 century
+	pointer->year = read_intu8(stream, error); // intu8 year
+	pointer->month = read_intu8(stream, error); // intu8 month
+	pointer->day = read_intu8(stream, error); // intu8 day
+	pointer->hour = read_intu8(stream, error); // intu8 hour
+	pointer->minute = read_intu8(stream, error); // intu8 minute
+	pointer->second = read_intu8(stream, error); // intu8 second
+	pointer->sec_fractions = read_intu8(stream, error); // intu8 sec_fractions
 }
 
 /**
@@ -214,12 +251,18 @@ void decode_absolutetime(ByteStreamReader *stream, AbsoluteTime *pointer)
  *
  * @param stream the NuObsValueCmp content decoded as ByteStreamReader.
  * @param pointer the NuObsValueCmp to be decoded.
+ * @param error Error feedback
  */
-void decode_nuobsvaluecmp(ByteStreamReader *stream, NuObsValueCmp *pointer)
+void decode_nuobsvaluecmp(ByteStreamReader *stream, NuObsValueCmp *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(NuObsValue));
@@ -231,7 +274,11 @@ void decode_nuobsvaluecmp(ByteStreamReader *stream, NuObsValueCmp *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_nuobsvalue(stream, pointer->value + i);
+			decode_nuobsvalue(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec nuobsvaluecmp underflow");
+				break;
+			}
 		}
 	}
 }
@@ -241,13 +288,15 @@ void decode_nuobsvaluecmp(ByteStreamReader *stream, NuObsValueCmp *pointer)
  *
  * @param stream the ScanReportInfoMPFixed content decoded as ByteStreamReader.
  * @param pointer the ScanReportInfoMPFixed to be decoded.
+ * @param error Error feedback
  */
 void decode_scanreportinfompfixed(ByteStreamReader *stream,
-				  ScanReportInfoMPFixed *pointer)
+				  ScanReportInfoMPFixed *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // DataReqId data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_scanreportperfixedlist(stream, &pointer->scan_per_fixed); // ScanReportPerFixedList scan_per_fixed
+	pointer->data_req_id = read_intu16(stream, error); // DataReqId data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_scanreportperfixedlist(stream, &pointer->scan_per_fixed, error);
+	// ScanReportPerFixedList scan_per_fixed
 }
 
 /**
@@ -255,10 +304,11 @@ void decode_scanreportinfompfixed(ByteStreamReader *stream,
  *
  * @param stream the RejectResult content decoded as ByteStreamReader.
  * @param pointer the RejectResult  to be decoded.
+ * @param error Error feedback
  */
-void decode_rejectresult(ByteStreamReader *stream, RejectResult *pointer)
+void decode_rejectresult(ByteStreamReader *stream, RejectResult *pointer, int *error)
 {
-	pointer->problem = read_intu16(stream, NULL); // RorjProblem problem
+	pointer->problem = read_intu16(stream, error); // RorjProblem problem
 }
 
 /**
@@ -266,12 +316,13 @@ void decode_rejectresult(ByteStreamReader *stream, RejectResult *pointer)
  *
  * @param stream the ManufSpecAssociationInformation content decoded as ByteStreamReader.
  * @param pointer the ManufSpecAssociationInformation to be decoded.
+ * @param error Error feedback
  */
 void decode_manufspecassociationinformation(ByteStreamReader *stream,
-		ManufSpecAssociationInformation *pointer)
+		ManufSpecAssociationInformation *pointer, int *error)
 {
-	decode_uuid_ident(stream, &pointer->data_proto_id_ext); // UUID_Ident data_proto_id_ext
-	decode_any(stream, &pointer->data_proto_info_ext); // Any data_proto_info_ext
+	decode_uuid_ident(stream, &pointer->data_proto_id_ext, error); // UUID_Ident data_proto_id_ext
+	decode_any(stream, &pointer->data_proto_info_ext, error); // Any data_proto_info_ext
 }
 
 /**
@@ -279,33 +330,44 @@ void decode_manufspecassociationinformation(ByteStreamReader *stream,
  *
  * @param stream the EnumObsValue content decoded as ByteStreamReader.
  * @param pointer the EnumObsValue to be decoded.
+ * @param error Error feedback
  */
-void decode_enumobsvalue(ByteStreamReader *stream, EnumObsValue *pointer)
+void decode_enumobsvalue(ByteStreamReader *stream, EnumObsValue *pointer, int *error)
 {
-	pointer->metric_id = read_intu16(stream, NULL); // OID_Type metric_id
-	pointer->state = read_intu16(stream, NULL); // MeasurementStatus state
-	decode_enumval(stream, &pointer->value); // EnumVal value
+	pointer->metric_id = read_intu16(stream, error); // OID_Type metric_id
+	pointer->state = read_intu16(stream, error); // MeasurementStatus state
+	decode_enumval(stream, &pointer->value, error); // EnumVal value
 }
 
 /**
- * Decodes octet_string.
+ * Decodes octet_string. In case of error, does not leak.
  *
  * @param stream the octet_string content decoded as ByteStreamReader.
  * @param pointer the octet_string to be decoded.
+ * @param error error feedback. 
  */
-void decode_octet_string(ByteStreamReader *stream, octet_string *pointer)
+void decode_octet_string(ByteStreamReader *stream, octet_string *pointer, int *error)
 {
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error)
+		return;
 
 	if (pointer->length > 0) {
 		pointer->value = calloc(pointer->length, sizeof(intu8));
 
 		if (pointer->value == NULL) {
+			*error = 1;
 			return;
 		}
 
-		read_intu8_many(stream, pointer->value, pointer->length, NULL);
+		read_intu8_many(stream, pointer->value, pointer->length, error);
+		if (*error) {
+			*error = 2;
+			free(pointer->value);
+			pointer->value = NULL;
+		}
 	}
 }
 
@@ -314,18 +376,21 @@ void decode_octet_string(ByteStreamReader *stream, octet_string *pointer)
  *
  * @param stream the HighResRelativeTime content decoded as ByteStreamReader.
  * @param pointer the HighResRelativeTime to be decoded.
+ * @param error Error feedback
  */
 void decode_highresrelativetime(ByteStreamReader *stream,
-				HighResRelativeTime *pointer)
+				HighResRelativeTime *pointer, int *error)
 {
 	// intu8 value[8];
 	int i;
 
 	for (i = 0; i < 8; i++) {
-		// TODO: ERROR handling
-		*(pointer->value + i) = read_intu8(stream, NULL);
+		*(pointer->value + i) = read_intu8(stream, error);
+		if (*error) {
+			DEBUG("dec highresrelativetime underflow");
+			// but let it fill with zeros
+		}
 	}
-
 }
 
 /**
@@ -333,11 +398,12 @@ void decode_highresrelativetime(ByteStreamReader *stream,
  *
  * @param stream the SampleType content decoded as ByteStreamReader.
  * @param pointer the SampleType to be decoded.
+ * @param error Error feedback
  */
-void decode_sampletype(ByteStreamReader *stream, SampleType *pointer)
+void decode_sampletype(ByteStreamReader *stream, SampleType *pointer, int *error)
 {
-	pointer->sample_size = read_intu8(stream, NULL); // intu8 sample_size
-	pointer->significant_bits = read_intu8(stream, NULL); // intu8 significant_bits
+	pointer->sample_size = read_intu8(stream, error); // intu8 sample_size
+	pointer->significant_bits = read_intu8(stream, error); // intu8 significant_bits
 }
 
 /**
@@ -345,11 +411,28 @@ void decode_sampletype(ByteStreamReader *stream, SampleType *pointer)
  *
  * @param stream the AttributeList content decoded as ByteStreamReader.
  * @param pointer the AttributeList to be decoded.
+ * @param error error return
  */
-void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer)
+void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer, int *err)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, err); // intu16 count
+	if (*err) {
+		DEBUG("attribute list: count err");
+		return;
+	}
+
+	pointer->length = read_intu16(stream, err); // intu16 length
+	if (*err) {
+		DEBUG("attribute list: length err");
+		return;
+	}
+
+	if (pointer->length > stream->unread_bytes) {
+		DEBUG("attribute list: underflow");
+		*err = 1;
+		return;
+	}
+
 	pointer->value = NULL;
 
 	if (pointer->count > 0) {
@@ -362,7 +445,11 @@ void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_ava_type(stream, pointer->value + i);
+			decode_ava_type(stream, pointer->value + i, err);
+			if (*err) {
+				DEBUG("attribute list: ava undeflow");
+				return;
+			}
 		}
 	}
 }
@@ -372,12 +459,18 @@ void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmidlist(ByteStreamReader *stream, SegmIdList *pointer)
+void decode_segmidlist(ByteStreamReader *stream, SegmIdList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(InstNumber));
@@ -389,7 +482,11 @@ void decode_segmidlist(ByteStreamReader *stream, SegmIdList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_intu16(stream, NULL);
+			*(pointer->value + i) = read_intu16(stream, error);
+			if (*error) {
+				DEBUG("dec segmidlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -399,13 +496,19 @@ void decode_segmidlist(ByteStreamReader *stream, SegmIdList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_simplenuobsvaluecmp(ByteStreamReader *stream,
-				SimpleNuObsValueCmp *pointer)
+				SimpleNuObsValueCmp *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(SimpleNuObsValue));
@@ -417,7 +520,11 @@ void decode_simplenuobsvaluecmp(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_float(stream);
+			*(pointer->value + i) = read_float(stream, error);
+			if (*error) {
+				DEBUG("dec cmp obs value: undeflow");
+				break;
+			}
 		}
 	}
 }
@@ -427,11 +534,12 @@ void decode_simplenuobsvaluecmp(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_getresultsimple(ByteStreamReader *stream, GetResultSimple *pointer)
+void decode_getresultsimple(ByteStreamReader *stream, GetResultSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attributelist(stream, &pointer->attribute_list); // AttributeList attribute_list
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_attributelist(stream, &pointer->attribute_list, error); // AttributeList attribute_list
 }
 
 /**
@@ -439,12 +547,18 @@ void decode_getresultsimple(ByteStreamReader *stream, GetResultSimple *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer)
+void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(HANDLE));
@@ -456,7 +570,11 @@ void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_intu16(stream, NULL);
+			*(pointer->value + i) = read_intu16(stream, error);
+			if (*error) {
+				DEBUG("dec handle list: undeflow");
+				break;
+			}
 		}
 	}
 }
@@ -466,13 +584,14 @@ void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmdataeventdescr(ByteStreamReader *stream, SegmDataEventDescr *pointer)
+void decode_segmdataeventdescr(ByteStreamReader *stream, SegmDataEventDescr *pointer, int *error)
 {
-	pointer->segm_instance = read_intu16(stream, NULL); // InstNumber segm_instance
-	pointer->segm_evt_entry_index = read_intu32(stream, NULL); // intu32 segm_evt_entry_index
-	pointer->segm_evt_entry_count = read_intu32(stream, NULL); // intu32 segm_evt_entry_count
-	pointer->segm_evt_status = read_intu16(stream, NULL); // SegmEvtStatus segm_evt_status
+	pointer->segm_instance = read_intu16(stream, error); // InstNumber segm_instance
+	pointer->segm_evt_entry_index = read_intu32(stream, error); // intu32 segm_evt_entry_index
+	pointer->segm_evt_entry_count = read_intu32(stream, error); // intu32 segm_evt_entry_count
+	pointer->segm_evt_status = read_intu16(stream, error); // SegmEvtStatus segm_evt_status
 }
 
 /**
@@ -480,12 +599,18 @@ void decode_segmdataeventdescr(ByteStreamReader *stream, SegmDataEventDescr *poi
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_attrvalmap(ByteStreamReader *stream, AttrValMap *pointer)
+void decode_attrvalmap(ByteStreamReader *stream, AttrValMap *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(AttrValMapEntry));
@@ -497,7 +622,11 @@ void decode_attrvalmap(ByteStreamReader *stream, AttrValMap *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_attrvalmapentry(stream, pointer->value + i);
+			decode_attrvalmapentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec attrvalmap underflow");
+				break;
+			}
 		}
 	}
 }
@@ -507,13 +636,14 @@ void decode_attrvalmap(ByteStreamReader *stream, AttrValMap *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_scalerangespec8(ByteStreamReader *stream, ScaleRangeSpec8 *pointer)
+void decode_scalerangespec8(ByteStreamReader *stream, ScaleRangeSpec8 *pointer, int *error)
 {
-	pointer->lower_absolute_value = read_float(stream); // FLOAT_Type lower_absolute_value
-	pointer->upper_absolute_value = read_float(stream); // FLOAT_Type upper_absolute_value
-	pointer->lower_scaled_value = read_intu8(stream, NULL); // intu8 lower_scaled_value
-	pointer->upper_scaled_value = read_intu8(stream, NULL); // intu8 upper_scaled_value
+	pointer->lower_absolute_value = read_float(stream, error); // FLOAT_Type lower_absolute_value
+	pointer->upper_absolute_value = read_float(stream, error); // FLOAT_Type upper_absolute_value
+	pointer->lower_scaled_value = read_intu8(stream, error); // intu8 lower_scaled_value
+	pointer->upper_scaled_value = read_intu8(stream, error); // intu8 upper_scaled_value
 }
 
 /**
@@ -521,19 +651,21 @@ void decode_scalerangespec8(ByteStreamReader *stream, ScaleRangeSpec8 *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_phdassociationinformation(ByteStreamReader *stream,
-				      PhdAssociationInformation *pointer)
+				      PhdAssociationInformation *pointer, int *error)
 {
-	pointer->protocolVersion = read_intu32(stream, NULL); // ProtocolVersion protocolVersion
-	pointer->encodingRules = read_intu16(stream, NULL); // EncodingRules encodingRules
-	pointer->nomenclatureVersion = read_intu32(stream, NULL); // NomenclatureVersion nomenclatureVersion
-	pointer->functionalUnits = read_intu32(stream, NULL); // FunctionalUnits functionalUnits
-	pointer->systemType = read_intu32(stream, NULL); // SystemType systemType
-	decode_octet_string(stream, &pointer->system_id); // octet_string system_id
-	pointer->dev_config_id = read_intu16(stream, NULL); // intu16 dev_config_id
-	decode_datareqmodecapab(stream, &pointer->data_req_mode_capab); // DataReqModeCapab data_req_mode_capab
-	decode_attributelist(stream, &pointer->optionList); // AttributeList optionList
+	pointer->protocolVersion = read_intu32(stream, error); // ProtocolVersion protocolVersion
+	pointer->encodingRules = read_intu16(stream, error); // EncodingRules encodingRules
+	pointer->nomenclatureVersion = read_intu32(stream, error); // NomenclatureVersion nomenclatureVersion
+	pointer->functionalUnits = read_intu32(stream, error); // FunctionalUnits functionalUnits
+	pointer->systemType = read_intu32(stream, error); // SystemType systemType
+	decode_octet_string(stream, &pointer->system_id, error); // octet_string system_id
+	pointer->dev_config_id = read_intu16(stream, error); // intu16 dev_config_id
+	decode_datareqmodecapab(stream, &pointer->data_req_mode_capab, error);
+	// DataReqModeCapab data_req_mode_capab
+	decode_attributelist(stream, &pointer->optionList, error); // AttributeList optionList
 }
 
 /**
@@ -541,13 +673,19 @@ void decode_phdassociationinformation(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportperfixedlist(ByteStreamReader *stream,
-				   ScanReportPerFixedList *pointer)
+				   ScanReportPerFixedList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerFixed));
@@ -559,7 +697,11 @@ void decode_scanreportperfixedlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_scanreportperfixed(stream, pointer->value + i);
+			decode_scanreportperfixed(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec scanreportperfixedlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -569,13 +711,19 @@ void decode_scanreportperfixedlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportpergroupedlist(ByteStreamReader *stream,
-				     ScanReportPerGroupedList *pointer)
+				     ScanReportPerGroupedList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerGrouped));
@@ -587,7 +735,11 @@ void decode_scanreportpergroupedlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_scanreportpergrouped(stream, pointer->value + i);
+			decode_scanreportpergrouped(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec scanreportpergroupedlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -597,12 +749,18 @@ void decode_scanreportpergroupedlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_dataprotolist(ByteStreamReader *stream, DataProtoList *pointer)
+void decode_dataprotolist(ByteStreamReader *stream, DataProtoList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(DataProto));
@@ -614,7 +772,11 @@ void decode_dataprotolist(ByteStreamReader *stream, DataProtoList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_dataproto(stream, pointer->value + i);
+			decode_dataproto(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec dataprotolist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -624,21 +786,22 @@ void decode_dataprotolist(ByteStreamReader *stream, DataProtoList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmselection(ByteStreamReader *stream, SegmSelection *pointer)
+void decode_segmselection(ByteStreamReader *stream, SegmSelection *pointer, int *error)
 {
-	pointer->choice = read_intu16(stream, NULL); // SegmSelection_choice choice
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->choice = read_intu16(stream, error); // SegmSelection_choice choice
+	pointer->length = read_intu16(stream, error); // intu16 length
 
 	switch (pointer->choice) {
 	case ALL_SEGMENTS_CHOSEN:
-		pointer->u.all_segments = read_intu16(stream, NULL);
+		pointer->u.all_segments = read_intu16(stream, error);
 		break;
 	case SEGM_ID_LIST_CHOSEN:
-		decode_segmidlist(stream, &pointer->u.segm_id_list);
+		decode_segmidlist(stream, &pointer->u.segm_id_list, error);
 		break;
 	case ABS_TIME_RANGE_CHOSEN:
-		decode_abstimerange(stream, &pointer->u.abs_time_range);
+		decode_abstimerange(stream, &pointer->u.abs_time_range, error);
 		break;
 	default:
 		// TODO: manage errors
@@ -651,11 +814,12 @@ void decode_segmselection(ByteStreamReader *stream, SegmSelection *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_errorresult(ByteStreamReader *stream, ErrorResult *pointer)
+void decode_errorresult(ByteStreamReader *stream, ErrorResult *pointer, int *error)
 {
-	pointer->error_value = read_intu16(stream, NULL); // ERROR error_value
-	decode_any(stream, &pointer->parameter); // Any parameter
+	pointer->error_value = read_intu16(stream, error); // ERROR error_value
+	decode_any(stream, &pointer->parameter, error); // Any parameter
 }
 
 /**
@@ -663,12 +827,18 @@ void decode_errorresult(ByteStreamReader *stream, ErrorResult *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_handleattrvalmap(ByteStreamReader *stream, HandleAttrValMap *pointer)
+void decode_handleattrvalmap(ByteStreamReader *stream, HandleAttrValMap *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(HandleAttrValMapEntry));
@@ -680,7 +850,11 @@ void decode_handleattrvalmap(ByteStreamReader *stream, HandleAttrValMap *pointer
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_handleattrvalmapentry(stream, pointer->value + i);
+			decode_handleattrvalmapentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec handleattrvalmap underflow");
+				break;
+			}
 		}
 	}
 }
@@ -690,14 +864,19 @@ void decode_handleattrvalmap(ByteStreamReader *stream, HandleAttrValMap *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_absolutetimeadjust(ByteStreamReader *stream, AbsoluteTimeAdjust *pointer)
+void decode_absolutetimeadjust(ByteStreamReader *stream, AbsoluteTimeAdjust *pointer, int *error)
 {
 	// intu8 value[6]
 	int i;
 
 	for (i = 0; i < 6; i++) {
-		*(pointer->value + i) = read_intu8(stream, NULL);
+		*(pointer->value + i) = read_intu8(stream, error);
+		if (*error) {
+			DEBUG("dec absolutetimeadjust underflow");
+			// but let it fill with zeros
+		}
 	}
 
 }
@@ -707,11 +886,12 @@ void decode_absolutetimeadjust(ByteStreamReader *stream, AbsoluteTimeAdjust *poi
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_aare_apdu(ByteStreamReader *stream, AARE_apdu *pointer)
+void decode_aare_apdu(ByteStreamReader *stream, AARE_apdu *pointer, int *error)
 {
-	pointer->result = read_intu16(stream, NULL); // Associate_result result
-	decode_dataproto(stream, &pointer->selected_data_proto); // DataProto selected_data_proto
+	pointer->result = read_intu16(stream, error); // Associate_result result
+	decode_dataproto(stream, &pointer->selected_data_proto, error); // DataProto selected_data_proto
 }
 
 /**
@@ -719,10 +899,11 @@ void decode_aare_apdu(ByteStreamReader *stream, AARE_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_rlre_apdu(ByteStreamReader *stream, RLRE_apdu *pointer)
+void decode_rlre_apdu(ByteStreamReader *stream, RLRE_apdu *pointer, int *error)
 {
-	pointer->reason = read_intu16(stream, NULL); // Release_response_reason reason
+	pointer->reason = read_intu16(stream, error); // Release_response_reason reason
 }
 
 /**
@@ -730,12 +911,18 @@ void decode_rlre_apdu(ByteStreamReader *stream, RLRE_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_metricidlist(ByteStreamReader *stream, MetricIdList *pointer)
+void decode_metricidlist(ByteStreamReader *stream, MetricIdList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(OID_Type));
@@ -747,7 +934,11 @@ void decode_metricidlist(ByteStreamReader *stream, MetricIdList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_intu16(stream, NULL);
+			*(pointer->value + i) = read_intu16(stream, error);
+			if (*error) {
+				DEBUG("dec metricidlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -757,11 +948,13 @@ void decode_metricidlist(ByteStreamReader *stream, MetricIdList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_scanreportperfixed(ByteStreamReader *stream, ScanReportPerFixed *pointer)
+void decode_scanreportperfixed(ByteStreamReader *stream, ScanReportPerFixed *pointer, int *error)
 {
-	pointer->person_id = read_intu16(stream, NULL); // intu16 person_id
-	decode_observationscanfixedlist(stream, &pointer->obs_scan_fix); // ObservationScanFixedList obs_scan_fix
+	pointer->person_id = read_intu16(stream, error); // intu16 person_id
+	decode_observationscanfixedlist(stream, &pointer->obs_scan_fix, error);
+	// ObservationScanFixedList obs_scan_fix
 }
 
 /**
@@ -769,13 +962,15 @@ void decode_scanreportperfixed(ByteStreamReader *stream, ScanReportPerFixed *poi
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportinfogrouped(ByteStreamReader *stream,
-				  ScanReportInfoGrouped *pointer)
+				  ScanReportInfoGrouped *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // intu16 data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_scanreportinfogroupedlist(stream, &pointer->obs_scan_grouped); // ScanReportInfoGroupedList obs_scan_grouped
+	pointer->data_req_id = read_intu16(stream, error); // intu16 data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_scanreportinfogroupedlist(stream, &pointer->obs_scan_grouped, error);
+	// ScanReportInfoGroupedList obs_scan_grouped
 }
 
 /**
@@ -783,11 +978,12 @@ void decode_scanreportinfogrouped(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_observationscan(ByteStreamReader *stream, ObservationScan *pointer)
+void decode_observationscan(ByteStreamReader *stream, ObservationScan *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attributelist(stream, &pointer->attributes); // AttributeList attributes
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_attributelist(stream, &pointer->attributes, error); // AttributeList attributes
 }
 
 /**
@@ -795,12 +991,13 @@ void decode_observationscan(ByteStreamReader *stream, ObservationScan *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportpergrouped(ByteStreamReader *stream,
-				 ScanReportPerGrouped *pointer)
+				 ScanReportPerGrouped *pointer, int *error)
 {
-	pointer->person_id = read_intu16(stream, NULL); // PersonId person_id
-	decode_octet_string(stream, &pointer->obs_scan_grouped);
+	pointer->person_id = read_intu16(stream, error); // PersonId person_id
+	decode_octet_string(stream, &pointer->obs_scan_grouped, error);
 }
 
 /**
@@ -808,11 +1005,12 @@ void decode_scanreportpergrouped(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_systemmodel(ByteStreamReader *stream, SystemModel *pointer)
+void decode_systemmodel(ByteStreamReader *stream, SystemModel *pointer, int *error)
 {
-	decode_octet_string(stream, &pointer->manufacturer); // octet_string manufacturer
-	decode_octet_string(stream, &pointer->model_number); // octet_string model_number
+	decode_octet_string(stream, &pointer->manufacturer, error); // octet_string manufacturer
+	decode_octet_string(stream, &pointer->model_number, error); // octet_string model_number
 }
 
 /**
@@ -820,13 +1018,19 @@ void decode_systemmodel(ByteStreamReader *stream, SystemModel *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_observationscanlist(ByteStreamReader *stream,
-				ObservationScanList *pointer)
+				ObservationScanList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ObservationScan));
@@ -838,7 +1042,11 @@ void decode_observationscanlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_observationscan(stream, pointer->value + i);
+			decode_observationscan(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec observationscanlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -848,30 +1056,36 @@ void decode_observationscanlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_apdu(ByteStreamReader *stream, APDU *pointer)
+void decode_apdu(ByteStreamReader *stream, APDU *pointer, int *error)
 {
-	pointer->choice = read_intu16(stream, NULL); // APDU_choice choice
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->choice = read_intu16(stream, error); // APDU_choice choice
+	pointer->length = read_intu16(stream, error); // intu16 length
+
+	if (*error) {
+		pointer->choice = pointer->length = 0;
+		return;
+	}
 
 	switch (pointer->choice) {
 	case AARQ_CHOSEN:
-		decode_aarq_apdu(stream, &pointer->u.aarq);
+		decode_aarq_apdu(stream, &pointer->u.aarq, error);
 		break;
 	case AARE_CHOSEN:
-		decode_aare_apdu(stream, &pointer->u.aare);
+		decode_aare_apdu(stream, &pointer->u.aare, error);
 		break;
 	case RLRQ_CHOSEN:
-		decode_rlrq_apdu(stream, &pointer->u.rlrq);
+		decode_rlrq_apdu(stream, &pointer->u.rlrq, error);
 		break;
 	case RLRE_CHOSEN:
-		decode_rlre_apdu(stream, &pointer->u.rlre);
+		decode_rlre_apdu(stream, &pointer->u.rlre, error);
 		break;
 	case ABRT_CHOSEN:
-		decode_abrt_apdu(stream, &pointer->u.abrt);
+		decode_abrt_apdu(stream, &pointer->u.abrt, error);
 		break;
 	case PRST_CHOSEN:
-		decode_prst_apdu(stream, &pointer->u.prst);
+		decode_prst_apdu(stream, &pointer->u.prst, error);
 		break;
 	default:
 		// TODO: manage errors
@@ -885,10 +1099,15 @@ void decode_apdu(ByteStreamReader *stream, APDU *pointer)
  * @param *stream
  * @param *pointer
  */
-void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer)
+void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 {
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->length = 0;
+		return;
+	}
 
 	if (pointer->length > 0) {
 		DATA_apdu *data = calloc(1, sizeof(DATA_apdu));
@@ -896,7 +1115,7 @@ void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer)
 		if (data == NULL) {
 			return;
 		} else {
-			decode_data_apdu(stream, data);
+			decode_data_apdu(stream, data, error);
 
 			encode_set_data_apdu(pointer, data);
 		} /* else / TODO: manage errors */
@@ -909,10 +1128,11 @@ void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer)
  * @param *stream
  * @param *pointer
  */
-void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *pointer)
+void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *pointer, int *error)
 {
-	pointer->segm_entry_header = read_intu16(stream, NULL); // SegmEntryHeader segm_entry_header
-	decode_segmentryelemlist(stream, &pointer->segm_entry_elem_list); // SegmEntryElemList segm_entry_elem_list
+	pointer->segm_entry_header = read_intu16(stream, error); // SegmEntryHeader segm_entry_header
+	decode_segmentryelemlist(stream, &pointer->segm_entry_elem_list, error);
+	// SegmEntryElemList segm_entry_elem_list
 }
 
 /**
@@ -920,11 +1140,23 @@ void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_any(ByteStreamReader *stream, Any *pointer)
+void decode_any(ByteStreamReader *stream, Any *pointer, int *error)
 {
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->length = read_intu16(stream, error); // intu16 length
+	if (*error) {
+		DEBUG("any struct: length error");
+		return;
+	}
+
 	pointer->value = NULL;
+
+	if (pointer->length > stream->unread_bytes) {
+		DEBUG("any struct: underflow");
+		*error = 1;
+		return;
+	}
 
 	if (pointer->length > 0) {
 		pointer->value = calloc(pointer->length, sizeof(intu8));
@@ -933,9 +1165,12 @@ void decode_any(ByteStreamReader *stream, Any *pointer)
 			return;
 		}
 
-		read_intu8_many(stream, pointer->value, pointer->length, NULL);
+		read_intu8_many(stream, pointer->value, pointer->length, error);
 
-		// TODO contents of Any in case of error?
+		if (*error) {
+			memset(pointer->value, 0, pointer->length);
+			return;
+		}
 	}
 }
 
@@ -944,11 +1179,13 @@ void decode_any(ByteStreamReader *stream, Any *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_setargumentsimple(ByteStreamReader *stream, SetArgumentSimple *pointer)
+void decode_setargumentsimple(ByteStreamReader *stream, SetArgumentSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_modificationlist(stream, &pointer->modification_list); // ModificationList modification_list
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_modificationlist(stream, &pointer->modification_list, error);
+	// ModificationList modification_list
 }
 
 /**
@@ -956,11 +1193,14 @@ void decode_setargumentsimple(ByteStreamReader *stream, SetArgumentSimple *point
  *
  * @param *stream
  * @param *pointer
+ * @param *error
  */
-void decode_segmentinfo(ByteStreamReader *stream, SegmentInfo *pointer)
+void decode_segmentinfo(ByteStreamReader *stream, SegmentInfo *pointer, int *error)
 {
-	pointer->seg_inst_no = read_intu16(stream, NULL); // InstNumber seg_inst_no
-	decode_attributelist(stream, &pointer->seg_info); // AttributeList seg_info
+	pointer->seg_inst_no = read_intu16(stream, error); // InstNumber seg_inst_no
+	if (*error)
+		return;
+	decode_attributelist(stream, &pointer->seg_info, error); // AttributeList seg_info
 }
 
 /**
@@ -968,13 +1208,19 @@ void decode_segmentinfo(ByteStreamReader *stream, SegmentInfo *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_pmsegmelemstaticattrlist(ByteStreamReader *stream,
-				     PmSegmElemStaticAttrList *pointer)
+				     PmSegmElemStaticAttrList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(SegmElemStaticAttrEntry));
@@ -986,7 +1232,11 @@ void decode_pmsegmelemstaticattrlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_segmelemstaticattrentry(stream, pointer->value + i);
+			decode_segmelemstaticattrentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec pmsegelemstatiattrlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -996,11 +1246,12 @@ void decode_pmsegmelemstaticattrlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_abstimerange(ByteStreamReader *stream, AbsTimeRange *pointer)
+void decode_abstimerange(ByteStreamReader *stream, AbsTimeRange *pointer, int *error)
 {
-	decode_absolutetime(stream, &pointer->from_time); // AbsoluteTime from_time
-	decode_absolutetime(stream, &pointer->to_time); // AbsoluteTime to_time
+	decode_absolutetime(stream, &pointer->from_time, error); // AbsoluteTime from_time
+	decode_absolutetime(stream, &pointer->to_time, error); // AbsoluteTime to_time
 }
 
 /**
@@ -1008,13 +1259,14 @@ void decode_abstimerange(ByteStreamReader *stream, AbsTimeRange *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportinfompvar(ByteStreamReader *stream,
-				ScanReportInfoMPVar *pointer)
+				ScanReportInfoMPVar *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // DataReqId data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_scanreportpervarlist(stream, &pointer->scan_per_var); // ScanReportPerVarList scan_per_var
+	pointer->data_req_id = read_intu16(stream, error); // DataReqId data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_scanreportpervarlist(stream, &pointer->scan_per_var, error); // ScanReportPerVarList scan_per_var
 }
 
 /**
@@ -1022,14 +1274,19 @@ void decode_scanreportinfompvar(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_uuid_ident(ByteStreamReader *stream, UUID_Ident *pointer)
+void decode_uuid_ident(ByteStreamReader *stream, UUID_Ident *pointer, int *error)
 {
 	// intu8 value[16]
 	int i;
 
 	for (i = 0; i < 16; i++) {
-		*(pointer->value + i) = read_intu8(stream, NULL);
+		*(pointer->value + i) = read_intu8(stream, error);
+		if (*error) {
+			DEBUG("dec uuid_ident underflow");
+			break;
+		}
 	}
 }
 
@@ -1038,11 +1295,13 @@ void decode_uuid_ident(ByteStreamReader *stream, UUID_Ident *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_getargumentsimple(ByteStreamReader *stream, GetArgumentSimple *pointer)
+void decode_getargumentsimple(ByteStreamReader *stream, GetArgumentSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attributeidlist(stream, &pointer->attribute_id_list); // AttributeIdList attribute_id_list
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_attributeidlist(stream, &pointer->attribute_id_list, error);
+	// AttributeIdList attribute_id_list
 }
 
 /**
@@ -1050,12 +1309,18 @@ void decode_getargumentsimple(ByteStreamReader *stream, GetArgumentSimple *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_regcertdatalist(ByteStreamReader *stream, RegCertDataList *pointer)
+void decode_regcertdatalist(ByteStreamReader *stream, RegCertDataList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(RegCertData));
@@ -1067,7 +1332,11 @@ void decode_regcertdatalist(ByteStreamReader *stream, RegCertDataList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_regcertdata(stream, pointer->value + i);
+			decode_regcertdata(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec regcertdatalist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1077,11 +1346,12 @@ void decode_regcertdatalist(ByteStreamReader *stream, RegCertDataList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_configreportrsp(ByteStreamReader *stream, ConfigReportRsp *pointer)
+void decode_configreportrsp(ByteStreamReader *stream, ConfigReportRsp *pointer, int *error)
 {
-	pointer->config_report_id = read_intu16(stream, NULL); // ConfigId config_report_id
-	pointer->config_result = read_intu16(stream, NULL); // ConfigResult config_result
+	pointer->config_report_id = read_intu16(stream, error); // ConfigId config_report_id
+	pointer->config_result = read_intu16(stream, error); // ConfigResult config_result
 }
 
 /**
@@ -1089,11 +1359,12 @@ void decode_configreportrsp(ByteStreamReader *stream, ConfigReportRsp *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_dataproto(ByteStreamReader *stream, DataProto *pointer)
+void decode_dataproto(ByteStreamReader *stream, DataProto *pointer, int *error)
 {
-	pointer->data_proto_id = read_intu16(stream, NULL); // DataProtoId data_proto_id
-	decode_any(stream, &pointer->data_proto_info); // Any data_proto_info
+	pointer->data_proto_id = read_intu16(stream, error); // DataProtoId data_proto_id
+	decode_any(stream, &pointer->data_proto_info, error); // Any data_proto_info
 }
 
 /**
@@ -1101,12 +1372,13 @@ void decode_dataproto(ByteStreamReader *stream, DataProto *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_metricstructuresmall(ByteStreamReader *stream,
-				 MetricStructureSmall *pointer)
+				 MetricStructureSmall *pointer, int *error)
 {
-	pointer->ms_struct = read_intu8(stream, NULL); // intu8 ms_struct
-	pointer->ms_comp_no = read_intu8(stream, NULL); // intu8 ms_comp_no
+	pointer->ms_struct = read_intu8(stream, error); // intu8 ms_struct
+	pointer->ms_comp_no = read_intu8(stream, error); // intu8 ms_comp_no
 }
 
 /**
@@ -1114,12 +1386,14 @@ void decode_metricstructuresmall(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_segmentstatisticentry(ByteStreamReader *stream,
-				  SegmentStatisticEntry *pointer)
+				  SegmentStatisticEntry *pointer, int *error)
 {
-	pointer->segm_stat_type = read_intu16(stream, NULL); // SegmStatType segm_stat_type
-	decode_octet_string(stream, &pointer->segm_stat_entry); // octet_string segm_stat_entry
+	pointer->segm_stat_type = read_intu16(stream, error); // SegmStatType segm_stat_type
+	decode_octet_string(stream, &pointer->segm_stat_entry, error);
+	// octet_string segm_stat_entry
 }
 
 /**
@@ -1127,11 +1401,14 @@ void decode_segmentstatisticentry(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmentdataevent(ByteStreamReader *stream, SegmentDataEvent *pointer)
+void decode_segmentdataevent(ByteStreamReader *stream, SegmentDataEvent *pointer, int *error)
 {
-	decode_segmdataeventdescr(stream, &pointer->segm_data_event_descr); // SegmDataEventDescr segm_data_event_descr
-	decode_octet_string(stream, &pointer->segm_data_event_entries); // octet_string segm_data_event_entries
+	decode_segmdataeventdescr(stream, &pointer->segm_data_event_descr, error);
+	// SegmDataEventDescr segm_data_event_descr
+	decode_octet_string(stream, &pointer->segm_data_event_entries, error);
+	// octet_string segm_data_event_entries
 }
 
 /**
@@ -1139,12 +1416,18 @@ void decode_segmentdataevent(ByteStreamReader *stream, SegmentDataEvent *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmentryelemlist(ByteStreamReader *stream, SegmEntryElemList *pointer)
+void decode_segmentryelemlist(ByteStreamReader *stream, SegmEntryElemList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(SegmEntryElem));
@@ -1156,7 +1439,11 @@ void decode_segmentryelemlist(ByteStreamReader *stream, SegmEntryElemList *point
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_segmentryelem(stream, pointer->value + i);
+			decode_segmentryelem(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec segmentryelemlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1166,12 +1453,13 @@ void decode_segmentryelemlist(ByteStreamReader *stream, SegmEntryElemList *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_saspec(ByteStreamReader *stream, SaSpec *pointer)
+void decode_saspec(ByteStreamReader *stream, SaSpec *pointer, int *error)
 {
-	pointer->array_size = read_intu16(stream, NULL); // intu16 array_size
-	decode_sampletype(stream, &pointer->sample_type); // SampleType sample_type
-	pointer->flags = read_intu16(stream, NULL); // SaFlags flags
+	pointer->array_size = read_intu16(stream, error); // intu16 array_size
+	decode_sampletype(stream, &pointer->sample_type, error); // SampleType sample_type
+	pointer->flags = read_intu16(stream, error); // SaFlags flags
 }
 
 /**
@@ -1179,11 +1467,12 @@ void decode_saspec(ByteStreamReader *stream, SaSpec *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_attributemodentry(ByteStreamReader *stream, AttributeModEntry *pointer)
+void decode_attributemodentry(ByteStreamReader *stream, AttributeModEntry *pointer, int *error)
 {
-	pointer->modify_operator = read_intu16(stream, NULL); // ModifyOperator modify_operator
-	decode_ava_type(stream, &pointer->attribute); // AVA_Type attribute
+	pointer->modify_operator = read_intu16(stream, error); // ModifyOperator modify_operator
+	decode_ava_type(stream, &pointer->attribute, error); // AVA_Type attribute
 }
 
 /**
@@ -1191,15 +1480,16 @@ void decode_attributemodentry(ByteStreamReader *stream, AttributeModEntry *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_mdstimeinfo(ByteStreamReader *stream, MdsTimeInfo *pointer)
+void decode_mdstimeinfo(ByteStreamReader *stream, MdsTimeInfo *pointer, int *error)
 {
-	pointer->mds_time_cap_state = read_intu16(stream, NULL); // MdsTimeCapState mds_time_cap_state
-	pointer->time_sync_protocol = read_intu16(stream, NULL); // TimeProtocolId time_sync_protocol
-	pointer->time_sync_accuracy = read_intu32(stream, NULL); // RelativeTime time_sync_accuracy
-	pointer->time_resolution_abs_time = read_intu16(stream, NULL); // intu16 time_resolution_abs_time
-	pointer->time_resolution_rel_time = read_intu16(stream, NULL); // intu16 time_resolution_rel_time
-	pointer->time_resolution_high_res_time = read_intu32(stream, NULL); // intu32 time_resolution_high_res_time
+	pointer->mds_time_cap_state = read_intu16(stream, error); // MdsTimeCapState mds_time_cap_state
+	pointer->time_sync_protocol = read_intu16(stream, error); // TimeProtocolId time_sync_protocol
+	pointer->time_sync_accuracy = read_intu32(stream, error); // RelativeTime time_sync_accuracy
+	pointer->time_resolution_abs_time = read_intu16(stream, error); // intu16 time_resolution_abs_time
+	pointer->time_resolution_rel_time = read_intu16(stream, error); // intu16 time_resolution_rel_time
+	pointer->time_resolution_high_res_time = read_intu32(stream, error); // intu32 time_resolution_high_res_time
 }
 
 /**
@@ -1207,21 +1497,27 @@ void decode_mdstimeinfo(ByteStreamReader *stream, MdsTimeInfo *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_enumval(ByteStreamReader *stream, EnumVal *pointer)
+void decode_enumval(ByteStreamReader *stream, EnumVal *pointer, int *error)
 {
-	pointer->choice = read_intu16(stream, NULL); // EnumVal_choice choice
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->choice = read_intu16(stream, error); // EnumVal_choice choice
+	pointer->length = read_intu16(stream, error); // intu16 length
+
+	if (*error) {
+		pointer->choice = pointer->length = 0;
+		return;
+	}
 
 	switch (pointer->choice) {
 	case OBJ_ID_CHOSEN:
-		pointer->u.enum_obj_id = read_intu16(stream, NULL);
+		pointer->u.enum_obj_id = read_intu16(stream, error);
 		break;
 	case TEXT_STRING_CHOSEN:
-		decode_octet_string(stream, &pointer->u.enum_text_string);
+		decode_octet_string(stream, &pointer->u.enum_text_string, error);
 		break;
 	case BIT_STR_CHOSEN:
-		pointer->u.enum_bit_str = read_intu32(stream, NULL);
+		pointer->u.enum_bit_str = read_intu32(stream, error);
 		break;
 	default:
 		break;
@@ -1233,11 +1529,12 @@ void decode_enumval(ByteStreamReader *stream, EnumVal *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_trigsegmdataxferreq(ByteStreamReader *stream,
-				TrigSegmDataXferReq *pointer)
+				TrigSegmDataXferReq *pointer, int *error)
 {
-	pointer->seg_inst_no = read_intu16(stream, NULL); // InstNumber seg_inst_no
+	pointer->seg_inst_no = read_intu16(stream, error); // InstNumber seg_inst_no
 }
 
 /**
@@ -1245,11 +1542,12 @@ void decode_trigsegmdataxferreq(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_batmeasure(ByteStreamReader *stream, BatMeasure *pointer)
+void decode_batmeasure(ByteStreamReader *stream, BatMeasure *pointer, int *error)
 {
-	pointer->value = read_float(stream); // FLOAT_Type value
-	pointer->unit = read_intu16(stream, NULL); // OID_Type unit
+	pointer->value = read_float(stream, error); // FLOAT_Type value
+	pointer->unit = read_intu16(stream, error); // OID_Type unit
 }
 
 /**
@@ -1257,12 +1555,18 @@ void decode_batmeasure(ByteStreamReader *stream, BatMeasure *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmentstatistics(ByteStreamReader *stream, SegmentStatistics *pointer)
+void decode_segmentstatistics(ByteStreamReader *stream, SegmentStatistics *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(SegmentStatisticEntry));
@@ -1274,7 +1578,11 @@ void decode_segmentstatistics(ByteStreamReader *stream, SegmentStatistics *point
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_segmentstatisticentry(stream, pointer->value + i);
+			decode_segmentstatisticentry(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec segmentstatistics underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1284,12 +1592,18 @@ void decode_segmentstatistics(ByteStreamReader *stream, SegmentStatistics *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_attributeidlist(ByteStreamReader *stream, AttributeIdList *pointer)
+void decode_attributeidlist(ByteStreamReader *stream, AttributeIdList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(OID_Type));
@@ -1301,7 +1615,11 @@ void decode_attributeidlist(ByteStreamReader *stream, AttributeIdList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_intu16(stream, NULL);
+			*(pointer->value + i) = read_intu16(stream, error);
+			if (*error) {
+				DEBUG("dec attributeidlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1311,13 +1629,15 @@ void decode_attributeidlist(ByteStreamReader *stream, AttributeIdList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportinfofixed(ByteStreamReader *stream,
-				ScanReportInfoFixed *pointer)
+				ScanReportInfoFixed *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // DataReqId data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_observationscanfixedlist(stream, &pointer->obs_scan_fixed); // ObservationScanFixedList obs_scan_fixed
+	pointer->data_req_id = read_intu16(stream, error); // DataReqId data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_observationscanfixedlist(stream, &pointer->obs_scan_fixed, error);
+	// ObservationScanFixedList obs_scan_fixed
 }
 
 /**
@@ -1325,15 +1645,17 @@ void decode_scanreportinfofixed(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_datarequest(ByteStreamReader *stream, DataRequest *pointer)
+void decode_datarequest(ByteStreamReader *stream, DataRequest *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // DataReqId data_req_id
-	pointer->data_req_mode = read_intu16(stream, NULL); // DataReqMode data_req_mode
-	pointer->data_req_time = read_intu32(stream, NULL); // RelativeTime data_req_time
-	pointer->data_req_person_id = read_intu16(stream, NULL); // intu16 DataRequest_data_req_person_id
-	pointer->data_req_class = read_intu16(stream, NULL); // OID_Type data_req_class
-	decode_handlelist(stream, &pointer->data_req_obj_handle_list); // HANDLEList data_req_obj_handle_list
+	pointer->data_req_id = read_intu16(stream, error); // DataReqId data_req_id
+	pointer->data_req_mode = read_intu16(stream, error); // DataReqMode data_req_mode
+	pointer->data_req_time = read_intu32(stream, error); // RelativeTime data_req_time
+	pointer->data_req_person_id = read_intu16(stream, error); // intu16 DataRequest_data_req_person_id
+	pointer->data_req_class = read_intu16(stream, error); // OID_Type data_req_class
+	decode_handlelist(stream, &pointer->data_req_obj_handle_list, error);
+	// HANDLEList data_req_obj_handle_list
 }
 
 /**
@@ -1341,12 +1663,13 @@ void decode_datarequest(ByteStreamReader *stream, DataRequest *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_authbodyandstructype(ByteStreamReader *stream,
-				 AuthBodyAndStrucType *pointer)
+				 AuthBodyAndStrucType *pointer, int *error)
 {
-	pointer->auth_body = read_intu8(stream, NULL); // AuthBody auth_body
-	pointer->auth_body_struc_type = read_intu8(stream, NULL); // AuthBodyStrucType auth_body_struc_type
+	pointer->auth_body = read_intu8(stream, error); // AuthBody auth_body
+	pointer->auth_body_struc_type = read_intu8(stream, error); // AuthBodyStrucType auth_body_struc_type
 }
 
 /**
@@ -1354,10 +1677,11 @@ void decode_authbodyandstructype(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_rlrq_apdu(ByteStreamReader *stream, RLRQ_apdu *pointer)
+void decode_rlrq_apdu(ByteStreamReader *stream, RLRQ_apdu *pointer, int *error)
 {
-	pointer->reason = read_intu16(stream, NULL); // Release_request_reason reason
+	pointer->reason = read_intu16(stream, error); // Release_request_reason reason
 }
 
 /**
@@ -1365,58 +1689,64 @@ void decode_rlrq_apdu(ByteStreamReader *stream, RLRQ_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_data_apdu_message(ByteStreamReader *stream, Data_apdu_message *pointer)
+void decode_data_apdu_message(ByteStreamReader *stream, Data_apdu_message *pointer, int *error)
 {
-	pointer->choice = read_intu16(stream, NULL); // DATA_apdu_choice choice
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->choice = read_intu16(stream, error); // DATA_apdu_choice choice
+	pointer->length = read_intu16(stream, error); // intu16 length
+
+	if (*error) {
+		pointer->choice = pointer->length = 0;
+		return;
+	}
 
 	switch (pointer->choice) {
 	case ROIV_CMIP_EVENT_REPORT_CHOSEN:
 		decode_eventreportargumentsimple(stream,
-						 &pointer->u.roiv_cmipEventReport);
+						 &pointer->u.roiv_cmipEventReport, error);
 		break;
 	case ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:
 		decode_eventreportargumentsimple(stream,
-						 &pointer->u.roiv_cmipConfirmedEventReport);
+						 &pointer->u.roiv_cmipConfirmedEventReport, error);
 		break;
 	case ROIV_CMIP_GET_CHOSEN:
-		decode_getargumentsimple(stream, &pointer->u.roiv_cmipGet);
+		decode_getargumentsimple(stream, &pointer->u.roiv_cmipGet, error);
 		break;
 	case ROIV_CMIP_SET_CHOSEN:
-		decode_setargumentsimple(stream, &pointer->u.roiv_cmipSet);
+		decode_setargumentsimple(stream, &pointer->u.roiv_cmipSet, error);
 		break;
 	case ROIV_CMIP_CONFIRMED_SET_CHOSEN:
 		decode_setargumentsimple(stream,
-					 &pointer->u.roiv_cmipConfirmedSet);
+					 &pointer->u.roiv_cmipConfirmedSet, error);
 		break;
 	case ROIV_CMIP_ACTION_CHOSEN:
-		decode_actionargumentsimple(stream, &pointer->u.roiv_cmipAction);
+		decode_actionargumentsimple(stream, &pointer->u.roiv_cmipAction, error);
 		break;
 	case ROIV_CMIP_CONFIRMED_ACTION_CHOSEN:
 		decode_actionargumentsimple(stream,
-					    &pointer->u.roiv_cmipConfirmedAction);
+					    &pointer->u.roiv_cmipConfirmedAction, error);
 		break;
 	case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:
 		decode_eventreportresultsimple(stream,
-					       &pointer->u.rors_cmipConfirmedEventReport);
+					       &pointer->u.rors_cmipConfirmedEventReport, error);
 		break;
 	case RORS_CMIP_GET_CHOSEN:
-		decode_getresultsimple(stream, &pointer->u.rors_cmipGet);
+		decode_getresultsimple(stream, &pointer->u.rors_cmipGet, error);
 		break;
 	case RORS_CMIP_CONFIRMED_SET_CHOSEN:
 		decode_setresultsimple(stream,
-				       &pointer->u.rors_cmipConfirmedSet);
+				       &pointer->u.rors_cmipConfirmedSet, error);
 		break;
 	case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
 		decode_actionresultsimple(stream,
-					  &pointer->u.rors_cmipConfirmedAction);
+					  &pointer->u.rors_cmipConfirmedAction, error);
 		break;
 	case ROER_CHOSEN:
-		decode_errorresult(stream, &pointer->u.roer);
+		decode_errorresult(stream, &pointer->u.roer, error);
 		break;
 	case RORJ_CHOSEN:
-		decode_rejectresult(stream, &pointer->u.rorj);
+		decode_rejectresult(stream, &pointer->u.rorj, error);
 		break;
 	default:
 		// TODO: manage errors
@@ -1429,14 +1759,15 @@ void decode_data_apdu_message(ByteStreamReader *stream, Data_apdu_message *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_eventreportargumentsimple(ByteStreamReader *stream,
-				      EventReportArgumentSimple *pointer)
+				      EventReportArgumentSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	pointer->event_time = read_intu32(stream, NULL); // RelativeTime event_time
-	pointer->event_type = read_intu16(stream, NULL); // OID_Type event_type
-	decode_any(stream, &pointer->event_info); // Any event_info
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	pointer->event_time = read_intu32(stream, error); // RelativeTime event_time
+	pointer->event_type = read_intu16(stream, error); // OID_Type event_type
+	decode_any(stream, &pointer->event_info, error); // Any event_info
 }
 
 /**
@@ -1444,12 +1775,13 @@ void decode_eventreportargumentsimple(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_scanreportinfovar(ByteStreamReader *stream, ScanReportInfoVar *pointer)
+void decode_scanreportinfovar(ByteStreamReader *stream, ScanReportInfoVar *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // DataReqId data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_observationscanlist(stream, &pointer->obs_scan_var); // ObservationScanList obs_scan_var
+	pointer->data_req_id = read_intu16(stream, error); // DataReqId data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_observationscanlist(stream, &pointer->obs_scan_var, error); // ObservationScanList obs_scan_var
 }
 
 /**
@@ -1457,13 +1789,14 @@ void decode_scanreportinfovar(ByteStreamReader *stream, ScanReportInfoVar *point
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportinfompgrouped(ByteStreamReader *stream,
-				    ScanReportInfoMPGrouped *pointer)
+				    ScanReportInfoMPGrouped *pointer, int *error)
 {
-	pointer->data_req_id = read_intu16(stream, NULL); // intu16 data_req_id
-	pointer->scan_report_no = read_intu16(stream, NULL); // intu16 scan_report_no
-	decode_scanreportpergroupedlist(stream, &pointer->scan_per_grouped); // ScanReportPerGroupedList scan_per_grouped
+	pointer->data_req_id = read_intu16(stream, error); // intu16 data_req_id
+	pointer->scan_report_no = read_intu16(stream, error); // intu16 scan_report_no
+	decode_scanreportpergroupedlist(stream, &pointer->scan_per_grouped, error); // ScanReportPerGroupedList scan_per_grouped
 }
 
 /**
@@ -1471,12 +1804,19 @@ void decode_scanreportinfompgrouped(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_configobject(ByteStreamReader *stream, ConfigObject *pointer)
+void decode_configobject(ByteStreamReader *stream, ConfigObject *pointer, int *err)
 {
-	pointer->obj_class = read_intu16(stream, NULL); // OID_Type obj_class
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attributelist(stream, &pointer->attributes); // AttributeList attributes
+	pointer->obj_class = read_intu16(stream, err); // OID_Type obj_class
+	if (*err) {
+		return;
+	}
+	pointer->obj_handle = read_intu16(stream, err); // HANDLE obj_handle
+	if (*err) {
+		return;
+	}
+	decode_attributelist(stream, &pointer->attributes, err); // AttributeList attributes
 }
 
 /**
@@ -1484,13 +1824,19 @@ void decode_configobject(ByteStreamReader *stream, ConfigObject *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportinfogroupedlist(ByteStreamReader *stream,
-				      ScanReportInfoGroupedList *pointer)
+				      ScanReportInfoGroupedList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count,
@@ -1503,7 +1849,11 @@ void decode_scanreportinfogroupedlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_octet_string(stream, pointer->value + i);
+			decode_octet_string(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec scanreportinfogroupedlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1513,14 +1863,15 @@ void decode_scanreportinfogroupedlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_eventreportresultsimple(ByteStreamReader *stream,
-				    EventReportResultSimple *pointer)
+				    EventReportResultSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	pointer->currentTime = read_intu32(stream, NULL); // RelativeTime currentTime
-	pointer->event_type = read_intu16(stream, NULL); // OID_Type event_type
-	decode_any(stream, &pointer->event_reply_info); // Any event_reply_info
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	pointer->currentTime = read_intu32(stream, error); // RelativeTime currentTime
+	pointer->event_type = read_intu16(stream, error); // OID_Type event_type
+	decode_any(stream, &pointer->event_reply_info, error); // Any event_reply_info
 }
 
 /**
@@ -1528,11 +1879,12 @@ void decode_eventreportresultsimple(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_type(ByteStreamReader *stream, TYPE *pointer)
+void decode_type(ByteStreamReader *stream, TYPE *pointer, int *error)
 {
-	pointer->partition = read_intu16(stream, NULL); // NomPartition partition
-	pointer->code = read_intu16(stream, NULL); // OID_Type code
+	pointer->partition = read_intu16(stream, error); // NomPartition partition
+	pointer->code = read_intu16(stream, error); // OID_Type code
 }
 
 /**
@@ -1540,10 +1892,11 @@ void decode_type(ByteStreamReader *stream, TYPE *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_metricspecsmall(ByteStreamReader *stream, MetricSpecSmall *pointer)
+void decode_metricspecsmall(ByteStreamReader *stream, MetricSpecSmall *pointer, int *error)
 {
-	*pointer = read_intu16(stream, NULL);
+	*pointer = read_intu16(stream, error);
 }
 
 /**
@@ -1551,12 +1904,13 @@ void decode_metricspecsmall(ByteStreamReader *stream, MetricSpecSmall *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_observationscanfixed(ByteStreamReader *stream,
-				 ObservationScanFixed *pointer)
+				 ObservationScanFixed *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_octet_string(stream, &pointer->obs_val_data); // octet_string obs_val_data
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_octet_string(stream, &pointer->obs_val_data, error); // octet_string obs_val_data
 }
 
 /**
@@ -1564,13 +1918,14 @@ void decode_observationscanfixed(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_dataresponse(ByteStreamReader *stream, DataResponse *pointer)
+void decode_dataresponse(ByteStreamReader *stream, DataResponse *pointer, int *error)
 {
-	pointer->rel_time_stamp = read_intu32(stream, NULL); // RelativeTime rel_time_stamp
-	pointer->data_req_result = read_intu16(stream, NULL); // DataReqResult data_req_result
-	pointer->event_type = read_intu16(stream, NULL); // OID_Type event_type
-	decode_any(stream, &pointer->event_info); // Any event_info
+	pointer->rel_time_stamp = read_intu32(stream, error); // RelativeTime rel_time_stamp
+	pointer->data_req_result = read_intu16(stream, error); // DataReqResult data_req_result
+	pointer->event_type = read_intu16(stream, error); // OID_Type event_type
+	decode_any(stream, &pointer->event_info, error); // Any event_info
 }
 
 /**
@@ -1578,12 +1933,13 @@ void decode_dataresponse(ByteStreamReader *stream, DataResponse *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_prodspecentry(ByteStreamReader *stream, ProdSpecEntry *pointer)
+void decode_prodspecentry(ByteStreamReader *stream, ProdSpecEntry *pointer, int *error)
 {
-	pointer->spec_type = read_intu16(stream, NULL); // ProdSpecEntry_spec_type spec_type
-	pointer->component_id = read_intu16(stream, NULL); // PrivateOid component_id
-	decode_octet_string(stream, &pointer->prod_spec); // octet_string prod_spec
+	pointer->spec_type = read_intu16(stream, error); // ProdSpecEntry_spec_type spec_type
+	pointer->component_id = read_intu16(stream, error); // PrivateOid component_id
+	decode_octet_string(stream, &pointer->prod_spec, error); // octet_string prod_spec
 }
 
 /**
@@ -1591,13 +1947,14 @@ void decode_prodspecentry(ByteStreamReader *stream, ProdSpecEntry *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_scalerangespec16(ByteStreamReader *stream, ScaleRangeSpec16 *pointer)
+void decode_scalerangespec16(ByteStreamReader *stream, ScaleRangeSpec16 *pointer, int *error)
 {
-	pointer->lower_absolute_value = read_float(stream); // FLOAT_Type lower_absolute_value
-	pointer->upper_absolute_value = read_float(stream); // FLOAT_Type upper_absolute_value
-	pointer->lower_scaled_value = read_intu16(stream, NULL); // intu16 lower_scaled_value
-	pointer->upper_scaled_value = read_intu16(stream, NULL); // intu16 upper_scaled_value
+	pointer->lower_absolute_value = read_float(stream, error); // FLOAT_Type lower_absolute_value
+	pointer->upper_absolute_value = read_float(stream, error); // FLOAT_Type upper_absolute_value
+	pointer->lower_scaled_value = read_intu16(stream, error); // intu16 lower_scaled_value
+	pointer->upper_scaled_value = read_intu16(stream, error); // intu16 upper_scaled_value
 }
 
 /**
@@ -1605,13 +1962,14 @@ void decode_scalerangespec16(ByteStreamReader *stream, ScaleRangeSpec16 *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmentryelem(ByteStreamReader *stream, SegmEntryElem *pointer)
+void decode_segmentryelem(ByteStreamReader *stream, SegmEntryElem *pointer, int *error)
 {
-	pointer->class_id = read_intu16(stream, NULL); // OID_Type class_id
-	decode_type(stream, &pointer->metric_type); // TYPE metric_type
-	pointer->handle = read_intu16(stream, NULL); // HANDLE handle
-	decode_attrvalmap(stream, &pointer->attr_val_map); // AttrValMap attr_val_map
+	pointer->class_id = read_intu16(stream, error); // OID_Type class_id
+	decode_type(stream, &pointer->metric_type, error); // TYPE metric_type
+	pointer->handle = read_intu16(stream, error); // HANDLE handle
+	decode_attrvalmap(stream, &pointer->attr_val_map, error); // AttrValMap attr_val_map
 }
 
 /**
@@ -1619,10 +1977,11 @@ void decode_segmentryelem(ByteStreamReader *stream, SegmEntryElem *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_abrt_apdu(ByteStreamReader *stream, ABRT_apdu *pointer)
+void decode_abrt_apdu(ByteStreamReader *stream, ABRT_apdu *pointer, int *error)
 {
-	pointer->reason = read_intu16(stream, NULL); // Abort_reason reason
+	pointer->reason = read_intu16(stream, error); // Abort_reason reason
 }
 
 /**
@@ -1630,12 +1989,13 @@ void decode_abrt_apdu(ByteStreamReader *stream, ABRT_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_datareqmodecapab(ByteStreamReader *stream, DataReqModeCapab *pointer)
+void decode_datareqmodecapab(ByteStreamReader *stream, DataReqModeCapab *pointer, int *error)
 {
-	pointer->data_req_mode_flags = read_intu16(stream, NULL); // DataReqModeFlags data_req_mode_flags
-	pointer->data_req_init_agent_count = read_intu8(stream, NULL); // intu8 data_req_init_agent_count
-	pointer->data_req_init_manager_count = read_intu8(stream, NULL); // intu8 data_req_init_manager_count
+	pointer->data_req_mode_flags = read_intu16(stream, error); // DataReqModeFlags data_req_mode_flags
+	pointer->data_req_init_agent_count = read_intu8(stream, error); // intu8 data_req_init_agent_count
+	pointer->data_req_init_manager_count = read_intu8(stream, error); // intu8 data_req_init_manager_count
 }
 
 /**
@@ -1643,13 +2003,19 @@ void decode_datareqmodecapab(ByteStreamReader *stream, DataReqModeCapab *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_supplementaltypelist(ByteStreamReader *stream,
-				 SupplementalTypeList *pointer)
+				 SupplementalTypeList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(TYPE));
@@ -1661,7 +2027,11 @@ void decode_supplementaltypelist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_type(stream, pointer->value + i);
+			decode_type(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec supplementaltypelist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1671,13 +2041,19 @@ void decode_supplementaltypelist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_observationscanfixedlist(ByteStreamReader *stream,
-				     ObservationScanFixedList *pointer)
+				     ObservationScanFixedList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ObservationScanFixed));
@@ -1689,7 +2065,11 @@ void decode_observationscanfixedlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_observationscanfixed(stream, pointer->value + i);
+			decode_observationscanfixed(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec observationscanfixedlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1699,12 +2079,13 @@ void decode_observationscanfixedlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_trigsegmdataxferrsp(ByteStreamReader *stream,
-				TrigSegmDataXferRsp *pointer)
+				TrigSegmDataXferRsp *pointer, int *error)
 {
-	pointer->seg_inst_no = read_intu16(stream, NULL); // InstNumber seg_inst_no
-	pointer->trig_segm_xfer_rsp = read_intu16(stream, NULL); // TrigSegmXferRsp trig_segm_xfer_rsp
+	pointer->seg_inst_no = read_intu16(stream, error); // InstNumber seg_inst_no
+	pointer->trig_segm_xfer_rsp = read_intu16(stream, error); // TrigSegmXferRsp trig_segm_xfer_rsp
 }
 
 /**
@@ -1712,11 +2093,12 @@ void decode_trigsegmdataxferrsp(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_data_apdu(ByteStreamReader *stream, DATA_apdu *pointer)
+void decode_data_apdu(ByteStreamReader *stream, DATA_apdu *pointer, int *error)
 {
-	pointer->invoke_id = read_intu16(stream, NULL); // InvokeIDType invoke_id
-	decode_data_apdu_message(stream, &pointer->message); // Data_apdu_message message
+	pointer->invoke_id = read_intu16(stream, error); // InvokeIDType invoke_id
+	decode_data_apdu_message(stream, &pointer->message, error); // Data_apdu_message message
 }
 
 /**
@@ -1724,11 +2106,12 @@ void decode_data_apdu(ByteStreamReader *stream, DATA_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_aarq_apdu(ByteStreamReader *stream, AARQ_apdu *pointer)
+void decode_aarq_apdu(ByteStreamReader *stream, AARQ_apdu *pointer, int *error)
 {
-	pointer->assoc_version = read_intu32(stream, NULL); // AssociationVersion assoc_version
-	decode_dataprotolist(stream, &pointer->data_proto_list); // DataProtoList data_proto_list
+	pointer->assoc_version = read_intu32(stream, error); // AssociationVersion assoc_version
+	decode_dataprotolist(stream, &pointer->data_proto_list, error); // DataProtoList data_proto_list
 }
 
 /**
@@ -1736,12 +2119,18 @@ void decode_aarq_apdu(ByteStreamReader *stream, AARQ_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_typeverlist(ByteStreamReader *stream, TypeVerList *pointer)
+void decode_typeverlist(ByteStreamReader *stream, TypeVerList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(TypeVer));
@@ -1753,7 +2142,11 @@ void decode_typeverlist(ByteStreamReader *stream, TypeVerList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_typever(stream, pointer->value + i);
+			decode_typever(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec typeverlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1763,11 +2156,13 @@ void decode_typeverlist(ByteStreamReader *stream, TypeVerList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_regcertdata(ByteStreamReader *stream, RegCertData *pointer)
+void decode_regcertdata(ByteStreamReader *stream, RegCertData *pointer, int *error)
 {
-	decode_authbodyandstructype(stream, &pointer->auth_body_and_struc_type); // AuthBodyAndStrucType auth_body_and_struc_type
-	decode_any(stream, &pointer->auth_body_data); // Any auth_body_data
+	decode_authbodyandstructype(stream, &pointer->auth_body_and_struc_type, error);
+	// AuthBodyAndStrucType auth_body_and_struc_type
+	decode_any(stream, &pointer->auth_body_data, error); // Any auth_body_data
 }
 
 /**
@@ -1775,13 +2170,14 @@ void decode_regcertdata(ByteStreamReader *stream, RegCertData *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_nuobsvalue(ByteStreamReader *stream, NuObsValue *pointer)
+void decode_nuobsvalue(ByteStreamReader *stream, NuObsValue *pointer, int *error)
 {
-	pointer->metric_id = read_intu16(stream, NULL); // OID_Type metric_id
-	pointer->state = read_intu16(stream, NULL); // MeasurementStatus state
-	pointer->unit_code = read_intu16(stream, NULL); // OID_Type unit_code
-	pointer->value = read_float(stream); // FLOAT_Type value
+	pointer->metric_id = read_intu16(stream, error); // OID_Type metric_id
+	pointer->state = read_intu16(stream, error); // MeasurementStatus state
+	pointer->unit_code = read_intu16(stream, error); // OID_Type unit_code
+	pointer->value = read_float(stream, error); // FLOAT_Type value
 }
 
 /**
@@ -1789,13 +2185,19 @@ void decode_nuobsvalue(ByteStreamReader *stream, NuObsValue *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_scanreportpervarlist(ByteStreamReader *stream,
-				 ScanReportPerVarList *pointer)
+				 ScanReportPerVarList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerVar));
@@ -1807,7 +2209,11 @@ void decode_scanreportpervarlist(ByteStreamReader *stream,
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_scanreportpervar(stream, pointer->value + i);
+			decode_scanreportpervar(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec scanreportpervarlist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1817,11 +2223,12 @@ void decode_scanreportpervarlist(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_settimeinvoke(ByteStreamReader *stream, SetTimeInvoke *pointer)
+void decode_settimeinvoke(ByteStreamReader *stream, SetTimeInvoke *pointer, int *error)
 {
-	decode_absolutetime(stream, &pointer->date_time); // AbsoluteTime date_time
-	pointer->accuracy = read_float(stream); // FLOAT_Type accuracy
+	decode_absolutetime(stream, &pointer->date_time, error); // AbsoluteTime date_time
+	pointer->accuracy = read_float(stream, error); // FLOAT_Type accuracy
 }
 
 /**
@@ -1829,12 +2236,18 @@ void decode_settimeinvoke(ByteStreamReader *stream, SetTimeInvoke *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_segmentinfolist(ByteStreamReader *stream, SegmentInfoList *pointer)
+void decode_segmentinfolist(ByteStreamReader *stream, SegmentInfoList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(SegmentInfo));
@@ -1846,7 +2259,11 @@ void decode_segmentinfolist(ByteStreamReader *stream, SegmentInfoList *pointer)
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_segmentinfo(stream, pointer->value + i);
+			decode_segmentinfo(stream, pointer->value + i, error);
+			if (*error) {
+				DEBUG("dec segmentinfolist underflow");
+				break;
+			}
 		}
 	}
 }
@@ -1856,12 +2273,13 @@ void decode_segmentinfolist(ByteStreamReader *stream, SegmentInfoList *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_actionresultsimple(ByteStreamReader *stream, ActionResultSimple *pointer)
+void decode_actionresultsimple(ByteStreamReader *stream, ActionResultSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	pointer->action_type = read_intu16(stream, NULL); // OID_Type action_type
-	decode_any(stream, &pointer->action_info_args); // Any action_info_args
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	pointer->action_type = read_intu16(stream, error); // OID_Type action_type
+	decode_any(stream, &pointer->action_info_args, error); // Any action_info_args
 }
 
 /**
@@ -1869,13 +2287,14 @@ void decode_actionresultsimple(ByteStreamReader *stream, ActionResultSimple *poi
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_segmelemstaticattrentry(ByteStreamReader *stream,
-				    SegmElemStaticAttrEntry *pointer)
+				    SegmElemStaticAttrEntry *pointer, int *error)
 {
-	pointer->class_id = read_intu16(stream, NULL); // OID_Type class_id
-	decode_type(stream, &pointer->metric_type); // TYPE metric_type
-	decode_attributelist(stream, &pointer->attribute_list); // AttributeList attribute_list
+	pointer->class_id = read_intu16(stream, error); // OID_Type class_id
+	decode_type(stream, &pointer->metric_type, error); // TYPE metric_type
+	decode_attributelist(stream, &pointer->attribute_list, error); // AttributeList attribute_list
 }
 
 /**
@@ -1883,12 +2302,18 @@ void decode_segmelemstaticattrentry(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *pointer)
+void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
+
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
 
 	if (pointer->count > 0) {
 		pointer->value = calloc(pointer->count, sizeof(BasicNuObsValue));
@@ -1900,7 +2325,11 @@ void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *poi
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			*(pointer->value + i) = read_sfloat(stream);
+			*(pointer->value + i) = read_sfloat(stream, error);
+			if (*error) {
+				DEBUG("dec cmp basic nu undeflow");
+				break;
+			}
 		}
 	}
 }
@@ -1910,14 +2339,28 @@ void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *poi
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer)
+void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer, int *error)
 {
-	pointer->count = read_intu16(stream, NULL); // intu16 count
-	pointer->length = read_intu16(stream, NULL); // intu16 length
+	*error = 0;
+	pointer->count = read_intu16(stream, error); // intu16 count
+	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
 
+	if (*error) {
+		pointer->count = pointer->length = 0;
+		return;
+	}
+
 	if (pointer->count > 0) {
+		if (pointer->length < stream->unread_bytes) {
+			DEBUG("object list incomplete");
+			pointer->count = pointer->length = 0;
+			*error = 1;
+			return;
+		}
+
 		pointer->value = calloc(pointer->count, sizeof(ConfigObject));
 
 		if (pointer->value == NULL) {
@@ -1927,7 +2370,13 @@ void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer
 		int i;
 
 		for (i = 0; i < pointer->count; i++) {
-			decode_configobject(stream, pointer->value + i);
+			decode_configobject(stream, pointer->value + i, error);
+			if (*error) {
+				pointer->count = pointer->length = 0;
+				free(pointer->value);
+				pointer->value = 0;
+				return;
+			}
 		}
 	}
 }
@@ -1937,11 +2386,12 @@ void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_setresultsimple(ByteStreamReader *stream, SetResultSimple *pointer)
+void decode_setresultsimple(ByteStreamReader *stream, SetResultSimple *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attributelist(stream, &pointer->attribute_list); // AttributeList attribute_list
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_attributelist(stream, &pointer->attribute_list, error); // AttributeList attribute_list
 }
 
 /**
@@ -1949,12 +2399,13 @@ void decode_setresultsimple(ByteStreamReader *stream, SetResultSimple *pointer)
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
 void decode_handleattrvalmapentry(ByteStreamReader *stream,
-				  HandleAttrValMapEntry *pointer)
+				  HandleAttrValMapEntry *pointer, int *error)
 {
-	pointer->obj_handle = read_intu16(stream, NULL); // HANDLE obj_handle
-	decode_attrvalmap(stream, &pointer->attr_val_map); // AttrValMap attr_val_map
+	pointer->obj_handle = read_intu16(stream, error); // HANDLE obj_handle
+	decode_attrvalmap(stream, &pointer->attr_val_map, error); // AttrValMap attr_val_map
 }
 
 /**
@@ -1962,10 +2413,11 @@ void decode_handleattrvalmapentry(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_simplenuobsvalue(ByteStreamReader *stream, SimpleNuObsValue *pointer)
+void decode_simplenuobsvalue(ByteStreamReader *stream, SimpleNuObsValue *pointer, int *error)
 {
-	*pointer = read_float(stream);
+	*pointer = read_float(stream, error);
 }
 
 /**
@@ -1973,10 +2425,11 @@ void decode_simplenuobsvalue(ByteStreamReader *stream, SimpleNuObsValue *pointer
  *
  * @param *stream
  * @param *pointer
+ * @param error Error feedback
  */
-void decode_configid(ByteStreamReader *stream, ConfigId *pointer)
+void decode_configid(ByteStreamReader *stream, ConfigId *pointer, int *error)
 {
-	*pointer = read_intu16(stream, NULL);
+	*pointer = read_intu16(stream, error);
 }
 
 /** @} */

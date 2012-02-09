@@ -788,7 +788,7 @@ void operating_assoc_release_req_tx(Context *ctx,
 void operating_rors_confirmed_action_tx(Context *ctx,
 					fsm_events evt, FSMEventData *data)
 {
-
+	int error = 0; // FIXME handle
 	DATA_apdu *data_apdu = encode_get_data_apdu(
 				       &data->received_apdu->u.prst);
 
@@ -810,7 +810,7 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 		ByteStreamReader *response_data = byte_stream_reader_instance(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args.value,
 						  data_apdu->message.u.rors_cmipConfirmedAction.action_info_args.length);
 
-		decode_dataresponse(response_data, &response);
+		decode_dataresponse(response_data, &response, &error);
 
 		// Send the event to the MDS
 		Any event;
@@ -853,6 +853,8 @@ void operating_rors_confirmed_action_tx(Context *ctx,
  */
 void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scanner, OID_Type event_type, Any *event)
 {
+	int error = 0; // FIXME handle
+
 	// TODO Change notify event
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
@@ -867,32 +869,32 @@ void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scann
 
 	switch (event_type) {
 	case MDC_NOTI_BUF_SCAN_REPORT_VAR:
-		decode_scanreportinfovar(event_info_stream, &info_var);
+		decode_scanreportinfovar(event_info_stream, &info_var, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_var(ctx, scanner, &info_var);
 		del_scanreportinfovar(&info_var);
 		break;
 	case MDC_NOTI_BUF_SCAN_REPORT_FIXED:
-		decode_scanreportinfofixed(event_info_stream, &info_fixed);
+		decode_scanreportinfofixed(event_info_stream, &info_fixed, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_fixed(ctx, scanner, &info_fixed);
 		del_scanreportinfofixed(&info_fixed);
 		break;
 	case MDC_NOTI_BUF_SCAN_REPORT_GROUPED:
-		decode_scanreportinfogrouped(event_info_stream, &info_grouped);
+		decode_scanreportinfogrouped(event_info_stream, &info_grouped, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_grouped(ctx, scanner, &info_grouped);
 		del_scanreportinfogrouped(&info_grouped);
 		break;
 	case MDC_NOTI_BUF_SCAN_REPORT_MP_VAR:
-		decode_scanreportinfompvar(event_info_stream, &info_mp_var);
+		decode_scanreportinfompvar(event_info_stream, &info_mp_var, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_mp_var(ctx, scanner, &info_mp_var);
 		del_scanreportinfompvar(&info_mp_var);
 		break;
 	case MDC_NOTI_BUF_SCAN_REPORT_MP_FIXED:
-		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed);
+		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_mp_fixed(ctx, scanner, &info_mp_fixed);
 		del_scanreportinfompfixed(&info_mp_fixed);
 		break;
 	case MDC_NOTI_BUF_SCAN_REPORT_MP_GROUPED:
-		decode_scanreportinfompgrouped(event_info_stream, &info_mp_grouped);
+		decode_scanreportinfompgrouped(event_info_stream, &info_mp_grouped, &error);
 		peri_cfg_scanner_event_report_buf_scan_report_mp_grouped(ctx, scanner, &info_mp_grouped);
 		del_scanreportinfompgrouped(&info_mp_grouped);
 		break;
@@ -911,6 +913,8 @@ void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scann
  */
 void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner, OID_Type event_type, Any *event)
 {
+	int error = 0; // FIXME handle
+
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
 	ScanReportInfoGrouped info_grouped;
@@ -924,32 +928,32 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
 
 	switch (event_type) {
 	case MDC_NOTI_UNBUF_SCAN_REPORT_VAR:
-		decode_scanreportinfovar(event_info_stream, &info_var);
+		decode_scanreportinfovar(event_info_stream, &info_var, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_var(ctx, scanner, &info_var);
 		del_scanreportinfovar(&info_var);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_FIXED:
-		decode_scanreportinfofixed(event_info_stream, &info_fixed);
+		decode_scanreportinfofixed(event_info_stream, &info_fixed, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_fixed(ctx, scanner, &info_fixed);
 		del_scanreportinfofixed(&info_fixed);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_GROUPED:
-		decode_scanreportinfogrouped(event_info_stream, &info_grouped);
+		decode_scanreportinfogrouped(event_info_stream, &info_grouped, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_grouped(ctx, scanner, &info_grouped);
 		del_scanreportinfogrouped(&info_grouped);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_VAR:
-		decode_scanreportinfompvar(event_info_stream, &info_mp_var);
+		decode_scanreportinfompvar(event_info_stream, &info_mp_var, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_var(ctx, scanner, &info_mp_var);
 		del_scanreportinfompvar(&info_mp_var);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_FIXED:
-		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed);
+		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_fixed(ctx, scanner, &info_mp_fixed);
 		del_scanreportinfompfixed(&info_mp_fixed);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_GROUPED:
-		decode_scanreportinfompgrouped(event_info_stream, &info_mp_grouped);
+		decode_scanreportinfompgrouped(event_info_stream, &info_mp_grouped, &error);
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_grouped(ctx, scanner, &info_mp_grouped);
 		del_scanreportinfompgrouped(&info_mp_grouped);
 		break;
@@ -967,11 +971,12 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
  */
 void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 {
+	int error = 0;
+
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
 	ScanReportInfoMPFixed info_mp_fixed;
 	ScanReportInfoMPVar info_mp_var;
-	//ERROR error;
 
 	ByteStreamReader *event_info_stream = byte_stream_reader_instance(event->value, event->length);
 
@@ -979,22 +984,28 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 
 	switch (event_type) {
 	case MDC_NOTI_SCAN_REPORT_FIXED:
-		decode_scanreportinfofixed(event_info_stream, &info_fixed);
-		mds_event_report_dynamic_data_update_fixed(ctx, &info_fixed);
+		decode_scanreportinfofixed(event_info_stream, &info_fixed, &error);
+		if (! error) {
+			mds_event_report_dynamic_data_update_fixed(ctx, &info_fixed);
+		}
 		del_scanreportinfofixed(&info_fixed);
 		break;
 	case MDC_NOTI_SCAN_REPORT_VAR:
-		decode_scanreportinfovar(event_info_stream, &info_var);
-		mds_event_report_dynamic_data_update_var(ctx, &info_var);
+		decode_scanreportinfovar(event_info_stream, &info_var, &error);
+		if (! error) {
+			mds_event_report_dynamic_data_update_var(ctx, &info_var);
+		}
 		del_scanreportinfovar(&info_var);
 		break;
 	case MDC_NOTI_SCAN_REPORT_MP_FIXED:
-		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed);
-		mds_event_report_dynamic_data_update_mp_fixed(ctx, &info_mp_fixed);
+		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed, &error);
+		if (! error) {
+			mds_event_report_dynamic_data_update_mp_fixed(ctx, &info_mp_fixed);
+		}
 		del_scanreportinfompfixed(&info_mp_fixed);
 		break;
 	case MDC_NOTI_SCAN_REPORT_MP_VAR:
-		decode_scanreportinfompvar(event_info_stream, &info_mp_var);
+		decode_scanreportinfompvar(event_info_stream, &info_mp_var, &error);
 		/* TODO: send to DIM
 		 * mds_event_report_dynamic_data_update_mp_var(MDS *self, ScanReportInfoMPVar info_mp_var);
 		 */
@@ -1036,12 +1047,13 @@ void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request 
  */
 void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r)
 {
+	int error = 0; // FIXME handle
 	SegmentInfoList info_list;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
 
 	ByteStreamReader *event_info_stream = byte_stream_reader_instance(event->value, event->length);
-	decode_segmentinfolist(event_info_stream, &info_list);
+	decode_segmentinfolist(event_info_stream, &info_list, &error);
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
 		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list, &(r->return_data));
@@ -1062,12 +1074,13 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handl
 void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
 							Request *r)
 {
+	int error = 0; // FIXME handle
 	TrigSegmDataXferRsp trig_rsp;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
 
 	ByteStreamReader *event_data_stream = byte_stream_reader_instance(event->value, event->length);
-	decode_trigsegmdataxferrsp(event_data_stream, &trig_rsp);
+	decode_trigsegmdataxferrsp(event_data_stream, &trig_rsp, &error);
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
 		pmstore_trig_segment_data_xfer_response(&(mds_obj->u.pmstore),
@@ -1090,6 +1103,7 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
 void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event)
 {
+	int error = 0; // FIXME handle
 	SegmentDataEvent segm_data_event;
 	SegmentDataResult result;
 
@@ -1097,7 +1111,7 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 	mds_obj = mds_get_object_by_handle(ctx->mds, obj_handle);
 
 	ByteStreamReader *event_data_stream = byte_stream_reader_instance(event->value, event->length);
-	decode_segmentdataevent(event_data_stream, &segm_data_event);
+	decode_segmentdataevent(event_data_stream, &segm_data_event, &error);
 
 	result.segm_data_event_descr = segm_data_event.segm_data_event_descr;
 	result.segm_data_event_descr.segm_evt_status = SEVTSTA_MANAGER_ABORT;

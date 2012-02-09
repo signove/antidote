@@ -160,6 +160,8 @@ static void comm_agent_process_confirmed_event_report(Context *ctx, APDU *apdu,
 					EventReportResultSimple *report,
 					FSMEventData *data)
 {
+	int error = 0; // FIXME handle
+
 	if (report->obj_handle != MDS_HANDLE)
 		goto fail;
 	if (report->event_type != MDC_NOTI_CONFIG)
@@ -168,7 +170,7 @@ static void comm_agent_process_confirmed_event_report(Context *ctx, APDU *apdu,
 	ConfigReportRsp rsp;
 	ByteStreamReader *stream = byte_stream_reader_instance(report->event_reply_info.value,
 						report->event_reply_info.length);
-	decode_configreportrsp(stream, &rsp);
+	decode_configreportrsp(stream, &rsp, &error);
 	free(stream);
 
 	if (rsp.config_result == ACCEPTED_CONFIG) {
@@ -433,17 +435,18 @@ ConfigResult configuring_perform_configuration_in(Context *ctx,
 
 			del_configreport(&config_report);
 			free(object_list);
+
 		} else if (ext_configurations_is_supported_standard(system_id,
-					config_report.config_report_id)) {
+					config_report.config_report_id) &&
+			  (object_list = ext_configurations_get_configuration_attributes(
+					system_id, config_report.config_report_id))) {
 			DEBUG(" configuring: using previous known extended configuration");
-			// tem malloc
-			object_list = ext_configurations_get_configuration_attributes(system_id,
-					config_report.config_report_id);
 
 			mds_configure_operating(ctx, object_list, 1);
 
 			del_configreport(&config_report);
 			free(object_list);
+
 		} else {
 			DEBUG(" configuring: using new extended configuration");
 			object_list = &config_report.config_obj_list;
@@ -481,6 +484,7 @@ ConfigResult configuring_perform_configuration_in(Context *ctx,
 void configuring_perform_configuration(Context *ctx, fsm_events evt,
 				       FSMEventData *event_data)
 {
+	int error = 0; // FIXME handle
 	DEBUG("\n configuring: performing");
 
 	APDU *apdu = event_data->received_apdu;
@@ -491,7 +495,7 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 	ConfigReport config_report;
 	ByteStreamReader *config_stream = byte_stream_reader_instance(args.event_info.value,
 					  args.event_info.length);
-	decode_configreport(config_stream, &config_report);
+	decode_configreport(config_stream, &config_report, &error);
 
 	configuring_perform_configuration_in(ctx, config_report, apdu, 0);
 
@@ -536,6 +540,7 @@ void configuring_new_measurements_response_tx(Context *ctx, fsm_events evt,
 void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 		FSMEventData *event_data)
 {
+	int error = 0; // FIXME handle
 	DEBUG("\n configuring: send configuration response");
 
 	APDU *apdu = event_data->received_apdu;
@@ -546,7 +551,7 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 	ConfigReport config_report;
 	ByteStreamReader *config_stream = byte_stream_reader_instance(args.event_info.value,
 					  args.event_info.length);
-	decode_configreport(config_stream, &config_report);
+	decode_configreport(config_stream, &config_report, &error);
 	ConfigId config_report_id = config_report.config_report_id;
 	del_configreport(&config_report);
 

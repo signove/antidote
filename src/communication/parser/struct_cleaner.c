@@ -1334,6 +1334,8 @@ void del_configobjectlist(ConfigObjectList *pointer)
 	}
 
 	free(pointer->value);
+	pointer->count = 0;
+	pointer->length = 0;
 	pointer->value = NULL;
 }
 

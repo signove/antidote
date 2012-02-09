@@ -80,16 +80,19 @@ void test_read_intu8()
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 243);
 
+	error = 0;
 	data = read_intu8(stream, &error);
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 207);
 
+	error = 0;
 	data = read_intu8(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
 
 	free(stream);
 	stream = NULL;
+	error = 0;
 	data = read_intu8(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
@@ -105,6 +108,7 @@ void test_read_intu8_many()
 	read_intu8_many(stream, data, 11, &error);
 	CU_ASSERT(error);
 
+	error = 0;
 	read_intu8_many(stream, data, 5, &error);
 	CU_ASSERT(!error);
 
@@ -114,9 +118,11 @@ void test_read_intu8_many()
 	CU_ASSERT_EQUAL(data[3], 0x00);
 	CU_ASSERT_EQUAL(data[4], 0x51);
 
+	error = 0;
 	read_intu8_many(stream, data, 6, &error);
 	CU_ASSERT(error);
 
+	error = 0;
 	read_intu8_many(stream, data, 5, &error);
 	CU_ASSERT(!error);
 
@@ -129,6 +135,7 @@ void test_read_intu8_many()
 	free(stream);
 	stream = NULL;
 
+	error = 0;
 	data[0] = read_intu8(stream, &error);
 	CU_ASSERT(error);
 }
@@ -165,18 +172,22 @@ void test_read_intu16()
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 62415);
 
+	error = 0;
 	data = read_intu16(stream, &error);
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 9652);
 
+	error = 0;
 	data = read_intu16(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
 
+	error = 0;
 	data = read_intu16(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
 
+	error = 0;
 	free(stream);
 	stream = NULL;
 	data = read_intu16(stream, &error);
@@ -196,20 +207,24 @@ void test_read_intu32()
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 0xAD1A1110);
 
+	error = 0;
 	data = read_intu32(stream, &error);
 	CU_ASSERT(!error);
 	CU_ASSERT_EQUAL(data, 0xA5C00CE0);
 
+	error = 0;
 	data = read_intu32(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
 
+	error = 0;
 	data = read_intu32(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
 
 	free(stream);
 	stream = NULL;
+	error = 0;
 	data = read_intu32(stream, &error);
 	CU_ASSERT(error);
 	CU_ASSERT_EQUAL(data, 0);
@@ -217,6 +232,7 @@ void test_read_intu32()
 
 void test_float()
 {
+	int error = 0; // FIXME
 	ByteStreamWriter *stream = byte_stream_writer_instance(256);
 	unsigned char test_data[256];
 
@@ -233,14 +249,14 @@ void test_float()
 	ByteStreamReader *rstream = byte_stream_reader_instance(test_data, 256);
 	
 	// numbers with exact float representation
-	CU_ASSERT_EQUAL(read_float(rstream), 0);
-	CU_ASSERT_EQUAL(read_float(rstream), 0.5);
-	CU_ASSERT_EQUAL(read_float(rstream), -0.5);
+	CU_ASSERT_EQUAL(read_float(rstream, &error), 0);
+	CU_ASSERT_EQUAL(read_float(rstream, &error), 0.5);
+	CU_ASSERT_EQUAL(read_float(rstream, &error), -0.5);
 	// numbers w/o exact float representation
-	CU_ASSERT_TRUE(fabs(read_float(rstream) - 25.1) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream) + 25.1) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream) - 36.7) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream) + 36.7) < 0.00001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 25.1) < 0.00001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 25.1) < 0.00001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 36.7) < 0.00001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 36.7) < 0.00001);
 
 	del_byte_stream_writer(stream, 1);
 	free(rstream);

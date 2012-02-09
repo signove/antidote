@@ -83,9 +83,9 @@ intu16 read_intu16(ByteStreamReader *stream, int *error);
 
 intu32 read_intu32(ByteStreamReader *stream, int *error);
 
-FLOAT_Type read_float(ByteStreamReader *stream);
+FLOAT_Type read_float(ByteStreamReader *stream, int *error);
 
-SFLOAT_Type read_sfloat(ByteStreamReader *stream);
+SFLOAT_Type read_sfloat(ByteStreamReader *stream, int *error);
 
 ByteStreamWriter *byte_stream_writer_instance(intu32 size);
 

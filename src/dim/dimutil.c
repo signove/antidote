@@ -153,97 +153,174 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 {
 
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_ID_HANDLE:
-		metric->handle = read_intu16(stream, NULL);
+		metric->handle = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle(data_entry, "Handle", &metric->handle);
 		break;
 	case MDC_ATTR_ID_TYPE:
 		del_type(&(metric->type));
-		decode_type(stream, &(metric->type));
+		decode_type(stream, &(metric->type), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_type(data_entry, "Type", &metric->type);
 		break;
 	case MDC_ATTR_SUPPLEMENTAL_TYPES:
 		del_supplementaltypelist(&metric->supplemental_types);
 		decode_supplementaltypelist(stream,
-					    &(metric->supplemental_types));
+					    &(metric->supplemental_types),
+						&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		break;
 	case MDC_ATTR_METRIC_SPEC_SMALL:
 		del_metricspecsmall(&metric->metric_spec_small);
 		decode_metricspecsmall(stream,
-				       &(metric->metric_spec_small));
+				       &(metric->metric_spec_small),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_attribute_metric_spec_small(data_entry, "Metric-Spec-Small",
 					&metric->metric_spec_small);
 		break;
 	case MDC_ATTR_METRIC_STRUCT_SMALL:
 		del_metricstructuresmall(&(metric->metric_structure_small));
 		decode_metricstructuresmall(stream,
-					    &(metric->metric_structure_small));
+					    &(metric->metric_structure_small),
+						&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_attribute_metric_structure_small(data_entry, "Metric-Structure-Small",
 					&metric->metric_structure_small);
 		break;
 	case MDC_ATTR_MSMT_STAT:
-		metric->measurement_status = read_intu16(stream, NULL);
+		metric->measurement_status = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Measurement-Status", &metric->measurement_status);
 		break;
 	case MDC_ATTR_ID_PHYSIO:
-		metric->metric_id = read_intu16(stream, NULL);
+		metric->metric_id = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		metric->use_metric_id_field = 1; // TRUE
 		data_set_oid_type(data_entry, "Metric-Id", &metric->metric_id);
 		break;
 	case MDC_ATTR_ID_PHYSIO_LIST:
 		del_metricidlist(&metric->metric_id_list);
-		decode_metricidlist(stream, &metric->metric_id_list);
+		decode_metricidlist(stream, &metric->metric_id_list, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_metric_id_list(data_entry, "Metric-Id-List", &metric->metric_id_list);
 		break;
 	case MDC_ATTR_METRIC_ID_PART:
-		metric->metric_id_partition = read_intu16(stream, NULL);
+		metric->metric_id_partition = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		metric->use_metric_id_partition_field = 1; // TRUE
 		data_set_intu16(data_entry, "Metric-Id-Partition", &metric->metric_id_partition);
 		break;
 	case MDC_ATTR_UNIT_CODE:
-		metric->unit_code = read_intu16(stream, NULL);
+		metric->unit_code = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_oid_type(data_entry, "Unit-Code", &metric->unit_code);
 		break;
 	case MDC_ATTR_ATTRIBUTE_VAL_MAP:
 		del_attrvalmap(&metric->attribute_value_map);
-		decode_attrvalmap(stream, &(metric->attribute_value_map));
+		decode_attrvalmap(stream, &(metric->attribute_value_map), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_attribute_value_map(data_entry, "Attribute-Value-Map",
 						&metric->attribute_value_map);
 		break;
 	case MDC_ATTR_SOURCE_HANDLE_REF:
-		metric->source_handle_reference = read_intu16(stream, NULL);
+		metric->source_handle_reference = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle(data_entry, "Source-Handle-Reference", &metric->source_handle_reference);
 		break;
 	case MDC_ATTR_ID_LABEL_STRING:
 		del_octet_string(&metric->label_string);
-		decode_octet_string(stream, &(metric->label_string));
+		decode_octet_string(stream, &(metric->label_string), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_label_string(data_entry, "Label-String", &metric->label_string);
 		break;
 	case MDC_ATTR_UNIT_LABEL_STRING:
 		del_octet_string(&metric->unit_label_string);
-		decode_octet_string(stream, &(metric->unit_label_string));
+		decode_octet_string(stream, &(metric->unit_label_string), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_label_string(data_entry, "Unit-LabelString", &metric->unit_label_string);
 		break;
 	case MDC_ATTR_TIME_STAMP_ABS:
 		del_absolutetime(&metric->absolute_time_stamp);
-		decode_absolutetime(stream, &(metric->absolute_time_stamp));
+		decode_absolutetime(stream, &(metric->absolute_time_stamp), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_absolute_time(data_entry, "Absolute-Time-Stamp",
 				       &metric->absolute_time_stamp);
 		break;
 	case MDC_ATTR_TIME_STAMP_REL:
-		metric->relative_time_stamp = read_intu32(stream, NULL);
+		metric->relative_time_stamp = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Relative-Time-Stamp", &metric->relative_time_stamp);
 		break;
 	case MDC_ATTR_TIME_STAMP_REL_HI_RES:
 		del_highresrelativetime(&metric->hi_res_time_stamp);
 		decode_highresrelativetime(stream,
-					   &(metric->hi_res_time_stamp));
+					   &(metric->hi_res_time_stamp),
+						&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_high_res_relative_time(data_entry, "HiRes-Time-Stamp", &metric->hi_res_time_stamp);
 		break;
 	case MDC_ATTR_TIME_PD_MSMT_ACTIVE:
-		metric->measure_active_period = read_float(stream);
+		metric->measure_active_period = read_float(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_float(data_entry, "Measure-Active-Period", &metric->measure_active_period);
 		break;
 	default:
@@ -271,12 +348,18 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 {
 
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_NU_VAL_OBS_SIMP:
 		del_simplenuobsvalue(&numeric->simple_nu_observed_value);
 		decode_simplenuobsvalue(stream,
-					&(numeric->simple_nu_observed_value));
+					&(numeric->simple_nu_observed_value),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 
 		data_set_simple_nu_obs_value(data_entry,
 					     "Simple-Nu-Observed-Value",
@@ -301,16 +384,40 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 		del_simplenuobsvaluecmp(
 			&numeric->compound_simple_nu_observed_value);
 		decode_simplenuobsvaluecmp(stream,
-					   &(numeric->compound_simple_nu_observed_value));
+					   &(numeric->compound_simple_nu_observed_value),
+						&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 
 		data_set_simple_nu_obs_val_cmp(data_entry,
 					       "Compound-Simple-Nu-Observed-Value",
 					       &(numeric->compound_simple_nu_observed_value),
 					       dimutil_get_metric_partition(&(numeric->metric)),
 					       numeric->metric.metric_id_list.value);
+
+		if (data_entry) {
+			data_set_meta_att(data_entry, data_strcp("partition"),
+					  intu16_2str(dimutil_get_metric_partition(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("metric-id"),
+					  intu16_2str(dimutil_get_metric_ids(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit-code"),
+					  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit"),
+					  dimutil_get_unit(&(numeric->metric)));
+		}
+
 		break;
 	case MDC_ATTR_NU_VAL_OBS_BASIC:
-		numeric->basic_nu_observed_value = read_sfloat(stream);
+		numeric->basic_nu_observed_value = read_sfloat(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_basic_nu_obs_val(data_entry,
 					  "Basic-Nu-Observed-Value",
 					  &(numeric->basic_nu_observed_value));
@@ -331,16 +438,40 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 		del_basicnuobsvaluecmp(
 			&numeric->compound_basic_nu_observed_value);
 		decode_basicnuobsvaluecmp(stream,
-					  &numeric->compound_basic_nu_observed_value);
+					  &numeric->compound_basic_nu_observed_value,
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_basic_nu_obs_val_cmp(data_entry,
 					      "Compound-Basic-Nu-Observed-Value",
 					      &(numeric->compound_basic_nu_observed_value),
 					      dimutil_get_metric_partition(&(numeric->metric)),
 					      numeric->metric.metric_id_list.value);
+
+		if (data_entry) {
+			data_set_meta_att(data_entry, data_strcp("partition"),
+					  intu16_2str(dimutil_get_metric_partition(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("metric-id"),
+					  intu16_2str(dimutil_get_metric_ids(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit-code"),
+					  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
+
+			data_set_meta_att(data_entry, data_strcp("unit"),
+					  dimutil_get_unit(&(numeric->metric)));
+		}
+
 		break;
 	case MDC_ATTR_NU_VAL_OBS:
 		del_nuobsvalue(&numeric->nu_observed_value);
-		decode_nuobsvalue(stream, &numeric->nu_observed_value);
+		decode_nuobsvalue(stream, &numeric->nu_observed_value, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_nu_obs_val(data_entry, "Nu-Observed-Value",
 				    &numeric->nu_observed_value);
 
@@ -362,7 +493,12 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 	case MDC_ATTR_NU_CMPD_VAL_OBS:
 		del_nuobsvaluecmp(&numeric->compound_nu_observed_value);
 		decode_nuobsvaluecmp(stream,
-				     &numeric->compound_nu_observed_value);
+				     &numeric->compound_nu_observed_value,
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 
 		data_set_nu_obs_val_cmp(data_entry,
 					"Compound-Nu-Observed-Value",
@@ -371,7 +507,11 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 
 		break;
 	case MDC_ATTR_NU_ACCUR_MSMT:
-		numeric->accuracy = read_float(stream);
+		numeric->accuracy = read_float(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_float(data_entry, "Accuracy", &numeric->accuracy);
 		break;
 	default:
@@ -400,17 +540,26 @@ int dimutil_fill_rtsa_attr(struct RTSA *rtsa, OID_Type attr_id,
 {
 
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_TIME_PD_SAMP:
-		rtsa->sample_period = read_intu32(stream, NULL);
+		rtsa->sample_period = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_sample_period(data_entry,
 				       "Sample-Period",
 				       rtsa->sample_period);
 		break;
 	case MDC_ATTR_SIMP_SA_OBS_VAL:
 		del_octet_string(&rtsa->simple_sa_observed_value);
-		decode_octet_string(stream, &(rtsa->simple_sa_observed_value));
+		decode_octet_string(stream, &(rtsa->simple_sa_observed_value), &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_simple_sa_observed_value(data_entry,
 						  "Simple-Sa-Observed-Value",
 						  &(rtsa->simple_sa_observed_value));
@@ -418,7 +567,12 @@ int dimutil_fill_rtsa_attr(struct RTSA *rtsa, OID_Type attr_id,
 	case MDC_ATTR_SCALE_SPECN_I8:
 		del_scalerangespec8(&rtsa->scale_and_range_specification_8);
 		decode_scalerangespec8(stream,
-				       &(rtsa->scale_and_range_specification_8));
+				       &(rtsa->scale_and_range_specification_8),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_scale_and_range_specification_8(data_entry,
 				"Scale-and-Range-Specification",
 				&(rtsa->scale_and_range_specification_8));
@@ -426,7 +580,12 @@ int dimutil_fill_rtsa_attr(struct RTSA *rtsa, OID_Type attr_id,
 	case MDC_ATTR_SCALE_SPECN_I16:
 		del_scalerangespec16(&rtsa->scale_and_range_specification_16);
 		decode_scalerangespec16(stream,
-					&(rtsa->scale_and_range_specification_16));
+					&(rtsa->scale_and_range_specification_16),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_scale_and_range_specification_16(data_entry,
 				"Scale-and-Range-Specification",
 				&(rtsa->scale_and_range_specification_16));
@@ -434,14 +593,23 @@ int dimutil_fill_rtsa_attr(struct RTSA *rtsa, OID_Type attr_id,
 	case MDC_ATTR_SCALE_SPECN_I32:
 		del_scalerangespec32(&rtsa->scale_and_range_specification_32);
 		decode_scalerangespec32(stream,
-					&(rtsa->scale_and_range_specification_32));
+					&(rtsa->scale_and_range_specification_32),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_scale_and_range_specification_32(data_entry,
 				"Scale-and-Range-Specification",
 				&(rtsa->scale_and_range_specification_32));
 		break;
 	case MDC_ATTR_SA_SPECN:
 		del_saspec(&rtsa->sa_specification);
-		decode_saspec(stream, &rtsa->sa_specification);
+		decode_saspec(stream, &rtsa->sa_specification, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_sa_specification(data_entry,
 					  "Sa-Specification",
 					  &(rtsa->sa_specification));
@@ -493,10 +661,15 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 {
 
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_ENUM_OBS_VAL_SIMP_OID:
-		enumeration->enum_observed_value_simple_OID = read_intu16(stream, NULL);
+		enumeration->enum_observed_value_simple_OID = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_observed_value_simple_OID(data_entry,
 						   "Enum-Observed-Value-Simple-OID",
 						   enumeration->enum_observed_value_simple_OID);
@@ -510,7 +683,11 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 		DEBUG("ENUM ATTR: [type:%s, value:%d]", "Enum-Observed-Value-Simple-OID", enumeration->enum_observed_value_simple_OID);
 		break;
 	case MDC_ATTR_ENUM_OBS_VAL_SIMP_BIT_STR:
-		enumeration->enum_observed_value_simple_bit_str = read_intu32(stream, NULL);
+		enumeration->enum_observed_value_simple_bit_str = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_observed_value_simple_bit_str(data_entry,
 						       "Enum-Observed-Value-Simple-Bit-Str",
 						       enumeration->enum_observed_value_simple_bit_str);
@@ -520,7 +697,11 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 		DEBUG("ENUM ATTR: [type:%s, value:%d]", "Enum-Observed-Value-Simple-Bit-Str", enumeration->enum_observed_value_simple_bit_str);
 		break;
 	case MDC_ATTR_ENUM_OBS_VAL_BASIC_BIT_STR:
-		enumeration->enum_observed_value_basic_bit_str = read_intu16(stream, NULL);
+		enumeration->enum_observed_value_basic_bit_str = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_observed_value_basic_bit_str(data_entry,
 						      "Enum-Observed-Value-Basic-Bit-Str",
 						      enumeration->enum_observed_value_basic_bit_str);
@@ -532,7 +713,12 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 	case MDC_ATTR_ENUM_OBS_VAL_SIMP_STR:
 		del_octet_string(&enumeration->enum_observed_value_simple_str);
 		decode_octet_string(stream,
-				    &(enumeration->enum_observed_value_simple_str));
+				    &(enumeration->enum_observed_value_simple_str),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_observed_value_simple_str(data_entry,
 						   "Enum-Observed-Value-Simple-Str",
 						   &(enumeration->enum_observed_value_simple_str));
@@ -543,7 +729,12 @@ int dimutil_fill_enumeration_attr(struct Enumeration *enumeration,
 		break;
 	case MDC_ATTR_VAL_ENUM_OBS:
 		del_enumobsvalue(&enumeration->enum_observed_value);
-		decode_enumobsvalue(stream,	&(enumeration->enum_observed_value));
+		decode_enumobsvalue(stream, &(enumeration->enum_observed_value),
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_enum_observed_value(data_entry,
 					     "Enum-Observed-Value",
 					     &(enumeration->enum_observed_value));
@@ -588,56 +779,96 @@ int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
 			      ByteStreamReader *stream,
 				DataEntry *data_entry)
 {
-
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_ID_HANDLE:
-		pmstore->handle = read_intu16(stream, NULL);
+		pmstore->handle = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle(data_entry, "Handle", &pmstore->handle);
 		break;
 	case MDC_ATTR_PM_STORE_CAPAB:
-		pmstore->pm_store_capab = read_intu16(stream, NULL);
+		pmstore->pm_store_capab = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Capabilities", &pmstore->pm_store_capab);
 		break;
 	case MDC_ATTR_METRIC_STORE_SAMPLE_ALG:
-		pmstore->store_sample_algorithm = read_intu16(stream, NULL);
+		pmstore->store_sample_algorithm = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Store-Sample-Algorithm",
 				&pmstore->store_sample_algorithm);
 		break;
 	case MDC_ATTR_METRIC_STORE_CAPAC_CNT:
-		pmstore->store_capacity_count = read_intu32(stream, NULL);
+		pmstore->store_capacity_count = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Store-Capacity-Count",
 				&pmstore->store_capacity_count);
 		break;
 	case MDC_ATTR_METRIC_STORE_USAGE_CNT:
-		pmstore->store_usage_count = read_intu32(stream, NULL);
+		pmstore->store_usage_count = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Store-Usage-Count",
 				&pmstore->store_usage_count);
 		break;
 	case MDC_ATTR_OP_STAT:
-		pmstore->operational_state = read_intu16(stream, NULL);
+		pmstore->operational_state = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Operational-State",
 				&pmstore->operational_state);
 		break;
 	case MDC_ATTR_PM_STORE_LABEL_STRING:
 		del_octet_string(&pmstore->pm_store_label);
-		decode_octet_string(stream, &pmstore->pm_store_label);
+		decode_octet_string(stream, &pmstore->pm_store_label, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_label_string(data_entry, "PM-Store-Label",
 				&pmstore->pm_store_label);
 		break;
 	case MDC_ATTR_TIME_PD_SAMP:
-		pmstore->sample_period = read_intu32(stream, NULL);
+		pmstore->sample_period = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Sample-Period",
 				&pmstore->sample_period);
 		break;
 	case MDC_ATTR_NUM_SEG:
-		pmstore->number_of_segments = read_intu16(stream, NULL);
+		pmstore->number_of_segments = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Number-Of-Segments",
 				&pmstore->number_of_segments);
 		break;
 	case MDC_ATTR_CLEAR_TIMEOUT:
-		pmstore->clear_timeout = read_intu32(stream, NULL);
+		pmstore->clear_timeout = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Clear-Timeout",
 				&pmstore->clear_timeout);
 		break;
@@ -663,26 +894,43 @@ int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
 static int dimutil_fill_scanner_attr(struct Scanner *scanner,
 				     OID_Type attr_id, ByteStreamReader *stream, DataEntry *data_entry)
 {
-
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_ID_HANDLE:
-		scanner->handle = read_intu16(stream, NULL);
+		scanner->handle = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle(data_entry, "Handle", &scanner->handle);
 		break;
 	case MDC_ATTR_OP_STAT:
-		scanner->operational_state = read_intu16(stream, NULL);
+		scanner->operational_state = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Operational-State", &scanner->operational_state);
 		break;
 	case MDC_ATTR_SCAN_HANDLE_LIST:
 		del_handlelist(&scanner->scan_handle_list);
-		decode_handlelist(stream, &scanner->scan_handle_list);
+		decode_handlelist(stream, &scanner->scan_handle_list, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle_list(data_entry, "Scan-Handle-List", &scanner->scan_handle_list);
 		break;
 	case MDC_ATTR_SCAN_HANDLE_ATTR_VAL_MAP:
 		del_handleattrvalmap(&scanner->scan_handle_attr_val_map);
-		decode_handleattrvalmap(stream, &scanner->scan_handle_attr_val_map);
+		decode_handleattrvalmap(stream, &scanner->scan_handle_attr_val_map,
+					&error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_handle_attr_val_map(data_entry, "Scan-Handle-Attr-Val-Map", &scanner->scan_handle_attr_val_map);
 		break;
 	default:
@@ -710,18 +958,31 @@ static int dimutil_fill_cfg_scanner_attr(struct CfgScanner *cfg_scanner,
 {
 
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_CONFIRM_MODE:
-		cfg_scanner->confirm_mode = read_intu16(stream, NULL);
+		cfg_scanner->confirm_mode = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Confirm-Mode", &cfg_scanner->confirm_mode);
 		break;
 	case MDC_ATTR_CONFIRM_TIMEOUT:
-		cfg_scanner->confirm_timeout = read_intu32(stream, NULL);
+		cfg_scanner->confirm_timeout = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Confirm-Timeout", &cfg_scanner->confirm_timeout);
 		break;
 	case MDC_ATTR_TX_WIND:
-		cfg_scanner->transmit_window = read_intu16(stream, NULL);
+		cfg_scanner->transmit_window = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu16(data_entry, "Transmit-Window", &cfg_scanner->transmit_window);
 		break;
 	default:
@@ -747,12 +1008,16 @@ static int dimutil_fill_cfg_scanner_attr(struct CfgScanner *cfg_scanner,
 int dimutil_fill_peri_scanner_attr(struct PeriCfgScanner *peri_scanner,
 				   OID_Type attr_id, ByteStreamReader *stream, DataEntry *data_entry)
 {
-
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_SCAN_REP_PD:
-		peri_scanner->reporting_interval = read_intu32(stream, NULL);
+		peri_scanner->reporting_interval = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Reporting-Interval", &peri_scanner->reporting_interval);
 		break;
 	default:
@@ -778,12 +1043,16 @@ int dimutil_fill_peri_scanner_attr(struct PeriCfgScanner *peri_scanner,
 int dimutil_fill_epi_scanner_attr(struct EpiCfgScanner *epi_scanner,
 				  OID_Type attr_id, ByteStreamReader *stream, DataEntry *data_entry)
 {
-
 	int result = 1;
+	int error = 0;
 
 	switch (attr_id) {
 	case MDC_ATTR_SCAN_REP_PD_MIN:
-		epi_scanner->min_reporting_interval = read_intu32(stream, NULL);
+		epi_scanner->min_reporting_interval = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		data_set_intu32(data_entry, "Min-Reporting-Interval", &epi_scanner->min_reporting_interval);
 		break;
 	default:

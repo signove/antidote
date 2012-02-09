@@ -517,6 +517,8 @@ void communication_read_input_stream(Context *ctx)
  */
 void communication_process_input_data(Context *ctx, ByteStreamReader *stream)
 {
+	int error = 0; // FIXME handle
+
 	if (ctx != NULL) {
 		if (stream == NULL) {
 			return;
@@ -524,7 +526,7 @@ void communication_process_input_data(Context *ctx, ByteStreamReader *stream)
 
 		// Decode the APDU
 		APDU apdu;
-		decode_apdu(stream, &apdu);
+		decode_apdu(stream, &apdu, &error);
 
 		// Process APDU
 		communication_process_apdu(ctx, &apdu);

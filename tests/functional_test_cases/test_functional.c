@@ -67,6 +67,7 @@ int functional_test_finish()
 
 void func_simulate_incoming_apdu(const char *apdu_file_path)
 {
+	int error = 0;
 	unsigned long buffer_size = 0;
 
 	unsigned char *buffer =
@@ -76,7 +77,7 @@ void func_simulate_incoming_apdu(const char *apdu_file_path)
 	APDU *apdu = (APDU *) malloc(sizeof(APDU));
 
 	if (stream != NULL && apdu != NULL) {
-		decode_apdu(stream, apdu);
+		decode_apdu(stream, apdu, &error);
 		communication_process_apdu(context_get(FUNC_TEST_SINGLE_CONTEXT), apdu);
 		del_apdu(apdu);
 	}
@@ -97,6 +98,7 @@ void func_simulate_incoming_apdu(const char *apdu_file_path)
 void func_simulate_service_response(const char *response_apdu_file,
 				    Request *request)
 {
+	int error = 0;
 	unsigned long buffer_size = 0;
 
 	unsigned char *buffer =
@@ -108,7 +110,7 @@ void func_simulate_service_response(const char *response_apdu_file,
 	Context *ctx = func_ctx();
 
 	if (stream != NULL && apdu != NULL) {
-		decode_apdu(stream, apdu);
+		decode_apdu(stream, apdu, &error);
 
 		if (apdu->choice == PRST_CHOSEN) {
 			DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);

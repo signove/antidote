@@ -249,6 +249,7 @@ static void del_PMStoreClearSegmRet(void *p)
 Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,
 		SegmSelection *selection, service_request_callback request_callback)
 {
+	int error = 0; // FIXME handle
 	ByteStreamWriter *writer;
 	ByteStreamReader *reader;
 	writer = byte_stream_writer_instance(selection->length + sizeof(SegmSelection_choice) + sizeof(intu16));
@@ -293,7 +294,7 @@ Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct
 	}
 	rs->del_function = &del_PMStoreClearSegmRet;
 	reader = byte_stream_reader_instance(writer->buffer, writer->size);
-	decode_segmselection(reader, &(rs->segm_selection));
+	decode_segmselection(reader, &(rs->segm_selection), &error);
 	free(reader);
 
 	del_byte_stream_writer(writer, 0);
@@ -648,43 +649,45 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 				     ByteStreamReader *stream)
 {
 	int result = 1;
+	int error = 0; // FIXME handle
 
 	switch (attr_id) {
 	case MDC_ATTR_PM_SEG_MAP:
-		decode_pmsegmententrymap(stream, &pm_segment->pm_segment_entry_map);
+		decode_pmsegmententrymap(stream, &pm_segment->pm_segment_entry_map,
+					&error);
 		break;
 	case MDC_ATTR_PM_SEG_PERSON_ID:
-		pm_segment->pm_seg_person_id = read_intu16(stream, NULL);
+		pm_segment->pm_seg_person_id = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_OP_STAT:
-		pm_segment->operational_state = read_intu16(stream, NULL);
+		pm_segment->operational_state = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_TIME_PD_SAMP:
-		pm_segment->sample_period = read_intu32(stream, NULL);
+		pm_segment->sample_period = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_PM_SEG_LABEL_STRING:
-		decode_octet_string(stream, &(pm_segment->segment_label));
+		decode_octet_string(stream, &(pm_segment->segment_label), &error);
 		break;
 	case MDC_ATTR_TIME_START_SEG:
-		decode_absolutetime(stream, &(pm_segment->segment_start_abs_time));
+		decode_absolutetime(stream, &(pm_segment->segment_start_abs_time), &error);
 		break;
 	case MDC_ATTR_TIME_END_SEG:
-		decode_absolutetime(stream, &(pm_segment->segment_end_abs_time));
+		decode_absolutetime(stream, &(pm_segment->segment_end_abs_time), &error);
 		break;
 	case MDC_ATTR_TIME_ABS_ADJUST:
-		decode_absolutetimeadjust(stream, &(pm_segment->date_and_time_adjustment));
+		decode_absolutetimeadjust(stream, &(pm_segment->date_and_time_adjustment), &error);
 		break;
 	case MDC_ATTR_SEG_USAGE_CNT:
-		pm_segment->segment_usage_count = read_intu32(stream, NULL);
+		pm_segment->segment_usage_count = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_SEG_STATS:
-		decode_segmentstatistics(stream, &(pm_segment->segment_statistics));
+		decode_segmentstatistics(stream, &(pm_segment->segment_statistics), &error);
 		break;
 	case MDC_ATTR_CONFIRM_TIMEOUT:
-		pm_segment->confirm_timeout = read_intu32(stream, NULL);
+		pm_segment->confirm_timeout = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_TRANSFER_TIMEOUT:
-		pm_segment->transfer_timeout = read_intu32(stream, NULL);
+		pm_segment->transfer_timeout = read_intu32(stream, &error);
 		break;
 	default:
 		result = 0;
@@ -823,38 +826,39 @@ void pmstore_service_set_attribute(struct PMStore *pm_store, AVA_Type *attribute
 int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamReader *stream)
 {
 	int result = 1;
+	int error = 0; // FIXME handle
 
 	switch (attr_id) {
 	case MDC_ATTR_ID_HANDLE:
-		pmstore->handle = read_intu16(stream, NULL);
+		pmstore->handle = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_PM_STORE_CAPAB:
-		pmstore->pm_store_capab = read_intu16(stream, NULL);
+		pmstore->pm_store_capab = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_METRIC_STORE_SAMPLE_ALG:
-		pmstore->store_sample_algorithm = read_intu16(stream, NULL);
+		pmstore->store_sample_algorithm = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_METRIC_STORE_CAPAC_CNT:
-		pmstore->store_capacity_count = read_intu32(stream, NULL);
+		pmstore->store_capacity_count = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_METRIC_STORE_USAGE_CNT:
-		pmstore->store_usage_count = read_intu32(stream, NULL);
+		pmstore->store_usage_count = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_OP_STAT:
-		pmstore->operational_state = read_intu16(stream, NULL);
+		pmstore->operational_state = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_PM_STORE_LABEL_STRING:
 		del_octet_string(&pmstore->pm_store_label);
-		decode_octet_string(stream, &pmstore->pm_store_label);
+		decode_octet_string(stream, &pmstore->pm_store_label, &error);
 		break;
 	case MDC_ATTR_TIME_PD_SAMP:
-		pmstore->sample_period = read_intu32(stream, NULL);
+		pmstore->sample_period = read_intu32(stream, &error);
 		break;
 	case MDC_ATTR_NUM_SEG:
-		pmstore->number_of_segments = read_intu16(stream, NULL);
+		pmstore->number_of_segments = read_intu16(stream, &error);
 		break;
 	case MDC_ATTR_CLEAR_TIMEOUT:
-		pmstore->clear_timeout = read_intu32(stream, NULL);
+		pmstore->clear_timeout = read_intu32(stream, &error);
 		break;
 	default:
 		result = 0;
@@ -875,6 +879,8 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 						struct PMSegment *segment, 
 						DataEntry *segm_data_entry)
 {
+	int error = 0; // FIXME handle
+
 	AbsoluteTime abs_time; // length 8
 	RelativeTime rel_time; // length 4
 	HighResRelativeTime hires_rel_time;	// 8
@@ -936,21 +942,21 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 
 		if (hdr_abs_time) {
 			offset += 8;
-			decode_absolutetime(stream, &abs_time);
+			decode_absolutetime(stream, &abs_time, &error);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_absolute_time(header_item, "Segment-Absolute-Time", &abs_time);
 		}
 
 		if (hdr_rel_time) {
 			offset += 4;
-			rel_time = read_intu32(stream, NULL);
+			rel_time = read_intu32(stream, &error);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
 		}
 
 		if (hdr_hirel_time) {
 			offset += 8;
-			decode_highresrelativetime(stream, &hires_rel_time);
+			decode_highresrelativetime(stream, &hires_rel_time, &error);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_high_res_relative_time(header_item, "Segment-Hires-Relative-Time",
 							&hires_rel_time);
@@ -1263,7 +1269,7 @@ static void data_set_segment_stat_entry(struct MDS *mds,
 
 	if (hdr_rel_time) {
 		offset += 4;
-		rel_time = read_intu32(stream, NULL);
+		rel_time = read_intu32(stream, &error);
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
 	}

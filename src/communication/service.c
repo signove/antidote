@@ -340,7 +340,11 @@ void service_request_retired(Context *ctx, DATA_apdu *response_apdu)
 {
 	Service *service = ctx->service;
 
-	// FIXME check range
+	if (response_apdu->invoke_id < 0 || response_apdu->invoke_id > 15) {
+		DEBUG("APDU invoke id out of rante");
+		return;
+	}
+
 	Request *req = &(service->requests_list[response_apdu->invoke_id]);
 
 	if (response_apdu->invoke_id != service->current_invoke_id) {

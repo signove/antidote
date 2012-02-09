@@ -291,21 +291,21 @@ int association_accept_data_protocol_20601_in(Context *ctx,
 					 &agent_assoc_information.system_id, id);
 		}
 
-		evt.u.association_result = ACCEPTED;
-		communication_fire_evt(ctx,
+		if (config) {
+			evt.u.association_result = ACCEPTED;
+			communication_fire_evt(ctx,
 				       fsm_evt_rx_aarq_acceptable_and_known_configuration,
 				       evtp);
 
-		if (config != NULL) {
 			// must be called AFTER communication_fire_evt()
 			// because the manager may do something like request
 			// MDS attributes and the request must go after
 			// "configuration accepted" packet.
 			mds_configure_operating(ctx, config, 1);
 			free(config);
-		}
 
-		return 2;
+			return 2;
+		}
 	}
 
 	// associated, configuration unknown
@@ -324,6 +324,8 @@ int association_accept_data_protocol_20601_in(Context *ctx,
  */
 static void association_accept_data_protocol_20601(Context *ctx, DataProto *proto)
 {
+	int error = 0; // FIXME handle
+
 	DEBUG("associating: accepted data protocol id <%d>", \
 	      DATA_PROTO_ID_20601);
 
@@ -335,7 +337,7 @@ static void association_accept_data_protocol_20601(Context *ctx, DataProto *prot
 	PhdAssociationInformation agent_assoc_information;
 	memset(&agent_assoc_information, 0, sizeof(PhdAssociationInformation));
 
-	decode_phdassociationinformation(stream, &agent_assoc_information);
+	decode_phdassociationinformation(stream, &agent_assoc_information, &error);
 
 	association_accept_data_protocol_20601_in(ctx, agent_assoc_information, 0);
 

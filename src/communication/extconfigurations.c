@@ -63,7 +63,7 @@ static char *ext_configurations_get_file_name(octet_string *system_id,
 		ConfigId config_id);
 
 static void ext_configurations_write_file(octet_string *system_id,
-		ConfigId config_id, ByteStreamWriter *stream);
+		ConfigId config_id, ByteStreamWriter *stream, int new);
 
 static struct ExtConfig *ext_configurations_get_config(
 	octet_string *system_id, ConfigId config_id);
@@ -192,6 +192,20 @@ void ext_configurations_remove_all_configs()
 }
 
 /**
+ * This method wipes the ext config index file
+ */
+static void ext_configurations_wipe()
+{
+	ext_configurations_create_environment();
+	ByteStreamWriter *stream = byte_stream_writer_instance(0);
+	char *concat = ext_concat_path_file();
+	ioutil_buffer_to_file(concat, stream->size,stream->buffer, 0);
+	free(concat);
+	DEBUG("wiped ext config file");
+}
+
+
+/**
  * This method loads the list of available configurations.
  */
 void ext_configurations_load_configurations()
@@ -199,73 +213,113 @@ void ext_configurations_load_configurations()
 	ext_configurations_create_environment();
 
 	unsigned long buffer_size = 0;
+	ByteStreamReader *stream = 0;
 	char *concat = ext_concat_path_file();
 	unsigned char *buffer = ioutil_buffer_from_file(concat, &buffer_size);
 	free(concat);
 
-	if (buffer != NULL) {
-		ByteStreamReader *stream = byte_stream_reader_instance(buffer, buffer_size);
-
-		if (ext_configuration_list != NULL) {
-			free(ext_configuration_list);
-			ext_configuration_list = NULL;
-			ext_configuration_size = 0;
-		}
-
-		intu16 size = buffer_size / (sizeof(ConfigId) + 6
-					     * sizeof(intu16));
-		ext_configuration_list = calloc(size, sizeof(struct ExtConfig));
-		ext_configuration_size = size;
-
-		int index;
-
-		for (index = 0; index < ext_configuration_size; index++) {
-			ext_configuration_list[index].config_id = read_intu16(
-						stream, NULL);
-			decode_octet_string(
-				stream,
-				&ext_configuration_list[index].system_id);
-			ext_configuration_list[index].obj_size = read_intu16(
-						stream, NULL); // APDU size
-		}
-
-		free(buffer);
-		free(stream);
+	if (!buffer) {
+		DEBUG("No ext config buffer to read");
+		goto exit;
 	}
+
+	stream = byte_stream_reader_instance(buffer, buffer_size);
+	if (!stream) {
+		DEBUG("Zero-sized ext config buffer");
+		goto exit;
+	}
+
+	if (ext_configuration_list != NULL) {
+		free(ext_configuration_list);
+		ext_configuration_list = NULL;
+		ext_configuration_size = 0;
+	}
+
+	ext_configuration_list = calloc(0, sizeof(struct ExtConfig));
+	ext_configuration_size = 0;
+
+	while (stream->unread_bytes > 0) {
+		int i = ext_configuration_size;
+		int error = 0;
+
+		int config_id = read_intu16(stream, &error);
+		if (error) {
+			DEBUG("ext config: err reading config_id %d", i);
+			ext_configurations_wipe();
+			break;
+		}
+
+		DEBUG("Decoding ext config id %x", config_id);
+
+		octet_string system_id = {0, 0};
+		decode_octet_string(stream, &system_id, &error);
+		if (error) {
+			DEBUG("ext config: err reading system_id %d %d", i, error);
+				ext_configurations_wipe();
+				break;
+			}
+
+		int obj_size = read_intu16(stream, &error);
+		if (error) {
+			DEBUG("ext config: err reading obj_size %d", i);
+			del_octet_string(&system_id);
+			ext_configurations_wipe();
+			break;
+		}
+
+		ext_configuration_list = realloc(ext_configuration_list,
+			++ext_configuration_size * sizeof(struct ExtConfig));
+
+		ext_configuration_list[i].config_id = config_id;
+		ext_configuration_list[i].system_id = system_id;
+		ext_configuration_list[i].obj_size = obj_size;
+	}
+
+exit:
+	free(buffer);
+	free(stream);
 }
 
 static void ext_configurations_write_file(octet_string *system_id,
-		ConfigId config_id, ByteStreamWriter *stream)
+		ConfigId config_id, ByteStreamWriter *stream,
+		int new)
 {
-	int size = sizeof(ConfigId) + 6 * sizeof(intu16);
-	ByteStreamWriter *header_stream = byte_stream_writer_instance(size);
-	encode_configid(header_stream, &config_id);
-	encode_octet_string(header_stream, system_id);
-	write_intu16(header_stream, stream->size);
+	if (new) {
+		// appends data to index file
+		int size = 2 + sizeof(ConfigId) +
+			sizeof(system_id->length) + system_id->length +
+			2;
 
-	int error_result;
-	char *concat = ext_concat_path_file();
-	error_result = ioutil_buffer_to_file(concat, header_stream->size,
+		ByteStreamWriter *header_stream = byte_stream_writer_instance(size);
+
+		encode_configid(header_stream, &config_id); // 2
+		encode_octet_string(header_stream, system_id); // 2 + len
+		write_intu16(header_stream, stream->size); // 2 (size of config)
+	
+		char *concat = ext_concat_path_file();
+		int err = ioutil_buffer_to_file(concat, header_stream->size,
 					     header_stream->buffer, 1);
-	free(concat);
-	del_byte_stream_writer(header_stream, 1);
+		free(concat);
+		del_byte_stream_writer(header_stream, 1);
 
-	if (error_result) {
-		// TODO Check Error condition
-		ERROR("ioutil_buffer_to_file");
-		return;
+		if (err) {
+			// TODO Check Error condition
+			ERROR("error writing ext config index");
+			return;
+		}
 	}
 
+	// writes particular config+device file
 	char *file_path =
 		ext_configurations_get_file_name(system_id, config_id);
-	error_result = ioutil_buffer_to_file(file_path, stream->size,
-					     stream->buffer, 1);
+	int err = ioutil_buffer_to_file(file_path, stream->size,
+					     stream->buffer, 0);
 	free(file_path);
 	file_path = NULL;
 
-	if (error_result) {
+	if (err) {
 		// TODO Check Error condition
-		ERROR("ioutil_buffer_to_file 2");
+		ERROR("error writing ext config file");
 	}
 }
 
@@ -281,6 +335,8 @@ static void ext_configurations_write_file(octet_string *system_id,
 void ext_configurations_register_conf(octet_string *system_id,
 				      ConfigId config_id, ConfigObjectList *object_list)
 {
+	int new;
+
 	if (ext_configuration_list == NULL) {
 		ext_configurations_load_configurations();
 	}
@@ -289,33 +345,40 @@ void ext_configurations_register_conf(octet_string *system_id,
 	ByteStreamWriter *stream = byte_stream_writer_instance(size);
 	encode_configobjectlist(stream, object_list);
 
-	ext_configurations_write_file(system_id, config_id, stream);
-	ext_configuration_size++;
-
-	ext_configuration_list = realloc(ext_configuration_list,
+	struct ExtConfig *cfg = ext_configurations_get_config(system_id, config_id);
+	if (!cfg) {
+		int error = 0; // FIXME handle
+		DEBUG("Adding new ext config to index");
+		new = 1;
+		ext_configuration_size++;
+		ext_configuration_list = realloc(ext_configuration_list,
 					 ext_configuration_size * sizeof(struct ExtConfig));
+		cfg = &(ext_configuration_list[ext_configuration_size - 1]);
 
-	// update list
-	ext_configuration_list[ext_configuration_size - 1].config_id =
-		config_id;
-	ext_configuration_list[ext_configuration_size - 1].obj_size =
-		stream->size;
+		cfg->config_id = config_id;
 
-	size = system_id->length * sizeof(intu8) + sizeof(intu16);
-	ByteStreamWriter *w_stream = byte_stream_writer_instance(size);
-	encode_octet_string(w_stream, system_id);
+		size = system_id->length * sizeof(intu8) + sizeof(intu16);
+		ByteStreamWriter *w_stream = byte_stream_writer_instance(size);
+		encode_octet_string(w_stream, system_id);
 
-	ByteStreamReader *r_stream = byte_stream_reader_instance(w_stream->buffer, size);
-	decode_octet_string(
-		r_stream,
-		&ext_configuration_list[ext_configuration_size - 1].system_id);
+		ByteStreamReader *r_stream = byte_stream_reader_instance(w_stream->buffer, size);
+		// used just to alloc system_id into cfg
+		decode_octet_string(r_stream, &cfg->system_id, &error);
 
-	del_byte_stream_writer(w_stream, 1);
-	free(r_stream);
+		del_byte_stream_writer(w_stream, 1);
+		free(r_stream);
+	} else {
+		DEBUG("Updating ext config");
+		new = 0;
+	}
+
+	ext_configurations_write_file(system_id, config_id, stream, new);
+
+	cfg->obj_size = stream->size;
 
 	if (ext_configuration_list == NULL) {
 		// TODO Check Error condition
-		ERROR("ext configuration decoding");
+		ERROR("ext configuration list is null");
 	}
 
 	del_byte_stream_writer(stream, 1);
@@ -398,18 +461,26 @@ ConfigObjectList *ext_configurations_get_configuration_attributes(
 
 		if (buffer == NULL) {
 			// TODO Check Error condition
-			ERROR("ioutil_buffer_from_file");
+			ERROR("ext_config_get could not read from file");
+			return NULL;
+		} else if (size != config->obj_size) {
+			ERROR("ext_config_get: bad obj size");
+			free(buffer);
 			return NULL;
 		} else {
-			ConfigObjectList *result = malloc(
-							   sizeof(ConfigObjectList));
+			ConfigObjectList *result = malloc(sizeof(ConfigObjectList));
 			ByteStreamReader *stream = byte_stream_reader_instance(buffer, size);
-			decode_configobjectlist(stream, result);
+			int error = 0;
+			decode_configobjectlist(stream, result, &error);
+			if (error) {
+				ERROR("ext_config_get: bad configuration data");
+				free(result);
+				result = NULL;
+			}
 			free(stream);
 			free(buffer);
 			return result;
 		}
-
 	}
 
 	return NULL;

@@ -129,10 +129,6 @@ intu8 read_intu8(ByteStreamReader *stream, int *error)
 		ret = *(stream->buffer_cur);
 		stream->buffer_cur++;
 		stream->unread_bytes--;
-
-		if (error) {
-			*error = 0;
-		}
 	} else {
 		if (error) {
 			*error = 1;
@@ -159,10 +155,6 @@ void read_intu8_many(ByteStreamReader *stream, intu8 *buf, int len, int *error)
 		memcpy(buf, stream->buffer_cur, len);
 		stream->buffer_cur += len;
 		stream->unread_bytes -= len;
-
-		if (error) {
-			*error = 0;
-		}
 	} else {
 		if (error) {
 			*error = 1;
@@ -189,10 +181,6 @@ intu16 read_intu16(ByteStreamReader *stream, int *error)
 
 		stream->buffer_cur += 2;
 		stream->unread_bytes -= 2;
-
-		if (error) {
-			*error = 0;
-		}
 	} else {
 		if (error) {
 			*error = 1;
@@ -219,10 +207,6 @@ intu32 read_intu32(ByteStreamReader *stream, int *error)
 		ret = ntohl(*((uint32_t *) stream->buffer_cur));
 		stream->buffer_cur += 4;
 		stream->unread_bytes -= 4;
-
-		if (error) {
-			*error = 0;
-		}
 	} else {
 		if (error) {
 			*error = 1;
@@ -238,11 +222,15 @@ intu32 read_intu32(ByteStreamReader *stream, int *error)
  * Consumes an intu32 from data, and calculates the float as described in MDER Annex F.6.
  *
  * @param stream The current ByteStreamReader.
+ * @param error Error feedback
  * @return float Converted float from stream.
  */
-FLOAT_Type read_float(ByteStreamReader *stream)
+FLOAT_Type read_float(ByteStreamReader *stream, int *error)
 {
-	intu32 int_data = read_intu32(stream, NULL);
+	intu32 int_data = read_intu32(stream, error);
+	if (*error)
+		return 0;
+
 	int32 mantissa = int_data & 0xFFFFFF;
 	int8 expoent = int_data >> 24;
 	double output = 0;
@@ -270,11 +258,15 @@ inline double fround(double n, unsigned d)
  * Consumes an intu16 from data, and calculates the sfloat as described in MDER Annex F.7.
  *
  * @param stream The current ByteStreamReader.
+ * @param error Error feedback
  * @return float Converted float from stream.
  */
-SFLOAT_Type read_sfloat(ByteStreamReader *stream)
+SFLOAT_Type read_sfloat(ByteStreamReader *stream, int *error)
 {
-	intu16 int_data = read_intu16(stream, NULL);
+	intu16 int_data = read_intu16(stream, error);
+	if (*error)
+		return 0;
+
 	intu16 mantissa = int_data & 0x0FFF;
 	int8 expoent = int_data >> 12;
 
