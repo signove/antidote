@@ -55,6 +55,10 @@ static void read_entries(DataEntry *values, int size, StringBuffer *sb);
  */
 static void describe_simple_entry(SimpleDataEntry *simple, StringBuffer *sb)
 {
+	if (!simple->name || !simple->type || !simple->value) {
+		// A malformed message might generate empty Data Entries
+		return;
+	}
 	strbuff_cat(sb, "<simple>");
 	strbuff_cat(sb, "<name>");
 	strbuff_xcat(sb, simple->name);
@@ -76,6 +80,10 @@ static void describe_simple_entry(SimpleDataEntry *simple, StringBuffer *sb)
  */
 static void describe_cmp_entry(CompoundDataEntry *cmp, StringBuffer *sb)
 {
+	if (!cmp->name || !cmp->entries) {
+		// A malformed message might generate empty Data Entries
+		return;
+	}
 	strbuff_cat(sb, "<compound>");
 	strbuff_cat(sb, "<name>");
 	strbuff_xcat(sb, cmp->name);
