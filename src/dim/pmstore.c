@@ -775,7 +775,7 @@ void pmstore_add_segment(struct PMStore *pm_store, struct PMSegment *segment)
 						 + 1));
 
 		if (pm_store->segm_list == NULL) {
-			ERROR("ERROR");
+			ERROR("PM-Store segm list");
 			exit(1);
 		}
 	}
@@ -1034,7 +1034,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 								stream, entry);
 
 					if (err == 0) {
-						ERROR(" ");
+						ERROR("PM-Store Metric enum");
 						ok = 0;
 					}
 				}
@@ -1355,7 +1355,7 @@ static void data_set_segment_stat_entry(struct MDS *mds,
 							stream, entry);
 
 				if (err == 0) {
-					ERROR(" ");
+					ERROR("PM-Store metric enum 2");
 					ok = 0;
 				}
 			}

@@ -108,7 +108,7 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 		llist_add(devices(), dev);
 		return dev->context;
 	} else {
-		ERROR("Transcoding plugin null");
+		ERROR("Trans context w/ unknown plugin");
 	}
 	ContextId c = {0, 0};
 	return c;

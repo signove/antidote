@@ -138,7 +138,7 @@ intu8 read_intu8(ByteStreamReader *stream, int *error)
 			*error = 1;
 		}
 
-		ERROR(" ")
+		ERROR("read_intu8")
 		;
 	}
 
@@ -168,7 +168,7 @@ void read_intu8_many(ByteStreamReader *stream, intu8 *buf, int len, int *error)
 			*error = 1;
 		}
 
-		ERROR(" ")
+		ERROR("read_intu8_many")
 		;
 	}
 }
@@ -198,7 +198,7 @@ intu16 read_intu16(ByteStreamReader *stream, int *error)
 			*error = 1;
 		}
 
-		ERROR(" ");
+		ERROR("read_intu16");
 	}
 
 	return ret;
@@ -228,7 +228,7 @@ intu32 read_intu32(ByteStreamReader *stream, int *error)
 			*error = 1;
 		}
 
-		ERROR(" ");
+		ERROR("read_intu32");
 	}
 
 	return ret;

@@ -252,7 +252,7 @@ static void ext_configurations_write_file(octet_string *system_id,
 
 	if (error_result) {
 		// TODO Check Error condition
-		ERROR(" ");
+		ERROR("ioutil_buffer_to_file");
 		return;
 	}
 
@@ -265,7 +265,7 @@ static void ext_configurations_write_file(octet_string *system_id,
 
 	if (error_result) {
 		// TODO Check Error condition
-		ERROR(" ");
+		ERROR("ioutil_buffer_to_file 2");
 	}
 }
 
@@ -315,7 +315,7 @@ void ext_configurations_register_conf(octet_string *system_id,
 
 	if (ext_configuration_list == NULL) {
 		// TODO Check Error condition
-		ERROR(" ");
+		ERROR("ext configuration decoding");
 	}
 
 	del_byte_stream_writer(stream, 1);
@@ -398,7 +398,7 @@ ConfigObjectList *ext_configurations_get_configuration_attributes(
 
 		if (buffer == NULL) {
 			// TODO Check Error condition
-			ERROR(" ");
+			ERROR("ioutil_buffer_from_file");
 			return NULL;
 		} else {
 			ConfigObjectList *result = malloc(
