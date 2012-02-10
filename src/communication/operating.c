@@ -917,7 +917,7 @@ void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scann
  */
 void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner, OID_Type event_type, Any *event)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
@@ -933,31 +933,43 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
 	switch (event_type) {
 	case MDC_NOTI_UNBUF_SCAN_REPORT_VAR:
 		decode_scanreportinfovar(event_info_stream, &info_var, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_var(ctx, scanner, &info_var);
 		del_scanreportinfovar(&info_var);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_FIXED:
 		decode_scanreportinfofixed(event_info_stream, &info_fixed, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_fixed(ctx, scanner, &info_fixed);
 		del_scanreportinfofixed(&info_fixed);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_GROUPED:
 		decode_scanreportinfogrouped(event_info_stream, &info_grouped, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_grouped(ctx, scanner, &info_grouped);
 		del_scanreportinfogrouped(&info_grouped);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_VAR:
 		decode_scanreportinfompvar(event_info_stream, &info_mp_var, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_var(ctx, scanner, &info_mp_var);
 		del_scanreportinfompvar(&info_mp_var);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_FIXED:
 		decode_scanreportinfompfixed(event_info_stream, &info_mp_fixed, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_fixed(ctx, scanner, &info_mp_fixed);
 		del_scanreportinfompfixed(&info_mp_fixed);
 		break;
 	case MDC_NOTI_UNBUF_SCAN_REPORT_MP_GROUPED:
 		decode_scanreportinfompgrouped(event_info_stream, &info_mp_grouped, &error);
+		if (error)
+			break;
 		epi_cfg_scanner_event_report_unbuf_scan_report_mp_grouped(ctx, scanner, &info_mp_grouped);
 		del_scanreportinfompgrouped(&info_mp_grouped);
 		break;
