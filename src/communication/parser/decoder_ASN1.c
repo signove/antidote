@@ -434,7 +434,8 @@ void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer, int 
 	}
 
 	if (pointer->length > stream->unread_bytes) {
-		DEBUG("attribute list: underflow");
+		DEBUG("attribute list: underflow %d > %d",
+			pointer->length, stream->unread_bytes);
 		*err = 1;
 		return;
 	}
