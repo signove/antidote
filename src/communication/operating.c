@@ -788,7 +788,6 @@ void operating_assoc_release_req_tx(Context *ctx,
 void operating_rors_confirmed_action_tx(Context *ctx,
 					fsm_events evt, FSMEventData *data)
 {
-	int error = 0; // FIXME handle
 	DATA_apdu *data_apdu = encode_get_data_apdu(
 				       &data->received_apdu->u.prst);
 
@@ -806,11 +805,17 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 	// Check action type
 	if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_DATA_REQUEST) {
 		DataResponse response;
+		int error = 0;
 
 		ByteStreamReader *response_data = byte_stream_reader_instance(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args.value,
 						  data_apdu->message.u.rors_cmipConfirmedAction.action_info_args.length);
 
 		decode_dataresponse(response_data, &response, &error);
+		free(response_data);
+
+		if (error) {
+			return;
+		}
 
 		// Send the event to the MDS
 		Any event;
@@ -822,7 +827,6 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 
 		operating_decode_mds_event(ctx, type, &event);
 
-		free(response_data);
 
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SET_TIME) {
 		// not needed
@@ -1047,20 +1051,26 @@ void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request 
  */
 void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	SegmentInfoList info_list;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
 
 	ByteStreamReader *event_info_stream = byte_stream_reader_instance(event->value, event->length);
 	decode_segmentinfolist(event_info_stream, &info_list, &error);
+	free(event_info_stream);
+
+	if (error) {
+		// TODO abort?
+		DEBUG("Error decoding segment info");
+		return;
+	}
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
 		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list, &(r->return_data));
 	}
 
 	del_segmentinfolist(&info_list);
-	free(event_info_stream);
 }
 
 /**
@@ -1074,20 +1084,25 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handl
 void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
 							Request *r)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	TrigSegmDataXferRsp trig_rsp;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
 
 	ByteStreamReader *event_data_stream = byte_stream_reader_instance(event->value, event->length);
 	decode_trigsegmdataxferrsp(event_data_stream, &trig_rsp, &error);
+	free(event_data_stream);
+
+	if (error) {
+		// TODO abort?
+		DEBUG("Error decoding trig segment response");
+		return;
+	}
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
 		pmstore_trig_segment_data_xfer_response(&(mds_obj->u.pmstore),
 							trig_rsp, &(r->return_data));
 	}
-
-	free(event_data_stream);
 }
 
 /**
@@ -1103,7 +1118,7 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
 void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	SegmentDataEvent segm_data_event;
 	SegmentDataResult result;
 
@@ -1112,6 +1127,13 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 
 	ByteStreamReader *event_data_stream = byte_stream_reader_instance(event->value, event->length);
 	decode_segmentdataevent(event_data_stream, &segm_data_event, &error);
+	free(event_data_stream);
+
+	if (error) {
+		// TODO abort?
+		DEBUG("Error decoding segment data evt");
+		return;
+	}
 
 	result.segm_data_event_descr = segm_data_event.segm_data_event_descr;
 	result.segm_data_event_descr.segm_evt_status = SEVTSTA_MANAGER_ABORT;
@@ -1126,7 +1148,6 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, H
 	}
 
 	del_segmentdataevent(&segm_data_event);
-	free(event_data_stream);
 
 	operating_segment_data_event_response_tx(ctx, invoke_id, obj_handle,
 			currentTime, event_type, result);
