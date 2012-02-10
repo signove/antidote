@@ -203,7 +203,7 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	data_apdu->message.u.rors_cmipGet.attribute_list = attrs;
 
 	data_apdu->message.length = sizeof(data_apdu->message.u.rors_cmipGet.obj_handle) +
-					attrs.length;
+					2 + 2 + attrs.length;
 
 	apdu.u.prst.length = sizeof(id)
 			     + sizeof(data_apdu->message.choice)
