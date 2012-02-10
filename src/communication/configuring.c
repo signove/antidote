@@ -576,17 +576,20 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 
 	// step02: calculate the APDU size
 
-	confirmed_result->event_reply_info.length = sizeof(ConfigReportRsp);
+	confirmed_result->event_reply_info.length = 4; // ConfigReportRsp
 
 	data.message.length = sizeof(HANDLE) + sizeof(RelativeTime)
-			      + sizeof(OID_Type) + sizeof(intu16);
+			      + sizeof(OID_Type) // EventReportResultSimple fields
+			      + sizeof(intu16); // Any's length field
 	data.message.length += confirmed_result->event_reply_info.length;
 
 	result_apdu.u.prst.length = sizeof(InvokeIDType)
-				    + sizeof(DATA_apdu_choice) + sizeof(intu16);
+				    + sizeof(DATA_apdu_choice)
+				    + sizeof(intu16); // data message's length field
 	result_apdu.u.prst.length += data.message.length;
 
-	result_apdu.length = result_apdu.u.prst.length + sizeof(intu16);
+	result_apdu.length = result_apdu.u.prst.length
+				+ sizeof(intu16); // prst length field
 
 	// step03: encode APDU
 
@@ -597,7 +600,8 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 
 
 	ByteStreamWriter *apdu_stream = byte_stream_writer_instance(
-						result_apdu.length);
+						result_apdu.length
+						+ 4); // APDU choice, length fields
 
 	encode_set_data_apdu(&result_apdu.u.prst, &data);
 	encode_apdu(apdu_stream, &result_apdu);
