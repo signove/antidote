@@ -44,6 +44,7 @@
 #include <string.h>
 
 // TODO improve error handling (out of loops)
+// TODO empty structs upon errors
 
 /**
  * Decodes SegmentDataResult.
@@ -138,6 +139,8 @@ void decode_productionspec(ByteStreamReader *stream, ProductionSpec *pointer, in
 		pointer->value = calloc(pointer->count, sizeof(ProdSpecEntry));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -268,6 +271,8 @@ void decode_nuobsvaluecmp(ByteStreamReader *stream, NuObsValueCmp *pointer, int 
 		pointer->value = calloc(pointer->count, sizeof(NuObsValue));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -359,6 +364,7 @@ void decode_octet_string(ByteStreamReader *stream, octet_string *pointer, int *e
 
 		if (pointer->value == NULL) {
 			*error = 1;
+			pointer->length = 0;
 			return;
 		}
 
@@ -411,7 +417,7 @@ void decode_sampletype(ByteStreamReader *stream, SampleType *pointer, int *error
  *
  * @param stream the AttributeList content decoded as ByteStreamReader.
  * @param pointer the AttributeList to be decoded.
- * @param error error return
+ * @param err error feedback
  */
 void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer, int *err)
 {
@@ -439,6 +445,8 @@ void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer, int 
 		pointer->value = calloc(pointer->count, sizeof(AVA_Type));
 
 		if (pointer->value == NULL) {
+			*err = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -476,6 +484,8 @@ void decode_segmidlist(ByteStreamReader *stream, SegmIdList *pointer, int *error
 		pointer->value = calloc(pointer->count, sizeof(InstNumber));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -514,6 +524,8 @@ void decode_simplenuobsvaluecmp(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(SimpleNuObsValue));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -564,6 +576,8 @@ void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer, int *error
 		pointer->value = calloc(pointer->count, sizeof(HANDLE));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -616,6 +630,8 @@ void decode_attrvalmap(ByteStreamReader *stream, AttrValMap *pointer, int *error
 		pointer->value = calloc(pointer->count, sizeof(AttrValMapEntry));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -691,6 +707,8 @@ void decode_scanreportperfixedlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerFixed));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -729,6 +747,8 @@ void decode_scanreportpergroupedlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerGrouped));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -766,6 +786,8 @@ void decode_dataprotolist(ByteStreamReader *stream, DataProtoList *pointer, int 
 		pointer->value = calloc(pointer->count, sizeof(DataProto));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -844,6 +866,8 @@ void decode_handleattrvalmap(ByteStreamReader *stream, HandleAttrValMap *pointer
 		pointer->value = calloc(pointer->count, sizeof(HandleAttrValMapEntry));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -928,6 +952,8 @@ void decode_metricidlist(ByteStreamReader *stream, MetricIdList *pointer, int *e
 		pointer->value = calloc(pointer->count, sizeof(OID_Type));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1036,6 +1062,8 @@ void decode_observationscanlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(ObservationScan));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1113,6 +1141,8 @@ void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 		DATA_apdu *data = calloc(1, sizeof(DATA_apdu));
 
 		if (data == NULL) {
+			*error = 1;
+			pointer->length = 0;
 			return;
 		} else {
 			decode_data_apdu(stream, data, error);
@@ -1162,6 +1192,8 @@ void decode_any(ByteStreamReader *stream, Any *pointer, int *error)
 		pointer->value = calloc(pointer->length, sizeof(intu8));
 
 		if (pointer->value == NULL) {
+			pointer->length = 0;
+			*error = 1;
 			return;
 		}
 
@@ -1226,6 +1258,8 @@ void decode_pmsegmelemstaticattrlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(SegmElemStaticAttrEntry));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1326,6 +1360,8 @@ void decode_regcertdatalist(ByteStreamReader *stream, RegCertDataList *pointer, 
 		pointer->value = calloc(pointer->count, sizeof(RegCertData));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1433,6 +1469,8 @@ void decode_segmentryelemlist(ByteStreamReader *stream, SegmEntryElemList *point
 		pointer->value = calloc(pointer->count, sizeof(SegmEntryElem));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1572,6 +1610,8 @@ void decode_segmentstatistics(ByteStreamReader *stream, SegmentStatistics *point
 		pointer->value = calloc(pointer->count, sizeof(SegmentStatisticEntry));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1609,6 +1649,8 @@ void decode_attributeidlist(ByteStreamReader *stream, AttributeIdList *pointer, 
 		pointer->value = calloc(pointer->count, sizeof(OID_Type));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -1804,7 +1846,7 @@ void decode_scanreportinfompgrouped(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
- * @param error Error feedback
+ * @param err Error feedback
  */
 void decode_configobject(ByteStreamReader *stream, ConfigObject *pointer, int *err)
 {
@@ -1843,6 +1885,8 @@ void decode_scanreportinfogroupedlist(ByteStreamReader *stream,
 					sizeof(ObservationScanGrouped));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2021,6 +2065,8 @@ void decode_supplementaltypelist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(TYPE));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2059,6 +2105,8 @@ void decode_observationscanfixedlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(ObservationScanFixed));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2136,6 +2184,8 @@ void decode_typeverlist(ByteStreamReader *stream, TypeVerList *pointer, int *err
 		pointer->value = calloc(pointer->count, sizeof(TypeVer));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2203,6 +2253,8 @@ void decode_scanreportpervarlist(ByteStreamReader *stream,
 		pointer->value = calloc(pointer->count, sizeof(ScanReportPerVar));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2253,6 +2305,8 @@ void decode_segmentinfolist(ByteStreamReader *stream, SegmentInfoList *pointer, 
 		pointer->value = calloc(pointer->count, sizeof(SegmentInfo));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2319,6 +2373,8 @@ void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *poi
 		pointer->value = calloc(pointer->count, sizeof(BasicNuObsValue));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
@@ -2343,7 +2399,6 @@ void decode_basicnuobsvaluecmp(ByteStreamReader *stream, BasicNuObsValueCmp *poi
  */
 void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer, int *error)
 {
-	*error = 0;
 	pointer->count = read_intu16(stream, error); // intu16 count
 	pointer->length = read_intu16(stream, error); // intu16 length
 	pointer->value = NULL;
@@ -2354,7 +2409,7 @@ void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer
 	}
 
 	if (pointer->count > 0) {
-		if (pointer->length < stream->unread_bytes) {
+		if (pointer->length > stream->unread_bytes) {
 			DEBUG("object list incomplete");
 			pointer->count = pointer->length = 0;
 			*error = 1;
@@ -2364,6 +2419,8 @@ void decode_configobjectlist(ByteStreamReader *stream, ConfigObjectList *pointer
 		pointer->value = calloc(pointer->count, sizeof(ConfigObject));
 
 		if (pointer->value == NULL) {
+			*error = 1;
+			pointer->count = pointer->length = 0;
 			return;
 		}
 
