@@ -160,7 +160,7 @@ static void comm_agent_process_confirmed_event_report(Context *ctx, APDU *apdu,
 					EventReportResultSimple *report,
 					FSMEventData *data)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	if (report->obj_handle != MDS_HANDLE)
 		goto fail;
@@ -172,6 +172,9 @@ static void comm_agent_process_confirmed_event_report(Context *ctx, APDU *apdu,
 						report->event_reply_info.length);
 	decode_configreportrsp(stream, &rsp, &error);
 	free(stream);
+
+	if (error)
+		goto fail;
 
 	if (rsp.config_result == ACCEPTED_CONFIG) {
 		communication_fire_evt(ctx,
@@ -542,7 +545,7 @@ void configuring_new_measurements_response_tx(Context *ctx, fsm_events evt,
 void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 		FSMEventData *event_data)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	DEBUG("\n configuring: send configuration response");
 
 	APDU *apdu = event_data->received_apdu;
@@ -554,6 +557,14 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 	ByteStreamReader *config_stream = byte_stream_reader_instance(args.event_info.value,
 					  args.event_info.length);
 	decode_configreport(config_stream, &config_report, &error);
+	free(config_stream);
+
+	if (error) {
+		// TODO abort?
+		DEBUG("bad config report, not responding");
+		return;
+	}
+
 	ConfigId config_report_id = config_report.config_report_id;
 	del_configreport(&config_report);
 
@@ -613,8 +624,6 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 
 	del_byte_stream_writer(config_rsp_stream, 1);
 	del_byte_stream_writer(apdu_stream, 1);
-
-	free(config_stream);
 }
 
 /**
