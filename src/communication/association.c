@@ -324,7 +324,7 @@ int association_accept_data_protocol_20601_in(Context *ctx,
  */
 static void association_accept_data_protocol_20601(Context *ctx, DataProto *proto)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	DEBUG("associating: accepted data protocol id <%d>", \
 	      DATA_PROTO_ID_20601);
@@ -339,10 +339,12 @@ static void association_accept_data_protocol_20601(Context *ctx, DataProto *prot
 
 	decode_phdassociationinformation(stream, &agent_assoc_information, &error);
 
-	association_accept_data_protocol_20601_in(ctx, agent_assoc_information, 0);
+	if (!error) {
+		association_accept_data_protocol_20601_in(ctx, agent_assoc_information, 0);
+		del_phdassociationinformation(&agent_assoc_information);
+	}
 
 	free(stream);
-	del_phdassociationinformation(&agent_assoc_information);
 }
 
 /**
