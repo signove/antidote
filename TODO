@@ -23,6 +23,7 @@ test-healthd.py: detect service stop and restart
 
 test-healthd.py: add XML parsing to get PM-Store handles et al.
 
+Add encoding error messages
 
 
 Document Agent, PM-Store and GetConfiguration ops

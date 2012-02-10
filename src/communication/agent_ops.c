@@ -194,7 +194,7 @@ void communication_agent_roiv_get_mds_tx(FSMContext *ctx, fsm_events evt, FSMEve
 	AttributeList attrs;
 
 	attrs.count = 0;
-	attrs.length = sizeof(attrs.count) + sizeof(attrs.length);
+	attrs.length = 0;
 	attrs.value = mds_get_attributes(ctx->mds, &attrs.count, &attrs.length);
 	
 	DEBUG("send RORS with MDS: %d attributes, length %d", attrs.count, attrs.length);
