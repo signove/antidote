@@ -325,6 +325,7 @@ intu32 write_intu8(ByteStreamWriter *stream, intu8 data)
 		stream->size++;
 		return 1; // true
 	} else {
+		ERROR("write_intu8");
 		return 0; // false
 	}
 
@@ -346,6 +347,8 @@ intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len)
 		stream->size += len;
 		return 1; // true
 	} else {
+		ERROR("write_intu8_many %d > %d",
+			len, stream->buffer_end - stream->buffer_cur + 1);
 		return 0; // false
 	}
 
@@ -366,6 +369,7 @@ intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 		stream->size += 2;
 		return 1; // true
 	} else {
+		ERROR("write_intu16");
 		return 0; // false
 	}
 }
@@ -385,6 +389,7 @@ intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 		stream->size += 4;
 		return 1; // true
 	} else {
+		ERROR("write_intu32");
 		return 0; // false
 	}
 }
