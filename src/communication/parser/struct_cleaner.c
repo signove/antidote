@@ -37,9 +37,30 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "src/communication/parser/struct_cleaner.h"
 #include "src/communication/parser/encoder_ASN1.h"
 #include "src/dim/nomenclature.h"
+
+#define QUOTE(x) #x
+
+#define CLVC()				\
+	memset(pointer, 0, sizeof(*pointer));
+
+#define CLV()				\
+	free(pointer->value);		\
+	CLVC();
+
+#define CHILDREN_GENERIC(delfunction)								\
+	if (pointer->value) {									\
+		int i;										\
+		for (i = 0; i < pointer->count; i++) {						\
+			delfunction(pointer->value + i);					\
+		}										\
+	}											
+
+#define DEL_FUNCTION(type) del_##type
+#define CHILDREN(lctype) CHILDREN_GENERIC(DEL_FUNCTION(lctype))
 
 /**
  * Delete SegmentDataResult
@@ -77,14 +98,8 @@ void del_typever(TypeVer *pointer)
  */
 void del_modificationlist(ModificationList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_attributemodentry(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(attributemodentry);
+	CLV();
 }
 
 /**
@@ -94,14 +109,8 @@ void del_modificationlist(ModificationList *pointer)
  */
 void del_productionspec(ProductionSpec *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_prodspecentry(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(prodspecentry);
+	CLV();
 }
 
 /**
@@ -168,14 +177,8 @@ void del_absolutetime(AbsoluteTime *pointer)
  */
 void del_nuobsvaluecmp(NuObsValueCmp *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_nuobsvalue(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(nuobsvalue);
+	CLV();
 }
 
 /**
@@ -226,8 +229,7 @@ void del_enumobsvalue(EnumObsValue *pointer)
  */
 void del_octet_string(octet_string *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -237,8 +239,7 @@ void del_octet_string(octet_string *pointer)
  */
 void del_enumprintablestring(EnumPrintableString *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -266,14 +267,8 @@ void del_sampletype(SampleType *pointer)
  */
 void del_attributelist(AttributeList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_ava_type(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(ava_type);
+	CLV();
 }
 
 /**
@@ -283,8 +278,7 @@ void del_attributelist(AttributeList *pointer)
  */
 void del_segmidlist(SegmIdList *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -294,8 +288,7 @@ void del_segmidlist(SegmIdList *pointer)
  */
 void del_simplenuobsvaluecmp(SimpleNuObsValueCmp *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -316,8 +309,7 @@ void del_getresultsimple(GetResultSimple *pointer)
  */
 void del_handlelist(HANDLEList *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -336,16 +328,8 @@ void del_segmdataeventdescr(SegmDataEventDescr *pointer)
  */
 void del_attrvalmap(AttrValMap *pointer)
 {
-	if (pointer->value != NULL) {
-		int i;
-
-		for (i = 0; i < pointer->count; i++) {
-			del_attrvalmapentry(pointer->value + i);
-		}
-
-		free(pointer->value);
-		pointer->value = NULL;
-	}
+	CHILDREN(attrvalmapentry);
+	CLV();
 }
 
 /**
@@ -376,14 +360,8 @@ void del_phdassociationinformation(PhdAssociationInformation *pointer)
  */
 void del_scanreportperfixedlist(ScanReportPerFixedList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_scanreportperfixed(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(scanreportperfixed);
+	CLV();
 }
 
 /**
@@ -393,14 +371,8 @@ void del_scanreportperfixedlist(ScanReportPerFixedList *pointer)
  */
 void del_scanreportpergroupedlist(ScanReportPerGroupedList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_scanreportpergrouped(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(scanreportpergrouped);
+	CLV();
 }
 
 /**
@@ -410,14 +382,8 @@ void del_scanreportpergroupedlist(ScanReportPerGroupedList *pointer)
  */
 void del_dataprotolist(DataProtoList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_dataproto(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(dataproto);
+	CLV();
 }
 
 /**
@@ -437,9 +403,9 @@ void del_segmselection(SegmSelection *pointer)
 		del_abstimerange(&pointer->u.abs_time_range);
 		break;
 	default:
-		// TODO: manage errors
 		break;
 	}
+	CLVC();
 }
 
 /**
@@ -459,14 +425,8 @@ void del_errorresult(ErrorResult *pointer)
  */
 void del_handleattrvalmap(HandleAttrValMap *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_handleattrvalmapentry(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(handleattrvalmapentry);
+	CLV();
 }
 
 /**
@@ -504,8 +464,7 @@ void del_rlre_apdu(RLRE_apdu *pointer)
  */
 void del_metricidlist(MetricIdList *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -566,16 +525,8 @@ void del_systemmodel(SystemModel *pointer)
  */
 void del_observationscanlist(ObservationScanList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_observationscan(pointer->value + i);
-	}
-
-	if (pointer->value != NULL) {
-		free(pointer->value);
-		pointer->value = NULL;
-	}
+	CHILDREN(observationscan);
+	CLV();
 }
 
 /**
@@ -605,9 +556,9 @@ void del_apdu(APDU *pointer)
 		del_prst_apdu(&(pointer->u.prst));
 		break;
 	default:
-		// TODO: manage errors
 		break;
 	}
+	CLVC();
 }
 
 /**
@@ -619,9 +570,8 @@ void del_prst_apdu(PRST_apdu *pointer)
 {
 	if (pointer->value != NULL) {
 		del_data_apdu(encode_get_data_apdu(pointer));
-		free(pointer->value);
-		pointer->value = NULL;
 	}
+	CLV();
 }
 
 /**
@@ -641,13 +591,7 @@ void del_pmsegmententrymap(PmSegmentEntryMap *pointer)
  */
 void del_any(Any *pointer)
 {
-	if (pointer->value != NULL) {
-		if (pointer->length > 0) {
-			free(pointer->value);
-			pointer->length = 0;
-			pointer->value = NULL;
-		}
-	}
+	CLV();
 }
 
 /**
@@ -677,14 +621,8 @@ void del_segmentinfo(SegmentInfo *pointer)
  */
 void del_pmsegmelemstaticattrlist(PmSegmElemStaticAttrList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_segmelemstaticattrentry(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(segmelemstaticattrentry);
+	CLV();
 }
 
 /**
@@ -734,14 +672,8 @@ void del_getargumentsimple(GetArgumentSimple *pointer)
  */
 void del_regcertdatalist(RegCertDataList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_regcertdata(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(regcertdata);
+	CLV();
 }
 
 /**
@@ -800,14 +732,8 @@ void del_segmentdataevent(SegmentDataEvent *pointer)
  */
 void del_segmentryelemlist(SegmEntryElemList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_segmentryelem(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(segmentryelem);
+	CLV();
 }
 
 /**
@@ -857,6 +783,7 @@ void del_enumval(EnumVal *pointer)
 	default:
 		break;
 	}
+	CLVC();
 }
 
 /**
@@ -884,14 +811,8 @@ void del_batmeasure(BatMeasure *pointer)
  */
 void del_segmentstatistics(SegmentStatistics *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_segmentstatisticentry(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(segmentstatisticentry);
+	CLV();
 }
 
 /**
@@ -901,10 +822,7 @@ void del_segmentstatistics(SegmentStatistics *pointer)
  */
 void del_attributeidlist(AttributeIdList *pointer)
 {
-	if (pointer->value != NULL) {
-		free(pointer->value);
-		pointer->value = NULL;
-	}
+	CLV();
 }
 
 /**
@@ -995,9 +913,9 @@ void del_data_apdu_message(Data_apdu_message *pointer)
 		del_rejectresult(&pointer->u.rorj);
 		break;
 	default:
-		// TODO: manage errors
 		break;
 	}
+	CLVC();
 }
 
 /**
@@ -1046,15 +964,9 @@ void del_configobject(ConfigObject *pointer)
  * @param *pointer
  */
 void del_scanreportinfogroupedlist(ScanReportInfoGroupedList *pointer)
-{
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_octet_string(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+{	
+	CHILDREN(octet_string);
+	CLV();
 }
 
 /**
@@ -1151,14 +1063,8 @@ void del_datareqmodecapab(DataReqModeCapab *pointer)
  */
 void del_supplementaltypelist(SupplementalTypeList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_type(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(type);
+	CLV();
 }
 
 /**
@@ -1168,14 +1074,8 @@ void del_supplementaltypelist(SupplementalTypeList *pointer)
  */
 void del_observationscanfixedlist(ObservationScanFixedList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_observationscanfixed(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(observationscanfixed);
+	CLV();
 }
 
 /**
@@ -1214,14 +1114,8 @@ void del_aarq_apdu(AARQ_apdu *pointer)
  */
 void del_typeverlist(TypeVerList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_typever(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(typever);
+	CLV();
 }
 
 /**
@@ -1251,14 +1145,8 @@ void del_nuobsvalue(NuObsValue *pointer)
  */
 void del_scanreportpervarlist(ScanReportPerVarList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_scanreportpervar(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(scanreportpervar);
+	CLV();
 }
 
 /**
@@ -1278,14 +1166,8 @@ void del_settimeinvoke(SetTimeInvoke *pointer)
  */
 void del_segmentinfolist(SegmentInfoList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_segmentinfo(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->value = NULL;
+	CHILDREN(segmentinfo);
+	CLV();
 }
 
 /**
@@ -1316,8 +1198,7 @@ void del_segmelemstaticattrentry(SegmElemStaticAttrEntry *pointer)
  */
 void del_basicnuobsvaluecmp(BasicNuObsValueCmp *pointer)
 {
-	free(pointer->value);
-	pointer->value = NULL;
+	CLV();
 }
 
 /**
@@ -1327,16 +1208,8 @@ void del_basicnuobsvaluecmp(BasicNuObsValueCmp *pointer)
  */
 void del_configobjectlist(ConfigObjectList *pointer)
 {
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		del_configobject(pointer->value + i);
-	}
-
-	free(pointer->value);
-	pointer->count = 0;
-	pointer->length = 0;
-	pointer->value = NULL;
+	CHILDREN(configobject);
+	CLV();
 }
 
 /**
