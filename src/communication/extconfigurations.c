@@ -349,7 +349,7 @@ void ext_configurations_register_conf(octet_string *system_id,
 
 	struct ExtConfig *cfg = ext_configurations_get_config(system_id, config_id);
 	if (!cfg) {
-		int error = 0; // FIXME handle
+		int error = 0;
 		DEBUG("Adding new ext config to index");
 		new = 1;
 		ext_configuration_size++;
@@ -364,7 +364,7 @@ void ext_configurations_register_conf(octet_string *system_id,
 		encode_octet_string(w_stream, system_id);
 
 		ByteStreamReader *r_stream = byte_stream_reader_instance(w_stream->buffer, size);
-		// used just to alloc system_id into cfg
+		// used just to alloc system_id into cfg; won't fail.
 		decode_octet_string(r_stream, &cfg->system_id, &error);
 
 		del_byte_stream_writer(w_stream, 1);
