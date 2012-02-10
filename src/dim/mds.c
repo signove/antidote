@@ -1245,7 +1245,7 @@ AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *tot_length)
  */
 void mds_set_attribute(MDS *mds, AVA_Type *attribute)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	intu8 *value = attribute->attribute_value.value;
 	intu16 length = attribute->attribute_value.length;
 
@@ -1253,121 +1253,188 @@ void mds_set_attribute(MDS *mds, AVA_Type *attribute)
 	case MDC_ATTR_ID_HANDLE:
 		break;
 	case MDC_ATTR_SYS_TYPE: {
-		del_type(&mds->system_type);
+		TYPE s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_type(stream, &mds->system_type, &error);
+		decode_type(stream, &s, &error);
+		if (!error) {
+			del_type(&mds->system_type);
+			mds->system_type = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_ID_MODEL: {
-		del_systemmodel(&mds->system_model);
+		SystemModel s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_systemmodel(stream, &mds->system_model, &error);
+		decode_systemmodel(stream, &s, &error);
+		if (!error) {
+			del_systemmodel(&mds->system_model);
+			mds->system_model = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_SYS_ID: {
-		del_octet_string(&mds->system_id);
+		octet_string s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_octet_string(stream, &mds->system_id, &error);
+		decode_octet_string(stream, &s, &error);
+		if (! error) {
+			del_octet_string(&mds->system_id);
+			mds->system_id = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_DEV_CONFIG_ID: {
-		del_configid(&mds->dev_configuration_id);
+		ConfigId s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_configid(stream, &mds->dev_configuration_id, &error);
+		decode_configid(stream, &s, &error);
+		if (! error) {
+			del_configid(&mds->dev_configuration_id);
+			mds->dev_configuration_id = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_ATTRIBUTE_VAL_MAP: {
-		del_attrvalmap(&mds->attribute_value_map);
+		AttrValMap s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_attrvalmap(stream, &mds->attribute_value_map, &error);
+		decode_attrvalmap(stream, &s, &error);
+		if (! error) {
+			del_attrvalmap(&mds->attribute_value_map);
+			mds->attribute_value_map = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_ID_PROD_SPECN: {
-		del_productionspec(&mds->production_specification);
+		ProductionSpec s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_productionspec(stream, &mds->production_specification, &error);
+		decode_productionspec(stream, &s, &error);
+		if (! error) {
+			del_productionspec(&mds->production_specification);
+			mds->production_specification = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_MDS_TIME_INFO: {
-		del_mdstimeinfo(&mds->mds_time_info);
+		MdsTimeInfo s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_mdstimeinfo(stream, &mds->mds_time_info, &error);
+		decode_mdstimeinfo(stream, &s, &error);
+		if (! error) {
+			del_mdstimeinfo(&mds->mds_time_info);
+			mds->mds_time_info = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_TIME_ABS: {
-		del_absolutetime(&mds->date_and_time);
+		AbsoluteTime s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_absolutetime(stream, &mds->date_and_time, &error);
+		decode_absolutetime(stream, &s, &error);
+		if (! error) {
+			del_absolutetime(&mds->date_and_time);
+			mds->date_and_time = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_TIME_REL: {
+		RelativeTime s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		mds->relative_time = read_intu32(stream, NULL);
-		// del_relative_time not needed
+		s = read_intu32(stream, &error);
+		if (! error) {
+			// del_relative_time not needed
+			mds->relative_time = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_TIME_REL_HI_RES: {
-		del_highresrelativetime(&mds->hires_relative_time);
+		HighResRelativeTime s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_highresrelativetime(stream, &mds->hires_relative_time, &error);
+		decode_highresrelativetime(stream, &s, &error);
+		if (! error) {
+			del_highresrelativetime(&mds->hires_relative_time);
+			mds->hires_relative_time = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_TIME_ABS_ADJUST: {
-		del_absolutetimeadjust(&mds->date_and_time_adjustment);
+		AbsoluteTimeAdjust s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_absolutetimeadjust(stream, &mds->date_and_time_adjustment, &error);
+		decode_absolutetimeadjust(stream, &s, &error);
+		if (! error) {
+			del_absolutetimeadjust(&mds->date_and_time_adjustment);
+			mds->date_and_time_adjustment = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_POWER_STAT: {
+		PowerStatus s;
 		// del not needed
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		mds->power_status = read_intu16(stream, NULL);
+		s = read_intu16(stream, &error);
+		if (! error) {
+			mds->power_status = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_VAL_BATT_CHARGE: {
+		intu16 s;
 		// del not needed
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		mds->battery_level = read_intu16(stream, NULL);
+		s = read_intu16(stream, &error);
+		if (! error) {
+			mds->battery_level = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_TIME_BATT_REMAIN: {
-		del_batmeasure(&mds->remaining_battery_time);
+		BatMeasure s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_batmeasure(stream, &mds->remaining_battery_time, &error);
+		decode_batmeasure(stream, &s, &error);
+		if (! error) {
+			del_batmeasure(&mds->remaining_battery_time);
+			mds->remaining_battery_time = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_REG_CERT_DATA_LIST: {
-		del_regcertdatalist(&mds->reg_cert_data_list);
+		RegCertDataList s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_regcertdatalist(stream, &mds->reg_cert_data_list, &error);
+		decode_regcertdatalist(stream, &s, &error);
+		if (! error) {
+			del_regcertdatalist(&mds->reg_cert_data_list);
+			mds->reg_cert_data_list = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_SYS_TYPE_SPEC_LIST: {
-		del_typeverlist(&mds->system_type_spec_list);
+		TypeVerList s;
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		decode_typeverlist(stream, &mds->system_type_spec_list, &error);
+		decode_typeverlist(stream, &s, &error);
+		if (! error) {
+			del_typeverlist(&mds->system_type_spec_list);
+			mds->system_type_spec_list = s;
+		}
 		free(stream);
 	}
 	break;
 	case MDC_ATTR_CONFIRM_TIMEOUT: {
+		RelativeTime s;
 		// del not needed
 		ByteStreamReader *stream = byte_stream_reader_instance(value, length);
-		mds->confirm_timeout = read_intu32(stream, NULL);
+		s = read_intu32(stream, &error);
+		if (! error)
+			mds->confirm_timeout = s;
 		free(stream);
 	}
 	break;
