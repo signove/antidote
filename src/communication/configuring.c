@@ -484,7 +484,7 @@ ConfigResult configuring_perform_configuration_in(Context *ctx,
 void configuring_perform_configuration(Context *ctx, fsm_events evt,
 				       FSMEventData *event_data)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	DEBUG("\n configuring: performing");
 
 	APDU *apdu = event_data->received_apdu;
@@ -497,7 +497,9 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 					  args.event_info.length);
 	decode_configreport(config_stream, &config_report, &error);
 
-	configuring_perform_configuration_in(ctx, config_report, apdu, 0);
+	if (!error) {
+		configuring_perform_configuration_in(ctx, config_report, apdu, 0);
+	}
 
 	free(config_stream);
 }
