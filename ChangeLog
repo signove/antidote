@@ -1,3 +1,10 @@
+Antidote 2.1
+------------
+
+* Added more checks while encoding APDUs
+
+* Increased robustness against APDU decoding errors
+
 Antidote 2.0
 ------------
 
