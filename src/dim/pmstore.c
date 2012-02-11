@@ -880,7 +880,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 						struct PMSegment *segment, 
 						DataEntry *segm_data_entry)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	AbsoluteTime abs_time; // length 8
 	RelativeTime rel_time; // length 4
@@ -944,6 +944,11 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		if (hdr_abs_time) {
 			offset += 8;
 			decode_absolutetime(stream, &abs_time, &error);
+			if (error) {
+				DEBUG("Bad PM-Segment data: absolute time");
+				segm_data_entry->u.compound.entries_count = i;
+				break;
+			}
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_absolute_time(header_item, "Segment-Absolute-Time", &abs_time);
 		}
@@ -951,6 +956,11 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		if (hdr_rel_time) {
 			offset += 4;
 			rel_time = read_intu32(stream, &error);
+			if (error) {
+				DEBUG("Bad PM-Segment data: reltime");
+				segm_data_entry->u.compound.entries_count = i;
+				break;
+			}
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_intu32(header_item, "Segment-Relative-Time", &rel_time);
 		}
@@ -958,6 +968,11 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		if (hdr_hirel_time) {
 			offset += 8;
 			decode_highresrelativetime(stream, &hires_rel_time, &error);
+			if (error) {
+				DEBUG("Bad PM-Segment data: highresreltime");
+				segm_data_entry->u.compound.entries_count = i;
+				break;
+			}
  			header_item = &header_data_entry->u.compound.entries[k++];
 			data_set_high_res_relative_time(header_item, "Segment-Hires-Relative-Time",
 							&hires_rel_time);
