@@ -249,7 +249,7 @@ static void del_PMStoreClearSegmRet(void *p)
 Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,
 		SegmSelection *selection, service_request_callback request_callback)
 {
-	int error = 0; // FIXME handle
+	int error = 0;
 	ByteStreamWriter *writer;
 	ByteStreamReader *reader;
 	writer = byte_stream_writer_instance(selection->length + sizeof(SegmSelection_choice) + sizeof(intu16));
@@ -294,6 +294,7 @@ Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct
 	}
 	rs->del_function = &del_PMStoreClearSegmRet;
 	reader = byte_stream_reader_instance(writer->buffer, writer->size);
+	// reused for allocation, can't fail
 	decode_segmselection(reader, &(rs->segm_selection), &error);
 	free(reader);
 
