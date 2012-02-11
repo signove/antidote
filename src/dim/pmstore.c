@@ -478,6 +478,7 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 	// FIXME EPX2 where errors come from? roer
 
 	for (i = 0; i < info_list_size; ++i) {
+		int ok = 1;
 		InstNumber inst_number = info_list.value[i].seg_inst_no;
 		int seg_info_size = info_list.value[i].seg_info.count;
 		AttributeList attr_list = info_list.value[i].seg_info;
@@ -492,8 +493,18 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 			value.value = attr_list.value[j].attribute_value.value;
 			ByteStreamReader *stream = byte_stream_reader_instance(value.value,
 						   value.length);
-			pmstore_fill_segment_attr(pmsegment, attr_id, stream);
+			ok = pmstore_fill_segment_attr(pmsegment, attr_id, stream);
 			free(stream);
+			if (! ok) {
+				free(pmsegment);
+				pmsegment = 0;
+				break;
+			}
+		}
+
+		if (! ok) {
+			ERROR("stopping segment info decoding");
+			break;
 		}
 
 		pmstore_add_segment(pm_store, pmsegment);
