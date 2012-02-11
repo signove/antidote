@@ -661,47 +661,125 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 				     ByteStreamReader *stream)
 {
 	int result = 1;
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	switch (attr_id) {
-	case MDC_ATTR_PM_SEG_MAP:
-		decode_pmsegmententrymap(stream, &pm_segment->pm_segment_entry_map,
-					&error);
+	case MDC_ATTR_PM_SEG_MAP: {
+		PmSegmentEntryMap s;
+		decode_pmsegmententrymap(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->pm_segment_entry_map = s;
 		break;
-	case MDC_ATTR_PM_SEG_PERSON_ID:
-		pm_segment->pm_seg_person_id = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_PM_SEG_PERSON_ID: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->pm_seg_person_id = s;
 		break;
-	case MDC_ATTR_OP_STAT:
-		pm_segment->operational_state = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_OP_STAT: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->operational_state = s;
 		break;
-	case MDC_ATTR_TIME_PD_SAMP:
-		pm_segment->sample_period = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_TIME_PD_SAMP: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->sample_period = s;
 		break;
-	case MDC_ATTR_PM_SEG_LABEL_STRING:
-		decode_octet_string(stream, &(pm_segment->segment_label), &error);
+	}
+	case MDC_ATTR_PM_SEG_LABEL_STRING: {
+		octet_string s;
+		decode_octet_string(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->segment_label = s;
 		break;
-	case MDC_ATTR_TIME_START_SEG:
-		decode_absolutetime(stream, &(pm_segment->segment_start_abs_time), &error);
+	}
+	case MDC_ATTR_TIME_START_SEG: {
+		AbsoluteTime s;
+		decode_absolutetime(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->segment_start_abs_time = s;
 		break;
-	case MDC_ATTR_TIME_END_SEG:
-		decode_absolutetime(stream, &(pm_segment->segment_end_abs_time), &error);
+	}
+	case MDC_ATTR_TIME_END_SEG: {
+		AbsoluteTime s;
+		decode_absolutetime(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->segment_end_abs_time = s;
 		break;
-	case MDC_ATTR_TIME_ABS_ADJUST:
-		decode_absolutetimeadjust(stream, &(pm_segment->date_and_time_adjustment), &error);
+	}
+	case MDC_ATTR_TIME_ABS_ADJUST: {
+		AbsoluteTimeAdjust s;
+		decode_absolutetimeadjust(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->date_and_time_adjustment = s;
 		break;
-	case MDC_ATTR_SEG_USAGE_CNT:
-		pm_segment->segment_usage_count = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_SEG_USAGE_CNT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->segment_usage_count = s;
 		break;
-	case MDC_ATTR_SEG_STATS:
-		decode_segmentstatistics(stream, &(pm_segment->segment_statistics), &error);
+	}
+	case MDC_ATTR_SEG_STATS: {
+		SegmentStatistics s;
+		decode_segmentstatistics(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->segment_statistics = s;
 		break;
-	case MDC_ATTR_CONFIRM_TIMEOUT:
-		pm_segment->confirm_timeout = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_CONFIRM_TIMEOUT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->confirm_timeout = s;
 		break;
-	case MDC_ATTR_TRANSFER_TIMEOUT:
-		pm_segment->transfer_timeout = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_TRANSFER_TIMEOUT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pm_segment->transfer_timeout = s;
 		break;
+	}
 	default:
+		// can't decode
 		result = 0;
 		break;
 	}
@@ -838,40 +916,101 @@ void pmstore_service_set_attribute(struct PMStore *pm_store, AVA_Type *attribute
 int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamReader *stream)
 {
 	int result = 1;
-	int error = 0; // FIXME handle
+	int error = 0;
 
 	switch (attr_id) {
-	case MDC_ATTR_ID_HANDLE:
-		pmstore->handle = read_intu16(stream, &error);
+	case MDC_ATTR_ID_HANDLE: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->handle = s;
 		break;
-	case MDC_ATTR_PM_STORE_CAPAB:
-		pmstore->pm_store_capab = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_PM_STORE_CAPAB: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->pm_store_capab = s;
 		break;
-	case MDC_ATTR_METRIC_STORE_SAMPLE_ALG:
-		pmstore->store_sample_algorithm = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_METRIC_STORE_SAMPLE_ALG: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->store_sample_algorithm = s;
 		break;
-	case MDC_ATTR_METRIC_STORE_CAPAC_CNT:
-		pmstore->store_capacity_count = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_METRIC_STORE_CAPAC_CNT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->store_capacity_count = s;
 		break;
-	case MDC_ATTR_METRIC_STORE_USAGE_CNT:
-		pmstore->store_usage_count = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_METRIC_STORE_USAGE_CNT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->store_usage_count = s;
 		break;
-	case MDC_ATTR_OP_STAT:
-		pmstore->operational_state = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_OP_STAT: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->operational_state = s;
 		break;
-	case MDC_ATTR_PM_STORE_LABEL_STRING:
+	}
+	case MDC_ATTR_PM_STORE_LABEL_STRING: {
+		octet_string s;
+		decode_octet_string(stream, &s, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
 		del_octet_string(&pmstore->pm_store_label);
-		decode_octet_string(stream, &pmstore->pm_store_label, &error);
+		pmstore->pm_store_label = s;
 		break;
-	case MDC_ATTR_TIME_PD_SAMP:
-		pmstore->sample_period = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_TIME_PD_SAMP: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->sample_period = s;
 		break;
-	case MDC_ATTR_NUM_SEG:
-		pmstore->number_of_segments = read_intu16(stream, &error);
+	}
+	case MDC_ATTR_NUM_SEG: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->number_of_segments = s;
 		break;
-	case MDC_ATTR_CLEAR_TIMEOUT:
-		pmstore->clear_timeout = read_intu32(stream, &error);
+	}
+	case MDC_ATTR_CLEAR_TIMEOUT: {
+		intu32 s = read_intu32(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		pmstore->clear_timeout = s;
 		break;
+	}
 	default:
 		result = 0;
 		break;
