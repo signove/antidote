@@ -244,13 +244,37 @@ dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 bus = dbus.SystemBus()
 
-obj = bus.get_object("com.signove.health", "/com/signove/health")
-srv = dbus.Interface(obj, "com.signove.health.manager")
+def bus_nameownerchanged(service, old, new):
+	if service == "com.signove.health":
+		if old == "" and new != "":
+			start()
+		elif old != "" and new == "":
+			stop()
+
+bus.add_signal_receiver(bus_nameownerchanged,
+			"NameOwnerChanged",
+			"org.freedesktop.DBus",
+			"org.freedesktop.DBus",
+			"/org/freedesktop/DBus")
+
+def stop():
+	print "Detaching..."
+
+def start():
+	print "Starting..."
+	try:
+		obj = bus.get_object("com.signove.health", "/com/signove/health")
+	except:
+		print "healthd service not found, waiting..."
+		return
+	srv = dbus.Interface(obj, "com.signove.health.manager")
+	print "Configuring..."
+	srv.ConfigurePassive(agent, [0x1004, 0x1007, 0x1029, 0x100f])
+	print "Waiting..."
+
 agent = Agent(bus, "/com/signove/health/agent/%d" % os.getpid())
 
-print "Configuring..."
-srv.ConfigurePassive(agent, [0x1004, 0x1007, 0x1029, 0x100f])
-print "Waiting..."
+start();
 
 mainloop = glib.MainLoop()
 mainloop.run()
