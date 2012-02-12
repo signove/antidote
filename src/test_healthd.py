@@ -13,6 +13,42 @@ dump_prefix = "XML"
 
 # TODO create module to interpret XML and show condensed results
 
+system_ids = {}
+
+def getText(node):
+    rc = []
+    for node in node.childNodes:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
+def get_system_id(path, xmldata):
+	if path in system_ids:
+		return system_ids[path]
+	sid = ""
+
+	if not xmldata:
+		return sid
+
+	try:
+		doc = parseString(xmldata)
+	except:
+		return sid
+
+	for entry in doc.getElementsByTagName("entry"):
+		for simple in entry.getElementsByTagName("simple"):
+			for name in simple.getElementsByTagName("name"):
+				sname = getText(name).strip()
+				if "System-Id" != sname:
+					continue
+				values = simple.getElementsByTagName("value")
+				if values:
+					sid = getText(values[0]).strip()
+					system_ids[path] = sid
+					return sid
+	return sid
+
 def beautify(xmldata):
 	try:
 		doc = parseString(xmldata)
@@ -21,9 +57,14 @@ def beautify(xmldata):
 		return xmldata
 	return doc.toprettyxml(indent="   ")
 
-def dump(suffix, xmldata):
+def dump(path, suffix, xmldata):
 	xmldata = beautify(xmldata)
-	f = open(dump_prefix + "_" + suffix + ".xml", "w")
+	rsid = get_system_id(path, None)
+	if len(rsid) > 4:
+		rsid = rsid[-4:]
+	if rsid:
+		rsid += "_"
+	f = open(dump_prefix + "_" + rsid + suffix + ".xml", "w")
 	f.write(xmldata)
 	f.close()
 
@@ -62,13 +103,15 @@ class Agent(dbus.service.Object):
 		print
 		print "Associated dev %s: XML with %d bytes" % (dev, len(xmldata))
 
-		dump("associated", xmldata)
+		print "System ID: %s" % get_system_id(dev, xmldata)
+		dump(dev, "associated", xmldata)
 		
 		# Convert path to an interface
+		devpath = dev
 		dev = bus.get_object("com.signove.health", dev)
 		dev = dbus.Interface(dev, "com.signove.health.device")
 
-		glib.timeout_add(0, getConfiguration, dev)
+		glib.timeout_add(0, getConfiguration, dev, devpath)
 		if clear_segment == 1:
 			glib.timeout_add(1000, clearSegment, dev, pmstore_handle, pmsegment_instance)
 			return
@@ -89,14 +132,14 @@ class Agent(dbus.service.Object):
 		print
 		print "MeasurementData dev %s" % dev
 		print "=== Data: ", xmldata
-		dump("measurement", xmldata)
+		dump(dev, "measurement", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
 	def PMStoreData(self, dev, pmstore_handle, xmldata):
 		print
 		print "PMStore dev %s handle %d" % (dev, pmstore_handle)
 		print "=== Data: XML with %d bytes" % len(xmldata)
-		dump("pmstore_%d" % pmstore_handle, xmldata)
+		dump(dev, "pmstore_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
 	def SegmentInfo(self, dev, pmstore_handle, xmldata):
@@ -104,7 +147,7 @@ class Agent(dbus.service.Object):
 		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== XML with %d bytes" % len(xmldata)
 		# print "\tData:\t", data
-		dump("segmentinfo_%d" % pmstore_handle, xmldata)
+		dump(dev, "segmentinfo_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentDataResponse(self, dev, pmstore_handle, pmsegment, response):
@@ -123,7 +166,7 @@ class Agent(dbus.service.Object):
 		print "SegmentData dev %s PM-Store handle %d" % (dev, pmstore_handle)
 		print "=== InstNumber %d" % pmsegment
 		print "=== Data: %d bytes XML" % len(xmldata)
-		dump("segmentdata_%d_%d" % (pmstore_handle, pmsegment), xmldata)
+		dump(dev, "segmentdata_%d_%d" % (pmstore_handle, pmsegment), xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
 	def SegmentCleared(self, dev, pmstore_handle, pmsegment, retstatus):
@@ -137,7 +180,7 @@ class Agent(dbus.service.Object):
 		print
 		print "DeviceAttributes dev %s" % dev
 		print "=== Data: XML with %d bytes" % len(xmldata)
-		dump("attributes", xmldata)
+		dump(dev, "attributes", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="s", out_signature="")
 	def Disassociated(self, dev):
@@ -153,12 +196,12 @@ def requestMdsAttributes (dev):
 	dev.RequestDeviceAttributes()
 	return False
 
-def getConfiguration(dev):
+def getConfiguration(dev, devpath):
 	config = dev.GetConfiguration()
 	print
 	print "Configuration: XML with %d bytes" % len(config)
 	print
-	dump("config", config)
+	dump(devpath, "config", config)
 	return False
 
 def getSegmentInfo(dev, handle):
@@ -258,7 +301,9 @@ bus.add_signal_receiver(bus_nameownerchanged,
 			"/org/freedesktop/DBus")
 
 def stop():
+	global system_ids
 	print "Detaching..."
+	system_ids = {}
 
 def start():
 	print "Starting..."
