@@ -19,10 +19,6 @@ PMStore ROER
 
 Implement "-1 = first PM-Store" idiom for ClearSegment and others
 
-test-healthd.py: detect service stop and restart
-
-test-healthd.py: add XML parsing to get PM-Store handles et al.
-
 Add encoding error messages
 
 
