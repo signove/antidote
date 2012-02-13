@@ -12,6 +12,7 @@
 #include <src/dim/nomenclature.h>
 #include <src/dim/mds.h>
 #include <communication/parser/encoder_ASN1.h>
+#include <communication/parser/struct_cleaner.h>
 #include <src/trans/trans.h>
 #include <src/specializations/pulse_oximeter.h>
 #include "example_oximeter.h"
@@ -245,6 +246,8 @@ static AttributeList generate_spec()
 	attr->attribute_id = MDC_ATTR_SYS_TYPE_SPEC_LIST;
 	attr->attribute_value.length = encoded_vlist->size;
 	attr->attribute_value.value = encoded_vlist->buffer;
+
+	del_typeverlist(&vlist);
 	free(encoded_vlist);
 
 	spec.count = 1;
