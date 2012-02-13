@@ -53,18 +53,18 @@ char *android_tmp_location = 0;
 // TODO this assumes that there is only one communication plugin!
 static unsigned int plugin_id = 0;
 
-jmethodID jni_up_cancel_timer = 0;
-jmethodID jni_up_create_timer = 0;
-jmethodID jni_up_associated = 0;
-jmethodID jni_up_disassociated = 0;
-jmethodID jni_up_deviceattributes = 0;
-jmethodID jni_up_measurementdata = 0;
+static jmethodID jni_up_cancel_timer = 0;
+static jmethodID jni_up_create_timer = 0;
+static jmethodID jni_up_associated = 0;
+static jmethodID jni_up_disassociated = 0;
+static jmethodID jni_up_deviceattributes = 0;
+static jmethodID jni_up_measurementdata = 0;
 // FIXME fill up
-jmethodID jni_up_pmstoredata = 0;
-jmethodID jni_up_segmentinfo = 0;
-jmethodID jni_up_segmentdataresponse = 0;
-jmethodID jni_up_segmentdata = 0;
-jmethodID jni_up_segmentcleared = 0;
+static jmethodID jni_up_pmstoredata = 0;
+static jmethodID jni_up_segmentinfo = 0;
+static jmethodID jni_up_segmentdataresponse = 0;
+static jmethodID jni_up_segmentdata = 0;
+static jmethodID jni_up_segmentcleared = 0;
 
 static void notif_java_measurementdata(ContextId, char *);
 static void notif_java_disassociated(ContextId);
@@ -75,7 +75,7 @@ static void notif_java_segmentdata(ContextId, int, int, char *);
 static void notif_java_segmentcleared(ContextId, int, int, int);
 static void notif_java_pmstoredata(ContextId, int, char *);
 
-CommunicationPlugin plugin;
+static CommunicationPlugin plugin;
 
 /* Called by IEEE library */
 

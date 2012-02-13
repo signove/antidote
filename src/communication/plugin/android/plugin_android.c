@@ -81,12 +81,12 @@ extern jobject bridge_obj;
 /**
  * Method ID of Java method to disconnect channel
  */
-jmethodID jni_up_disconnect_channel;
+static jmethodID jni_up_disconnect_channel;
 
 /**
  * Method ID of Java method to send data
  */
-jmethodID jni_up_send_data;
+static jmethodID jni_up_send_data;
 
 /**
  * Callback called from Android, when device connects (BT-wise)

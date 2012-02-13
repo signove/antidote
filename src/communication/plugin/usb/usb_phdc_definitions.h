@@ -28,31 +28,31 @@
 #ifndef USB_PHDC_DEFINITIONS_
 #define USB_PHDC_DEFINITIONS_
 
-const uint8_t PHDC_INTERFACE_CLASS = 0x0F;
+static const uint8_t PHDC_INTERFACE_CLASS = 0x0F;
 /*
  *	PHDC Descriptor Types
  */
-const uint8_t PHDC_CLASSFUNCTION_DESCRIPTOR = 0x20;
-const uint8_t PHDC_QOS_DESCRIPTOR = 0x21;
-const uint8_t PHDC_METADATA_DESCRIPTOR = 0x22;
-const uint8_t PHDC_11073PHD_FUNCTION_DESCRIPTOR = 0x30;
+static const uint8_t PHDC_CLASSFUNCTION_DESCRIPTOR = 0x20;
+static const uint8_t PHDC_QOS_DESCRIPTOR = 0x21;
+static const uint8_t PHDC_METADATA_DESCRIPTOR = 0x22;
+static const uint8_t PHDC_11073PHD_FUNCTION_DESCRIPTOR = 0x30;
 
 /*
  * PHDC Request Types
  */
-const uint8_t GET_STATUS = 0x00;
-const uint8_t CLEAR_FEATURE = 0x01;
-const uint8_t SET_FEATURE = 0x03;
+static const uint8_t GET_STATUS = 0x00;
+static const uint8_t CLEAR_FEATURE = 0x01;
+static const uint8_t SET_FEATURE = 0x03;
 
 /*
  * PHDC Feature Types
  */
-const uint8_t FEATURE_PHDC_QOS = 0x01;
+static const uint8_t FEATURE_PHDC_QOS = 0x01;
 
 /*
  *	Personal Healthcare Data and Messaging Formats
  */
-const uint8_t PHDC_VENDOR = 0x01;
-const uint8_t PHDC_11073_20601 = 0x02;
+static const uint8_t PHDC_VENDOR = 0x01;
+static const uint8_t PHDC_11073_20601 = 0x02;
 
 #endif /*USB_PHDC_DEFINITIONS_*/

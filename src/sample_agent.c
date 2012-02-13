@@ -69,7 +69,7 @@ static int alarms = 4;
 /**
  * SIGALRM handler
  */
-void sigalrm(int dummy)
+static void sigalrm(int dummy)
 {
 	// This is not incredibly safe, because signal may interrupt
 	// processing, and is not a technique for a production agent,
@@ -94,7 +94,7 @@ void sigalrm(int dummy)
  *
  * @param ctx current context.
  */
-void device_associated(Context *ctx)
+static void device_associated(Context *ctx)
 {
 	fprintf(stderr, " main: Associated\n");
 	alarm(3);
@@ -106,7 +106,7 @@ void device_associated(Context *ctx)
  *
  * @param ctx current context.
  */
-void device_unavailable(Context *ctx)
+static void device_unavailable(Context *ctx)
 {
 	fprintf(stderr, " main: Disasociated\n");
 	alarms = 0;
@@ -118,7 +118,7 @@ void device_unavailable(Context *ctx)
  *
  * @param ctx current context.
  */
-void device_connected(Context *ctx)
+static void device_connected(Context *ctx)
 {
 	fprintf(stderr, "main: Connected\n");
 

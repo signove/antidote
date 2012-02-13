@@ -53,9 +53,9 @@ static unsigned int plugin_id = 0;
 static char *current_data = NULL;
 static int data_len = 0;
 
-usb_phdc_context *phdc_context = NULL;
-int sch_search = 0;
-int sch_usb = 0;
+static usb_phdc_context *phdc_context = NULL;
+static int sch_search = 0;
+static int sch_usb = 0;
 
 typedef struct device_object {
 	usb_phdc_device *impl;
@@ -92,7 +92,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
  * @param handle Connection handler
  * @param device Device connected
  */
-void device_connected(guint64 handle, const char *device)
+static void device_connected(guint64 handle, const char *device)
 {
 	ContextId cid = {plugin_id, handle};
 
@@ -446,7 +446,7 @@ static void schedule(int *id, gboolean (*cb)(gpointer), gpointer context, int to
 	*id = g_timeout_add(to, cb, context);
 }
 
-gboolean usb_alarm(gpointer dummy)
+static gboolean usb_alarm(gpointer dummy)
 {
 	phdc_device_timeout_event(phdc_context);
 	return FALSE;

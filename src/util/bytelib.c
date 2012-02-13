@@ -55,7 +55,7 @@ typedef enum {
 	MDER_RESERVED_VALUE = 0x00800001,
 	MDER_NEGATIVE_INFINITY = 0x00800002
 } ReservedFloatValues;
-const intu32 FIRST_RESERVED_VALUE = MDER_POSITIVE_INFINITY;
+static const intu32 FIRST_RESERVED_VALUE = MDER_POSITIVE_INFINITY;
 
 // (2 ** 23 - 3)
 #define MDER_FLOAT_MANTISSA_MAX 0x007FFFFD
@@ -79,7 +79,7 @@ typedef enum {
 	MDER_S_RESERVED_VALUE = 0x0801,
 	MDER_S_NEGATIVE_INFINITY = 0x0802
 } ReservedSFloatValues;
-const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
+static const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
 
 // (2 ** 11 - 3)
 #define MDER_SFLOAT_MANTISSA_MAX 0x07FD
@@ -95,7 +95,6 @@ const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
 // 10 ** upper(11 * log(2) / log(10))
 #define MDER_SFLOAT_PRECISION 10000
 
-
 #ifdef WIN32
 int round(double number)
 {
@@ -109,7 +108,7 @@ int round(double number)
 
 #endif
 
-const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
+static const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
 
 /**
  * Bytelib constructor.

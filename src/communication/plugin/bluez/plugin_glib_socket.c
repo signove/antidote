@@ -200,7 +200,7 @@ static int remove_connection(Connection *conn)
  * @param data Related Context
  * @return TRUE if connection stays open, FALSE otherwise
  */
-gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
+static gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 			   gpointer data)
 {
 	DEBUG(" glib socket: network_read_apdu");
@@ -309,7 +309,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
  * @param user_data related NetworkSocket
  * @return TRUE
  */
-gboolean new_connection(GSocketService *service, GSocketConnection *connection,
+static gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 			GObject *source_object, gpointer user_data)
 {
 	g_object_ref(connection);

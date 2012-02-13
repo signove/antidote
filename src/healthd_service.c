@@ -527,8 +527,8 @@ static char *client_name = NULL;
 
 static GSList *devices = NULL;
 
-DBusGConnection *bus = NULL;
-DBusGProxy *agent_proxy = NULL;
+static DBusGConnection *bus = NULL;
+static DBusGProxy *agent_proxy = NULL;
 
 static const char *get_device_object(const char *, ContextId);
 static void get_agent_proxy();

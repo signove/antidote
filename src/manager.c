@@ -209,7 +209,7 @@ void manager_finalize()
  *
  * This method should be invoked in a thread safe execution.
  *
- * @param listener the listen to be added.
+ * @param listener the listener to be added.
  * @return 1 if operation succeeds, 0 if not.
  */
 int manager_add_listener(ManagerListener listener)
@@ -636,7 +636,7 @@ Request *manager_request_get_pmstore(ContextId id, int handle,
 }
 
 /**
- * Requests segments information
+ * Requests PM-Store segments information
  *
  * @param id context id
  * @param handle PM-Store handle
@@ -664,11 +664,11 @@ Request *manager_request_get_segment_info(ContextId id, int handle,
 }
 
 /**
- * Requests segments data
+ * Requests PM-Segment data
  *
  * @param id context id
  * @param handle PM-Store handle
- * @param instnumber PM-Instance number
+ * @param instnumber PM-Instance number of PM-Segment
  * @param callback
  * @return pointer to request sent
  */
@@ -724,7 +724,7 @@ Request *manager_request_clear_segments(ContextId id,
 
 
 /**
- * Requests clear segments data
+ * Requests PM-Store clear segments data
  *
  * @param id context id
  * @param handle PM-Store handle

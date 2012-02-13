@@ -38,28 +38,28 @@
 
 #include "usb_phdc_drive.h"
 
-usb_phdc_context *phdc_context = NULL;
-usb_phdc_device *phdc_device = NULL;
-int read_more_data = 1;
+static usb_phdc_context *phdc_context = NULL;
+static usb_phdc_device *phdc_device = NULL;
+static int read_more_data = 1;
 
-void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length);
-void write_ieee_response(unsigned char *buffer_in, int buffer_length);
-void device_disconnected(usb_phdc_device *dev);
+static void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length);
+static void write_ieee_response(unsigned char *buffer_in, int buffer_length);
+static void device_disconnected(usb_phdc_device *dev);
 
-unsigned char association_response[] = { 0xe3, 0x00, 0x00, 0x2c,
+static unsigned char association_response[] = { 0xe3, 0x00, 0x00, 0x2c,
 		0x00,
 		0x03, //accepted-unknown-config
 		0x50, 0x79, 0x00, 0x26, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x08, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33,
 		0x22, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-unsigned char association_release_response[] = { 0xE5, 0x00, 0x00, 0x02, 0x00, 0x00 };
+static unsigned char association_release_response[] = { 0xE5, 0x00, 0x00, 0x02, 0x00, 0x00 };
 
-unsigned char configuration_response[] = { 0xE7, 0x00, 0x00, 0x16, 0x00, 0x14, 0x00, 0x02, 0x02,
+static unsigned char configuration_response[] = { 0xE7, 0x00, 0x00, 0x16, 0x00, 0x14, 0x00, 0x02, 0x02,
 		0x01, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x1C, 0x00, 0x04, 0x40, 0x00,
 		0x00, 0x00 };
 
-void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length)
+static void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_length)
 {
 	int i;
 	fprintf(stdout, "Data received length: %d \n", buffer_length);
@@ -72,7 +72,7 @@ void print_read_data(usb_phdc_device *dev, unsigned char *buffer, int buffer_len
 	write_ieee_response(buffer, buffer_length);
 }
 
-void process_exit(int s)
+static void process_exit(int s)
 {
 	fprintf(stdout, "Exiting by reason:  %d\n", s);
 	release_phdc_resources(phdc_context);
@@ -81,7 +81,7 @@ void process_exit(int s)
 }
 
 //Fake write response
-void write_ieee_response(unsigned char *buffer_in, int buffer_length)
+static void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 {
 	unsigned int msg_type;
 	if (buffer_length <= 0) {
@@ -104,12 +104,12 @@ void write_ieee_response(unsigned char *buffer_in, int buffer_length)
 
 }
 
-void device_disconnected(usb_phdc_device *dev)
+static void device_disconnected(usb_phdc_device *dev)
 {
 	read_more_data = 0;
 }
 
-void schedule_timeout(int ms)
+static void schedule_timeout(int ms)
 {
 	fprintf(stderr, "Timeout of %dms requested by USB but not scheduled\n", ms);
 }
