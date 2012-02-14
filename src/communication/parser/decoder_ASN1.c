@@ -55,11 +55,19 @@
 	CHK(pointer->count = read_intu16(stream, error));
 
 #define LENGTH()			\
-	CHK(pointer->length = read_intu16(stream, error));
+	CHK(pointer->length = read_intu16(stream, error)); 	\
+	if (pointer->length > stream->unread_bytes) {		\
+		ERROR("children length underflow");		\
+		goto fail;					\
+	}
 
 #define CLV()				\
 	pointer->value = NULL;		\
 	COUNT();			\
+	LENGTH();
+
+#define LV()				\
+	pointer->value = NULL;		\
 	LENGTH();
 
 #define CHILDREN_GENERIC(typeU, decodefunction)									\
@@ -384,9 +392,7 @@ void decode_enumobsvalue(ByteStreamReader *stream, EnumObsValue *pointer, int *e
  */
 void decode_octet_string(ByteStreamReader *stream, octet_string *pointer, int *error)
 {
-	pointer->value = NULL;
-	CHK(pointer->length = read_intu16(stream, error));
-	// intu16 length
+	LV();
 
 	if (pointer->length > 0) {
 		pointer->value = (intu8 *) calloc(pointer->length, sizeof(intu8));
@@ -923,9 +929,7 @@ void decode_apdu(ByteStreamReader *stream, APDU *pointer, int *error)
  */
 void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 {
-	pointer->value = NULL;
-	CHK(pointer->length = read_intu16(stream, error));
-	// intu16 length
+	LV();
 
 	if (pointer->length > 0) {
 		DATA_apdu *data = (DATA_apdu *) calloc(1, sizeof(DATA_apdu));
@@ -967,14 +971,7 @@ void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *point
  */
 void decode_any(ByteStreamReader *stream, Any *pointer, int *error)
 {
-	pointer->value = NULL;
-	CHK(pointer->length = read_intu16(stream, error));
-	// intu16 length
-
-	if (pointer->length > stream->unread_bytes) {
-		ERROR("any struct: underflow");
-		goto fail;
-	}
+	LV();
 
 	if (pointer->length > 0) {
 		pointer->value = (intu8 *) calloc(pointer->length, sizeof(intu8));
