@@ -46,37 +46,15 @@ FSMEventData.
 
 3) Low priority
 
-ASN.1: writer stream (using in encoding) should not need
-to know final msg size in advance.
+ASN.1: use "open" stream writers, no need to specify count.
 
-ASN.1: In the other hand, when the developer *does* know
-the final octet size, current behaviour should be kept,
-so inconsistencies are detected (and should be reported
-in a very agressive way, like quitting the app). For
-example, oximeter data event report is "copied" from
-spec, and octet lengths are there, and message has a
-fixed size,  so it makes sense to use this information 
-for increased cross-check.
-
-ASN.1: structures which have a length argument should
-calculate it dynamically upon encoding, not needing
-manual pre-calculation of octet size.
-
-ASN.1: eliminate the need of pre-encoding of certain
-structures. APDU encoding should be done at once,
-and writer/reader streams should not be necessary
-at higher-level code like communication/association.c.
-
-The need of pre-encoding normally happens because some
-APDU structures have the "Any" element, which contains
-pre-encoded data (whose actual type is opaque to
-APDU final encoder).
-
-So, this refactoring will mean removing the Any type,
-replacing it by some other structure that can contain
-a range of sub-structures, and is capable of
-introspection (i.e. knowing which sub-structure it
-contains, and how to encode/decode it).
+ASN.1: mitigate the need of Any structures. Points:
+	* handle Anys in decoder level
+	* soft error (choice unknown) x hard errors
+		(stream underflow)
+	* currently, decoder reports all errors as hard
+	* many 'flavors' of Any in every place it is used,
+	  each one with union of possible decoded outcomes.
 
 Clearer, simpler rules of ownership, in particular when
 involving APDU data. (This will be easier once the
