@@ -1173,6 +1173,7 @@ static void disconnect_manager_signals()
 /**
  * Starts Health link with BlueZ.
  *
+ * @param plugin_label sequential label of this plugin
  * @return success status
  */
 static int init(unsigned int plugin_label)
@@ -1266,6 +1267,7 @@ static int finalize()
 /**
  * Reads an APDU from buffer
  *
+ * @param ctx The communication context
  * @return a byteStream with the read APDU.
  */
 static ByteStreamReader *get_apdu(struct Context *ctx)

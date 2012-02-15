@@ -150,7 +150,7 @@ static void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm
  *
  * This method should be invoked in a thread safe execution.
  *
- * @param plugin the configured plugin to define communication behaviour
+ * @param plugins the configured communication plugins
  */
 void manager_init(CommunicationPlugin **plugins)
 {

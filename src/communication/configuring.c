@@ -398,7 +398,9 @@ static ConfigResult configuring_evaluate_configuration_validity(
  *
  * @param ctx context
  * @param config_report configuration report
+ * @param apdu APDU data
  * @param trans whether context is a transcoded device
+ * @return config result
  */
 ConfigResult configuring_perform_configuration_in(Context *ctx,
 					ConfigReport config_report,

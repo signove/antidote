@@ -114,7 +114,7 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  *
  * This method should be invoked in a thread safe execution.
  *
- * @param plugin the configured plugin to define communication behavior
+ * @param plugins the configured plugins to define communication behavior
  * @param specialization Specialization of the agent
  * @param event_report_cb The event report callback
  * @param mds_data_cb Data callback

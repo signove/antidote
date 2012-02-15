@@ -442,7 +442,7 @@ void decode_sampletype(ByteStreamReader *stream, SampleType *pointer, int *error
  *
  * @param stream the AttributeList content decoded as ByteStreamReader.
  * @param pointer the AttributeList to be decoded.
- * @param err error feedback
+ * @param error error feedback
  */
 void decode_attributelist(ByteStreamReader *stream, AttributeList *pointer, int *error)
 {
@@ -919,6 +919,7 @@ void decode_apdu(ByteStreamReader *stream, APDU *pointer, int *error)
  *
  * @param *stream
  * @param *pointer
+ * @param *error
  */
 void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 {
@@ -943,8 +944,9 @@ void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 /**
  * Decode PmSegmentEntryMap
  *
- * @param *stream
- * @param *pointer
+ * @param stream
+ * @param pointer
+ * @param error
  */
 void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *pointer, int *error)
 {
@@ -1588,7 +1590,7 @@ void decode_scanreportinfompgrouped(ByteStreamReader *stream,
  *
  * @param *stream
  * @param *pointer
- * @param err Error feedback
+ * @param error Error feedback
  */
 void decode_configobject(ByteStreamReader *stream, ConfigObject *pointer, int *error)
 {

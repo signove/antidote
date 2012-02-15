@@ -61,7 +61,9 @@ jmethodID jni_up_send_data;
 /**
  * Callback called from Android, when device connects (BT-wise)
  *
- * @param handle
+ * @param env Java thread environment
+ * @param obj Java object
+ * @param handle Communication handle
  */
 void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 						jobject obj, jint handle)
@@ -74,7 +76,9 @@ void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 /**
  * Callback called from Android layer when device disconnects (BT-wise)
  *
- * @param handle
+ * @param env Java thread environment
+ * @param obj Java object
+ * @param handle Communication handle
  */
 void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env, jobject obj,
 								jint handle)
@@ -104,6 +108,8 @@ void plugin_android_setup(CommunicationPlugin *plugin)
 
 /**
  * Forces closure of a channel
+ * @param context Communication context
+ * @return success status
  */
 static int force_disconnect_channel(Context *c)
 {
@@ -117,6 +123,7 @@ static int force_disconnect_channel(Context *c)
 /**
  * Starts Health link with Android.
  *
+ * @param plugin_label the internal plugin label id
  * @return success status
  */
 static int init(unsigned int plugin_label)
@@ -139,6 +146,7 @@ static int finalize()
 /**
  * Reads an APDU from buffer
  *
+ * @param context the communication context
  * @return a byteStream with the read APDU.
  */
 static ByteStreamReader *get_apdu(struct Context *ctx)
