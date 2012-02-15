@@ -30,7 +30,7 @@
  */
 
 /**
- * @addtogroup Communication
+ * @addtogroup BlueZPlugin
  * @{
  */
 

@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup Communication
+ * @addtogroup PluginTrans
  * @{
  */
 

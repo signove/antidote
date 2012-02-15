@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup main
+ * @addtogroup android
  * @{
  */
 
@@ -149,12 +149,6 @@ typedef struct {
 	DataList *list;
 } segment_data_evt;
 
-/**
- * Delayed PM-Segment data handling
- *
- * @param data pointer to event struct
- * @return always FALSE
- */
 /*
 // FIXME
 static void segment_data_received_phase2(gpointer revt)
