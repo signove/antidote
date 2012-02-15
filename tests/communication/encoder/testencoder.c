@@ -354,6 +354,8 @@ void test_enconder_byte_stream_writer()
 
 	CU_ASSERT_EQUAL(write_intu8(stream_writer, 10), 0);
 	CU_ASSERT_EQUAL(write_intu16(stream_writer, 10), 0);
+	int dummy;
+	CU_ASSERT_EQUAL(reserve_intu16(stream_writer, &dummy), 0);
 	CU_ASSERT_EQUAL(write_intu32(stream_writer, 10), 0);
 
 	CU_ASSERT_EQUAL(stream_writer->buffer[h243_size-1], h243_buffer[h243_size-1]);

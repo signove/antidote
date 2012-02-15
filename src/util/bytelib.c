@@ -320,11 +320,50 @@ ByteStreamWriter *byte_stream_writer_instance(intu32 size)
 	ByteStreamWriter *stream = (ByteStreamWriter *) calloc(1, sizeof(ByteStreamWriter));
 	stream->buffer = (intu8 *) calloc(1, size * sizeof(intu8));
 	stream->size = 0;
-
-	stream->buffer_cur = stream->buffer;
-	stream->buffer_end = stream->buffer + size - 1;
+	stream->buffer_size = size;
+	stream->open = 0;
 
 	return stream;
+}
+
+/**
+ * ByteStreamWriter constructor (open version)
+ *
+ * @param hint Hint of data stream size for optimization
+ * @return ByteStreamWriter A ByteStreamWriter pointer.
+ */
+ByteStreamWriter *open_stream_writer(intu32 hint)
+{
+	ByteStreamWriter *stream = byte_stream_writer_instance(hint);
+	stream->open = 1;
+	return stream;
+}
+
+
+/**
+ * Checks stream size and extends if necessary (if it iso open)
+ *
+ * @param stream The stream
+ * @param need Additional octets needed
+ */
+static int check_writer(ByteStreamWriter *stream, int need)
+{
+	if ((stream->size + need) <= stream->buffer_size) {
+		return 1;
+	}
+
+	if (! stream->open) {
+		// keep old behavior, let it fail
+		return 0;
+	}
+	
+	// make more space
+	int increase = stream->buffer_size + need;
+	stream->buffer = realloc(stream->buffer, stream->buffer_size + increase);
+	memset(stream->buffer + stream->buffer_size, 0, increase);
+	stream->buffer_size += increase;
+
+	return 1;
 }
 
 
@@ -337,8 +376,8 @@ ByteStreamWriter *byte_stream_writer_instance(intu32 size)
  */
 intu32 write_intu8(ByteStreamWriter *stream, intu8 data)
 {
-	if (stream->buffer_cur <= stream->buffer_end) {
-		*(stream->buffer_cur++) = data;
+	if (check_writer(stream, 1)) {
+		*(stream->buffer + stream->size) = data;
 		stream->size++;
 		return 1; // true
 	} else {
@@ -359,16 +398,13 @@ intu32 write_intu8(ByteStreamWriter *stream, intu8 data)
  */
 intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *error)
 {
-	if ((stream->buffer_cur + len - 1) <= stream->buffer_end) {
-		memcpy(stream->buffer_cur, data, len);
-		stream->buffer_cur += len;
+	if (check_writer(stream, len)) {
+		memcpy(stream->buffer + stream->size, data, len);
 		stream->size += len;
 		*error = 0;
 		return len; 
 	} else {
-		long int ldiff = stream->buffer_end - stream->buffer_cur + 1;
-		ERROR("write_intu8_many %d > %ld",
-			len, ldiff);
+		ERROR("write_intu8_many %d > %d", len, stream->buffer_size);
 		*error = 1;
 		return 0; // false
 	}
@@ -384,9 +420,8 @@ intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *err
  */
 intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 {
-	if ((stream->buffer_cur + 1) <= stream->buffer_end) {
-		*((uint16_t *) stream->buffer_cur) = htons(data);
-		stream->buffer_cur += 2;
+	if (check_writer(stream, 2)) {
+		*((uint16_t *) (stream->buffer + stream->size)) = htons(data);
 		stream->size += 2;
 		return 2; // true
 	} else {
@@ -402,12 +437,11 @@ intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
  * @param position Pointer to store position of intu16 in stream
  * @return octets written or (0) error
  */
-intu32 reserve_intu16(ByteStreamWriter *stream, intu16** position)
+intu32 reserve_intu16(ByteStreamWriter *stream, int* position)
 {
-	if ((stream->buffer_cur + 1) <= stream->buffer_end) {
-		*position = (uint16_t *) stream->buffer_cur;
-		*((uint16_t *) stream->buffer_cur) = 0;
-		stream->buffer_cur += 2;
+	if (check_writer(stream, 2)) {
+		*position = stream->size;
+		*((uint16_t *) (stream->buffer + stream->size)) = 0;
 		stream->size += 2;
 		return 2; // true
 	} else {
@@ -419,12 +453,13 @@ intu32 reserve_intu16(ByteStreamWriter *stream, intu16** position)
 /**
  * Use space reserved for one intu16 in stream, for a 'length' field
  *
+ * @param stream The writer stream
  * @param position the position in stream to be filled
  * @param data intu16 to be written.
  */
-void commit_intu16(intu16 *position, intu16 data)
+void commit_intu16(ByteStreamWriter *stream, int position, intu16 data)
 {
-	*(position) = htons(data);
+	*((uint16_t *) (stream->buffer + position)) = htons(data);
 }
 
 /**
@@ -436,9 +471,8 @@ void commit_intu16(intu16 *position, intu16 data)
  */
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 {
-	if ((stream->buffer_cur + 3) <= stream->buffer_end) {
-		*((uint32_t *) stream->buffer_cur) = htonl(data);
-		stream->buffer_cur += 4;
+	if (check_writer(stream, 4)) {
+		*((uint32_t *) (stream->buffer + stream->size)) = htonl(data);
 		stream->size += 4;
 		return 4; // true
 	} else {

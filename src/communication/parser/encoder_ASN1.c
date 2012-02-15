@@ -81,7 +81,7 @@
 	CHK(write_intu16(stream, pointer->count));
 
 #define RESERVE_LENGTH()				\
-	intu16 *length_position;			\
+	int length_position;				\
 	int header_octets;				\
 	pointer->length = 0;				\
 	CHK(reserve_intu16(stream, &length_position));	\
@@ -94,7 +94,7 @@
 
 #define L_EPILOGUE()							\
 	pointer->length = octets - header_octets;			\
-	commit_intu16(length_position, pointer->length);		\
+	commit_intu16(stream, length_position, pointer->length);	\
 	EPILOGUE();
 
 #define EPILOGUE()			\

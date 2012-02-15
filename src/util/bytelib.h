@@ -72,8 +72,8 @@ typedef struct ByteStreamWriter {
 	intu32 size;
 
 	intu8 *buffer;
-	intu8 *buffer_cur;
-	intu8 *buffer_end;
+	int buffer_size;
+	int open;
 } ByteStreamWriter;
 
 ByteStreamReader *byte_stream_reader_instance(intu8 *stream, intu32 size);
@@ -92,13 +92,15 @@ SFLOAT_Type read_sfloat(ByteStreamReader *stream, int *error);
 
 ByteStreamWriter *byte_stream_writer_instance(intu32 size);
 
+ByteStreamWriter *open_stream_writer(intu32 hint);
+
 intu32 write_intu8(ByteStreamWriter *stream, intu8 data);
 
 intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *error);
 
 intu32 write_intu16(ByteStreamWriter *stream, intu16 data);
-intu32 reserve_intu16(ByteStreamWriter *stream, intu16 **position);
-void commit_intu16(intu16 *position, intu16 data);
+intu32 reserve_intu16(ByteStreamWriter *stream, int *position);
+void commit_intu16(ByteStreamWriter *stream, int position, intu16 data);
 
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data);
 
