@@ -333,7 +333,7 @@ ByteStreamWriter *byte_stream_writer_instance(intu32 size)
  *
  * @param stream The current ByteStreamWriter.
  * @param data intu8 to be written.
- * @return Error code - (1) success, (0) error
+ * @return Error code - count of octets written, (0) error
  */
 intu32 write_intu8(ByteStreamWriter *stream, intu8 data)
 {
@@ -354,19 +354,22 @@ intu32 write_intu8(ByteStreamWriter *stream, intu8 data)
  * @param stream The current ByteStreamWriter.
  * @param data intu8 buffer to be written.
  * @param len the exact number of intu8's to be written
- * @return Error code - (1) success, (0) error
+ * @param error 1 if error, 0 if ok (unambiguous in case of len==0)
+ * @return Error code - count of octets written, (0) error
  */
-intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len)
+intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *error)
 {
 	if ((stream->buffer_cur + len - 1) <= stream->buffer_end) {
 		memcpy(stream->buffer_cur, data, len);
 		stream->buffer_cur += len;
 		stream->size += len;
-		return 1; // true
+		*error = 0;
+		return len; 
 	} else {
 		long int ldiff = stream->buffer_end - stream->buffer_cur + 1;
 		ERROR("write_intu8_many %d > %ld",
 			len, ldiff);
+		*error = 1;
 		return 0; // false
 	}
 
@@ -377,7 +380,7 @@ intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len)
  *
  * @param stream The current ByteStreamWriter.
  * @param data intu16 to be written.
- * @return Error code - (1) success, (0) error
+ * @return Error code - count of octets written, (0) error
  */
 intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 {
@@ -385,7 +388,7 @@ intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 		*((uint16_t *) stream->buffer_cur) = htons(data);
 		stream->buffer_cur += 2;
 		stream->size += 2;
-		return 1; // true
+		return 2; // true
 	} else {
 		ERROR("write_intu16");
 		return 0; // false
@@ -393,11 +396,43 @@ intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 }
 
 /**
+ * Reserve space for one intu16 in stream, generally for a 'length' field
+ *
+ * @param stream The current ByteStreamWriter.
+ * @param position Pointer to store position of intu16 in stream
+ * @return octets written or (0) error
+ */
+intu32 reserve_intu16(ByteStreamWriter *stream, intu16** position)
+{
+	if ((stream->buffer_cur + 1) <= stream->buffer_end) {
+		*position = (uint16_t *) stream->buffer_cur;
+		*((uint16_t *) stream->buffer_cur) = 0;
+		stream->buffer_cur += 2;
+		stream->size += 2;
+		return 2; // true
+	} else {
+		ERROR("reserve_intu16");
+		return 0; // false
+	}
+}
+
+/**
+ * Use space reserved for one intu16 in stream, for a 'length' field
+ *
+ * @param position the position in stream to be filled
+ * @param data intu16 to be written.
+ */
+void commit_intu16(intu16 *position, intu16 data)
+{
+	*(position) = htons(data);
+}
+
+/**
  * Writes an intu16 into stream, rearranging it to the proper endianism.
  *
  * @param stream The current ByteStreamWriter.
  * @param data intu32 to be written.
- * @return Error code - (1) success, (0) error
+ * @return Error code - count of octets written, (0) error
  */
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 {
@@ -405,7 +440,7 @@ intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 		*((uint32_t *) stream->buffer_cur) = htonl(data);
 		stream->buffer_cur += 4;
 		stream->size += 4;
-		return 1; // true
+		return 4; // true
 	} else {
 		ERROR("write_intu32");
 		return 0; // false
@@ -417,7 +452,7 @@ intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
  *
  * @param stream The current ByteStreamWriter.
  * @param data to be converted to intu32 and written into stream.
- * @return Error code - (1) success, (0) error
+ * @return Error code - count of octets written, (0) error
  */
 intu32 write_sfloat(ByteStreamWriter *stream, SFLOAT_Type data)
 {
@@ -492,7 +527,7 @@ finally:
  *
  * @param stream The current ByteStreamWriter.
  * @param data to be converted to intu32 and written into stream.
- * @return Error code - (1) success, (0) error
+ * @return Error code - count of octets written, (0) error
  */
 intu32 write_float(ByteStreamWriter *stream, FLOAT_Type data)
 {

@@ -41,27 +41,115 @@
 #include "src/util/log.h"
 #include "src/communication/parser/encoder_ASN1.h"
 
+/**
+ * \cond Undocumented
+ */
+
 #ifdef WIN32
 #define __func__ __FUNCTION__
 #endif
 
-#define CHK(fff) if (! (fff)) { ERROR("%s encoding", __func__); ok = 0; }
+#define PROLOGUE()			\
+	int octets = 0;
 
+#define WRITE_STRING(len) 								\
+	{										\
+		int error = 0;								\
+		int count = write_intu8_many(stream, pointer->value, len, &error);	\
+		if (error) {								\
+			ERROR("%s encoding string", __func__);				\
+			return 0;							\
+		}									\
+		octets += count;							\
+	}
+
+#define WRITE_STRING_WITH_LENGTH()			\
+	CHK(write_intu16(stream, pointer->length));	\
+	WRITE_STRING(pointer->length);
+
+#define CHK(fff) \
+	{						\
+		int count = (fff);			\
+		if (! count) {				\
+			ERROR("%s encoding", __func__);	\
+			return 0;			\
+		}					\
+		octets += count;				\
+	}
+
+#define COUNT()						\
+	CHK(write_intu16(stream, pointer->count));
+
+#define RESERVE_LENGTH()				\
+	intu16 *length_position;			\
+	int header_octets;				\
+	pointer->length = 0;				\
+	CHK(reserve_intu16(stream, &length_position));	\
+	header_octets = octets;	
+
+#define CL_PROLOGUE()					\
+	PROLOGUE();					\
+	COUNT();					\
+	RESERVE_LENGTH();
+
+#define L_EPILOGUE()							\
+	pointer->length = octets - header_octets;			\
+	commit_intu16(length_position, pointer->length);		\
+	EPILOGUE();
+
+#define EPILOGUE()			\
+	return octets;
+
+#define CHILDREN_G(encodefunction)					\
+	int i;								\
+	for (i = 0; i < pointer->count; i++) {				\
+		CHK(encodefunction(stream, pointer->value + i));	\
+	}
+
+#define CHILDREN(type)	CHILDREN_G(encode_##type)
+
+#define CHILDREN_16()							\
+	int i;								\
+	for (i = 0; i < pointer->count; i++) {				\
+		CHK(write_intu16(stream, *(pointer->value + i)));	\
+	}
+
+#define CHILDREN_32()							\
+	int i;								\
+	for (i = 0; i < pointer->count; i++) {				\
+		CHK(write_intu32(stream, *(pointer->value + i)));	\
+	}
+
+#define CHILDREN_FLOAT()						\
+	int i;								\
+	for (i = 0; i < pointer->count; i++) {				\
+		CHK(write_float(stream, *(pointer->value + i)));	\
+	}
+
+#define CHILDREN_SFLOAT()						\
+	int i;								\
+	for (i = 0; i < pointer->count; i++) {				\
+		CHK(write_sfloat(stream, *(pointer->value + i)));	\
+	}
+
+/**
+ * \endcond
+ */
 
 /**
  * Encode SegmentDataResult
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentdataresult(ByteStreamWriter *stream,
 			      SegmentDataResult *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_segmdataeventdescr(stream, &pointer->segm_data_event_descr));
 	// SegmDataEventDescr segm_data_event_descr
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -69,16 +157,16 @@ int encode_segmentdataresult(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportpervar(ByteStreamWriter *stream,
 			     ScanReportPerVar *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->person_id));
 	CHK(encode_observationscanlist(stream, &pointer->obs_scan_var));
 	// ObservationScanList obs_scan_var
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -86,14 +174,14 @@ int encode_scanreportpervar(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_typever(ByteStreamWriter *stream, TypeVer *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->type));
 	CHK(write_intu16(stream, pointer->version));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -101,21 +189,16 @@ int encode_typever(ByteStreamWriter *stream, TypeVer *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_modificationlist(ByteStreamWriter *stream,
 			     ModificationList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_attributemodentry(stream, pointer->value + i));
-	}
+	CHILDREN(attributemodentry);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -123,20 +206,15 @@ int encode_modificationlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_productionspec(ByteStreamWriter *stream, ProductionSpec *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_prodspecentry(stream, pointer->value + i));
-	}
+	CHILDREN(prodspecentry);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -144,17 +222,17 @@ int encode_productionspec(ByteStreamWriter *stream, ProductionSpec *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_actionargumentsimple(ByteStreamWriter *stream,
 				 ActionArgumentSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(write_intu16(stream, pointer->action_type));
 	CHK(encode_any(stream, &pointer->action_info_args));
 	// Any action_info_args
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -162,17 +240,17 @@ int encode_actionargumentsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scalerangespec32(ByteStreamWriter *stream,
 			     ScaleRangeSpec32 *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_float(stream, pointer->lower_absolute_value));
 	CHK(write_float(stream, pointer->upper_absolute_value));
 	CHK(write_intu32(stream, pointer->lower_scaled_value));
 	CHK(write_intu32(stream, pointer->upper_scaled_value));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -180,15 +258,15 @@ int encode_scalerangespec32(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_ava_type(ByteStreamWriter *stream, AVA_Type *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->attribute_id));
 	CHK(encode_any(stream, &pointer->attribute_value));
 	// Any attribute_value
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -196,15 +274,15 @@ int encode_ava_type(ByteStreamWriter *stream, AVA_Type *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_configreport(ByteStreamWriter *stream, ConfigReport *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->config_report_id));
 	CHK(encode_configobjectlist(stream, &pointer->config_obj_list));
 	// ConfigObjectList config_obj_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -212,14 +290,14 @@ int encode_configreport(ByteStreamWriter *stream, ConfigReport *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_attrvalmapentry(ByteStreamWriter *stream, AttrValMapEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->attribute_id));
 	CHK(write_intu16(stream, pointer->attribute_len));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -227,11 +305,11 @@ int encode_attrvalmapentry(ByteStreamWriter *stream, AttrValMapEntry *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_absolutetime(ByteStreamWriter *stream, AbsoluteTime *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu8(stream, pointer->century));
 	CHK(write_intu8(stream, pointer->year));
 	CHK(write_intu8(stream, pointer->month));
@@ -240,7 +318,7 @@ int encode_absolutetime(ByteStreamWriter *stream, AbsoluteTime *pointer)
 	CHK(write_intu8(stream, pointer->minute));
 	CHK(write_intu8(stream, pointer->second));
 	CHK(write_intu8(stream, pointer->sec_fractions));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -248,20 +326,15 @@ int encode_absolutetime(ByteStreamWriter *stream, AbsoluteTime *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_nuobsvaluecmp(ByteStreamWriter *stream, NuObsValueCmp *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_nuobsvalue(stream, pointer->value + i));
-	}
+	CHILDREN(nuobsvalue);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -269,17 +342,17 @@ int encode_nuobsvaluecmp(ByteStreamWriter *stream, NuObsValueCmp *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfompfixed(ByteStreamWriter *stream,
 				  ScanReportInfoMPFixed *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_scanreportperfixedlist(stream, &pointer->scan_per_fixed));
 	// ScanReportPerFixedList scan_per_fixed
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -287,13 +360,13 @@ int encode_scanreportinfompfixed(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_rejectresult(ByteStreamWriter *stream, RejectResult *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->problem));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -301,17 +374,17 @@ int encode_rejectresult(ByteStreamWriter *stream, RejectResult *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_manufspecassociationinformation(ByteStreamWriter *stream,
 		ManufSpecAssociationInformation *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_uuid_ident(stream, &pointer->data_proto_id_ext));
 	// UUID_Ident data_proto_id_ext
 	CHK(encode_any(stream, &pointer->data_proto_info_ext));
 	// Any data_proto_info_ext
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -319,16 +392,16 @@ int encode_manufspecassociationinformation(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_enumobsvalue(ByteStreamWriter *stream, EnumObsValue *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->metric_id));
 	CHK(write_intu16(stream, pointer->state));
 	CHK(encode_enumval(stream, &pointer->value));
 	// EnumVal value
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -336,14 +409,13 @@ int encode_enumobsvalue(ByteStreamWriter *stream, EnumObsValue *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_octet_string(ByteStreamWriter *stream, octet_string *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->length));
-	CHK(write_intu8_many(stream, pointer->value, pointer->length));
-	return ok;
+	PROLOGUE();
+	WRITE_STRING_WITH_LENGTH();
+	EPILOGUE();
 }
 
 /**
@@ -351,15 +423,15 @@ int encode_octet_string(ByteStreamWriter *stream, octet_string *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_highresrelativetime(ByteStreamWriter *stream,
 				HighResRelativeTime *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	// intu8 value[8];
-	CHK(write_intu8_many(stream, pointer->value, 8));
-	return ok;
+	WRITE_STRING(8);
+	EPILOGUE();
 }
 
 /**
@@ -367,14 +439,14 @@ int encode_highresrelativetime(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_sampletype(ByteStreamWriter *stream, SampleType *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu8(stream, pointer->sample_size));
 	CHK(write_intu8(stream, pointer->significant_bits));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -382,20 +454,15 @@ int encode_sampletype(ByteStreamWriter *stream, SampleType *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_attributelist(ByteStreamWriter *stream, AttributeList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_ava_type(stream, pointer->value + i));
-	}
+	CHILDREN(ava_type);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -403,20 +470,13 @@ int encode_attributelist(ByteStreamWriter *stream, AttributeList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmidlist(ByteStreamWriter *stream, SegmIdList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_intu16(stream, *(pointer->value + i)));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_16();
+	L_EPILOGUE();
 }
 
 /**
@@ -424,20 +484,14 @@ int encode_segmidlist(ByteStreamWriter *stream, SegmIdList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_simplenuobsvaluecmp(ByteStreamWriter *stream,
 				SimpleNuObsValueCmp *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_float(stream, *(pointer->value + i)));
-	}
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_FLOAT();
+	L_EPILOGUE();
 }
 
 /**
@@ -445,15 +499,15 @@ int encode_simplenuobsvaluecmp(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_getresultsimple(ByteStreamWriter *stream, GetResultSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attributelist(stream, &pointer->attribute_list));
 	// AttributeList attribute_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -461,20 +515,13 @@ int encode_getresultsimple(ByteStreamWriter *stream, GetResultSimple *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_handlelist(ByteStreamWriter *stream, HANDLEList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_intu16(stream, *(pointer->value + i)));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_16();
+	L_EPILOGUE();
 }
 
 /**
@@ -482,17 +529,17 @@ int encode_handlelist(ByteStreamWriter *stream, HANDLEList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmdataeventdescr(ByteStreamWriter *stream,
 			       SegmDataEventDescr *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->segm_instance));
 	CHK(write_intu32(stream, pointer->segm_evt_entry_index));
 	CHK(write_intu32(stream, pointer->segm_evt_entry_count));
 	CHK(write_intu16(stream, pointer->segm_evt_status));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -500,20 +547,15 @@ int encode_segmdataeventdescr(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_attrvalmap(ByteStreamWriter *stream, AttrValMap *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_attrvalmapentry(stream, pointer->value + i));
-	}
+	CHILDREN(attrvalmapentry);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -521,16 +563,16 @@ int encode_attrvalmap(ByteStreamWriter *stream, AttrValMap *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scalerangespec8(ByteStreamWriter *stream, ScaleRangeSpec8 *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_float(stream, pointer->lower_absolute_value));
 	CHK(write_float(stream, pointer->upper_absolute_value));
 	CHK(write_intu8(stream, pointer->lower_scaled_value));
 	CHK(write_intu8(stream, pointer->upper_scaled_value));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -538,12 +580,12 @@ int encode_scalerangespec8(ByteStreamWriter *stream, ScaleRangeSpec8 *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_phdassociationinformation(ByteStreamWriter *stream,
 				      PhdAssociationInformation *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu32(stream, pointer->protocolVersion));
 	CHK(write_intu16(stream, pointer->encodingRules));
 	CHK(write_intu32(stream, pointer->nomenclatureVersion));
@@ -556,7 +598,7 @@ int encode_phdassociationinformation(ByteStreamWriter *stream,
 	// DataReqModeCapab data_req_mode_capab
 	CHK(encode_attributelist(stream, &pointer->optionList));
 	// AttributeList optionList
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -564,21 +606,16 @@ int encode_phdassociationinformation(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportperfixedlist(ByteStreamWriter *stream,
 				   ScanReportPerFixedList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_scanreportperfixed(stream, pointer->value + i));
-	}
+	CHILDREN(scanreportperfixed);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -586,21 +623,16 @@ int encode_scanreportperfixedlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportpergroupedlist(ByteStreamWriter *stream,
 				     ScanReportPerGroupedList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_scanreportpergrouped(stream, pointer->value + i));
-	}
+	CHILDREN(scanreportpergrouped);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -608,20 +640,15 @@ int encode_scanreportpergroupedlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_dataprotolist(ByteStreamWriter *stream, DataProtoList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
+	CL_PROLOGUE();
 
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_dataproto(stream, pointer->value + i));
-	}
+	CHILDREN(dataproto);
 
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -629,13 +656,13 @@ int encode_dataprotolist(ByteStreamWriter *stream, DataProtoList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmselection(ByteStreamWriter *stream, SegmSelection *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->choice));
-	CHK(write_intu16(stream, pointer->length));
+	RESERVE_LENGTH();
 
 	switch (pointer->choice) {
 	case ALL_SEGMENTS_CHOSEN:
@@ -652,7 +679,7 @@ int encode_segmselection(ByteStreamWriter *stream, SegmSelection *pointer)
 		return 0;
 		break;
 	}
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -660,15 +687,15 @@ int encode_segmselection(ByteStreamWriter *stream, SegmSelection *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_errorresult(ByteStreamWriter *stream, ErrorResult *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->error_value));
 	CHK(encode_any(stream, &pointer->parameter));
 	// Any parameter
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -676,20 +703,14 @@ int encode_errorresult(ByteStreamWriter *stream, ErrorResult *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_handleattrvalmap(ByteStreamWriter *stream,
 			     HandleAttrValMap *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_handleattrvalmapentry(stream, pointer->value + i));
-	}
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(handleattrvalmapentry);
+	L_EPILOGUE();
 }
 
 /**
@@ -697,16 +718,16 @@ int encode_handleattrvalmap(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_absolutetimeadjust(ByteStreamWriter *stream,
 			       AbsoluteTimeAdjust *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	// intu8 value[6]
-	CHK(write_intu8_many(stream, pointer->value, 6));
+	WRITE_STRING(6);
 
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -714,15 +735,15 @@ int encode_absolutetimeadjust(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_aare_apdu(ByteStreamWriter *stream, AARE_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->result));
 	CHK(encode_dataproto(stream, &pointer->selected_data_proto));
 	// DataProto selected_data_proto
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -730,13 +751,13 @@ int encode_aare_apdu(ByteStreamWriter *stream, AARE_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_rlre_apdu(ByteStreamWriter *stream, RLRE_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->reason));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -744,20 +765,13 @@ int encode_rlre_apdu(ByteStreamWriter *stream, RLRE_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_metricidlist(ByteStreamWriter *stream, MetricIdList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_intu16(stream, *(pointer->value + i)));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_16();
+	L_EPILOGUE();
 }
 
 /**
@@ -765,16 +779,16 @@ int encode_metricidlist(ByteStreamWriter *stream, MetricIdList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportperfixed(ByteStreamWriter *stream,
 			       ScanReportPerFixed *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->person_id));
 	CHK(encode_observationscanfixedlist(stream, &pointer->obs_scan_fix));
 	// ObservationScanFixedList obs_scan_fix
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -782,17 +796,17 @@ int encode_scanreportperfixed(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfogrouped(ByteStreamWriter *stream,
 				  ScanReportInfoGrouped *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_scanreportinfogroupedlist(stream, &pointer->obs_scan_grouped));
 	// ScanReportInfoGroupedList obs_scan_grouped
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -800,15 +814,15 @@ int encode_scanreportinfogrouped(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_observationscan(ByteStreamWriter *stream, ObservationScan *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attributelist(stream, &pointer->attributes));
 	// AttributeList attributes
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -816,15 +830,15 @@ int encode_observationscan(ByteStreamWriter *stream, ObservationScan *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportpergrouped(ByteStreamWriter *stream,
 				 ScanReportPerGrouped *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->person_id));
 	CHK(encode_octet_string(stream, &pointer->obs_scan_grouped));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -832,16 +846,16 @@ int encode_scanreportpergrouped(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_systemmodel(ByteStreamWriter *stream, SystemModel *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_octet_string(stream, &pointer->manufacturer));
 	// octet_string manufacturer
 	CHK(encode_octet_string(stream, &pointer->model_number));
 	// octet_string model_number
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -849,20 +863,14 @@ int encode_systemmodel(ByteStreamWriter *stream, SystemModel *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_observationscanlist(ByteStreamWriter *stream,
 				ObservationScanList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_observationscan(stream, pointer->value + i));
-	}
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(observationscan);
+	L_EPILOGUE();
 }
 
 /**
@@ -886,13 +894,13 @@ int encode_observationscanlist(ByteStreamWriter *stream,
  *
  * @param prst
  * @param data_apdu
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_set_data_apdu(PRST_apdu *prst, DATA_apdu *data_apdu)
 {
-	int ok = 1;
+	PROLOGUE();
 	prst->value = (intu8 *) data_apdu;
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -900,7 +908,7 @@ int encode_set_data_apdu(PRST_apdu *prst, DATA_apdu *data_apdu)
  *
  * @param prst
  * @return data_apdu
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 DATA_apdu *encode_get_data_apdu(PRST_apdu *prst)
 {
@@ -912,13 +920,13 @@ DATA_apdu *encode_get_data_apdu(PRST_apdu *prst)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_apdu(ByteStreamWriter *stream, APDU *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->choice));
-	CHK(write_intu16(stream, pointer->length));
+	RESERVE_LENGTH();
 
 	switch (pointer->choice) {
 	case AARQ_CHOSEN:
@@ -944,7 +952,7 @@ int encode_apdu(ByteStreamWriter *stream, APDU *pointer)
 		return 0;
 		break;
 	}
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -952,20 +960,20 @@ int encode_apdu(ByteStreamWriter *stream, APDU *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_prst_apdu(ByteStreamWriter *stream, PRST_apdu *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->length));
+	PROLOGUE();
+	RESERVE_LENGTH();
 
 	if (pointer->value != NULL) {
 		CHK(encode_data_apdu(stream, encode_get_data_apdu(pointer)));
 	} else {
 		ERROR("encode_prst_apdu pointer value");
-		ok = 0;
+		return 0;
 	}
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -973,16 +981,16 @@ int encode_prst_apdu(ByteStreamWriter *stream, PRST_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_pmsegmententrymap(ByteStreamWriter *stream,
 			      PmSegmentEntryMap *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->segm_entry_header));
 	CHK(encode_segmentryelemlist(stream, &pointer->segm_entry_elem_list));
 	// SegmEntryElemList segm_entry_elem_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -990,14 +998,13 @@ int encode_pmsegmententrymap(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_any(ByteStreamWriter *stream, Any *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->length));
-	CHK(write_intu8_many(stream, pointer->value, pointer->length));
-	return ok;
+	PROLOGUE();
+	WRITE_STRING_WITH_LENGTH();
+	EPILOGUE();
 }
 
 /**
@@ -1005,16 +1012,16 @@ int encode_any(ByteStreamWriter *stream, Any *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_setargumentsimple(ByteStreamWriter *stream,
 			      SetArgumentSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_modificationlist(stream, &pointer->modification_list));
 	// ModificationList modification_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1022,15 +1029,15 @@ int encode_setargumentsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentinfo(ByteStreamWriter *stream, SegmentInfo *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->seg_inst_no));
 	CHK(encode_attributelist(stream, &pointer->seg_info));
 	// AttributeList seg_info
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1038,21 +1045,14 @@ int encode_segmentinfo(ByteStreamWriter *stream, SegmentInfo *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_pmsegmelemstaticattrlist(ByteStreamWriter *stream,
 				     PmSegmElemStaticAttrList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_segmelemstaticattrentry(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(segmelemstaticattrentry);
+	L_EPILOGUE();
 }
 
 /**
@@ -1060,16 +1060,16 @@ int encode_pmsegmelemstaticattrlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_abstimerange(ByteStreamWriter *stream, AbsTimeRange *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_absolutetime(stream, &pointer->from_time));
 	// AbsoluteTime from_time
 	CHK(encode_absolutetime(stream, &pointer->to_time));
 	// AbsoluteTime to_time
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1077,17 +1077,17 @@ int encode_abstimerange(ByteStreamWriter *stream, AbsTimeRange *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfompvar(ByteStreamWriter *stream,
 				ScanReportInfoMPVar *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_scanreportpervarlist(stream, &pointer->scan_per_var));
 	// ScanReportPerVarList scan_per_var
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1095,14 +1095,14 @@ int encode_scanreportinfompvar(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_uuid_ident(ByteStreamWriter *stream, UUID_Ident *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	// intu8 value[16]
-	CHK(write_intu8_many(stream, pointer->value, 16));
-	return ok;
+	WRITE_STRING(16);
+	EPILOGUE();
 }
 
 /**
@@ -1110,16 +1110,16 @@ int encode_uuid_ident(ByteStreamWriter *stream, UUID_Ident *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_getargumentsimple(ByteStreamWriter *stream,
 			      GetArgumentSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attributeidlist(stream, &pointer->attribute_id_list));
 	// AttributeIdList attribute_id_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1127,20 +1127,13 @@ int encode_getargumentsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_regcertdatalist(ByteStreamWriter *stream, RegCertDataList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_regcertdata(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(regcertdata);
+	L_EPILOGUE();
 }
 
 /**
@@ -1148,14 +1141,14 @@ int encode_regcertdatalist(ByteStreamWriter *stream, RegCertDataList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_configreportrsp(ByteStreamWriter *stream, ConfigReportRsp *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->config_report_id));
 	CHK(write_intu16(stream, pointer->config_result));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1163,15 +1156,15 @@ int encode_configreportrsp(ByteStreamWriter *stream, ConfigReportRsp *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_dataproto(ByteStreamWriter *stream, DataProto *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_proto_id));
 	CHK(encode_any(stream, &pointer->data_proto_info));
 	// Any data_proto_info
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1179,15 +1172,15 @@ int encode_dataproto(ByteStreamWriter *stream, DataProto *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_metricstructuresmall(ByteStreamWriter *stream,
 				 MetricStructureSmall *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu8(stream, pointer->ms_struct));
 	CHK(write_intu8(stream, pointer->ms_comp_no));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1195,16 +1188,16 @@ int encode_metricstructuresmall(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentstatisticentry(ByteStreamWriter *stream,
 				  SegmentStatisticEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->segm_stat_type));
 	CHK(encode_octet_string(stream, &pointer->segm_stat_entry));
 	// octet_string segm_stat_entry
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1212,17 +1205,17 @@ int encode_segmentstatisticentry(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentdataevent(ByteStreamWriter *stream,
 			     SegmentDataEvent *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_segmdataeventdescr(stream, &pointer->segm_data_event_descr));
 	// SegmDataEventDescr segm_data_event_descr
 	CHK(encode_octet_string(stream, &pointer->segm_data_event_entries));
 	// octet_string segm_data_event_entries
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1230,21 +1223,14 @@ int encode_segmentdataevent(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentryelemlist(ByteStreamWriter *stream,
 			      SegmEntryElemList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_segmentryelem(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(segmentryelem);
+	L_EPILOGUE();
 }
 
 /**
@@ -1252,16 +1238,16 @@ int encode_segmentryelemlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_saspec(ByteStreamWriter *stream, SaSpec *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->array_size));
 	CHK(encode_sampletype(stream, &pointer->sample_type));
 	// SampleType sample_type
 	CHK(write_intu16(stream, pointer->flags));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1269,16 +1255,16 @@ int encode_saspec(ByteStreamWriter *stream, SaSpec *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_attributemodentry(ByteStreamWriter *stream,
 			      AttributeModEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->modify_operator));
 	CHK(encode_ava_type(stream, &pointer->attribute));
 	// AVA_Type attribute
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1286,18 +1272,18 @@ int encode_attributemodentry(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_mdstimeinfo(ByteStreamWriter *stream, MdsTimeInfo *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->mds_time_cap_state));
 	CHK(write_intu16(stream, pointer->time_sync_protocol));
 	CHK(write_intu32(stream, pointer->time_sync_accuracy));
 	CHK(write_intu16(stream, pointer->time_resolution_abs_time));
 	CHK(write_intu16(stream, pointer->time_resolution_rel_time));
 	CHK(write_intu32(stream, pointer->time_resolution_high_res_time));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1305,13 +1291,13 @@ int encode_mdstimeinfo(ByteStreamWriter *stream, MdsTimeInfo *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_enumval(ByteStreamWriter *stream, EnumVal *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->choice));
-	CHK(write_intu16(stream, pointer->length));
+	RESERVE_LENGTH();
 
 	switch (pointer->choice) {
 	case OBJ_ID_CHOSEN:
@@ -1328,7 +1314,7 @@ int encode_enumval(ByteStreamWriter *stream, EnumVal *pointer)
 		return 0;
 		break;
 	}
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -1336,14 +1322,14 @@ int encode_enumval(ByteStreamWriter *stream, EnumVal *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_trigsegmdataxferreq(ByteStreamWriter *stream,
 				TrigSegmDataXferReq *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->seg_inst_no));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1351,14 +1337,14 @@ int encode_trigsegmdataxferreq(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_batmeasure(ByteStreamWriter *stream, BatMeasure *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_float(stream, pointer->value));
 	CHK(write_intu16(stream, pointer->unit));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1366,21 +1352,14 @@ int encode_batmeasure(ByteStreamWriter *stream, BatMeasure *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentstatistics(ByteStreamWriter *stream,
 			      SegmentStatistics *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_segmentstatisticentry(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(segmentstatisticentry);
+	L_EPILOGUE();
 }
 
 /**
@@ -1388,20 +1367,13 @@ int encode_segmentstatistics(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_attributeidlist(ByteStreamWriter *stream, AttributeIdList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_intu16(stream, *(pointer->value + i)));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_16();
+	L_EPILOGUE();
 }
 
 /**
@@ -1409,17 +1381,17 @@ int encode_attributeidlist(ByteStreamWriter *stream, AttributeIdList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfofixed(ByteStreamWriter *stream,
 				ScanReportInfoFixed *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_observationscanfixedlist(stream, &pointer->obs_scan_fixed));
 	// ObservationScanFixedList obs_scan_fixed
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1427,11 +1399,11 @@ int encode_scanreportinfofixed(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_datarequest(ByteStreamWriter *stream, DataRequest *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->data_req_mode));
 	CHK(write_intu32(stream, pointer->data_req_time));
@@ -1439,7 +1411,7 @@ int encode_datarequest(ByteStreamWriter *stream, DataRequest *pointer)
 	CHK(write_intu16(stream, pointer->data_req_class));
 	CHK(encode_handlelist(stream, &pointer->data_req_obj_handle_list));
 	// HANDLEList data_req_obj_handle_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1447,15 +1419,15 @@ int encode_datarequest(ByteStreamWriter *stream, DataRequest *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_authbodyandstructype(ByteStreamWriter *stream,
 				 AuthBodyAndStrucType *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu8(stream, pointer->auth_body));
 	CHK(write_intu8(stream, pointer->auth_body_struc_type));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1463,13 +1435,13 @@ int encode_authbodyandstructype(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_rlrq_apdu(ByteStreamWriter *stream, RLRQ_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->reason));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1477,14 +1449,14 @@ int encode_rlrq_apdu(ByteStreamWriter *stream, RLRQ_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_data_apdu_message(ByteStreamWriter *stream,
 			      Data_apdu_message *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->choice));
-	CHK(write_intu16(stream, pointer->length));
+	RESERVE_LENGTH();
 
 	switch (pointer->choice) {
 	case ROIV_CMIP_EVENT_REPORT_CHOSEN:
@@ -1535,10 +1507,10 @@ int encode_data_apdu_message(ByteStreamWriter *stream,
 		break;
 	default:
 		ERROR("encoding: Data apdu type uknown");
-		ok = 0;
+		return 0;
 		break;
 	}
-	return ok;
+	L_EPILOGUE();
 }
 
 /**
@@ -1546,18 +1518,18 @@ int encode_data_apdu_message(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_eventreportargumentsimple(ByteStreamWriter *stream,
 				      EventReportArgumentSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(write_intu32(stream, pointer->event_time));
 	CHK(write_intu16(stream, pointer->event_type));
 	CHK(encode_any(stream, &pointer->event_info));
 	// Any event_info
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1565,17 +1537,17 @@ int encode_eventreportargumentsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfovar(ByteStreamWriter *stream,
 			      ScanReportInfoVar *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_observationscanlist(stream, &pointer->obs_scan_var));
 	// ObservationScanList obs_scan_var
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1583,17 +1555,17 @@ int encode_scanreportinfovar(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfompgrouped(ByteStreamWriter *stream,
 				    ScanReportInfoMPGrouped *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_id));
 	CHK(write_intu16(stream, pointer->scan_report_no));
 	CHK(encode_scanreportpergroupedlist(stream, &pointer->scan_per_grouped));
 	// ScanReportPerGroupedList scan_per_grouped
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1601,16 +1573,16 @@ int encode_scanreportinfompgrouped(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_configobject(ByteStreamWriter *stream, ConfigObject *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_class));
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attributelist(stream, &pointer->attributes));
 	// AttributeList attributes
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1618,22 +1590,14 @@ int encode_configobject(ByteStreamWriter *stream, ConfigObject *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportinfogroupedlist(ByteStreamWriter *stream,
 				      ScanReportInfoGroupedList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_octet_string(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(octet_string);
+	L_EPILOGUE();
 }
 
 /**
@@ -1641,18 +1605,18 @@ int encode_scanreportinfogroupedlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_eventreportresultsimple(ByteStreamWriter *stream,
 				    EventReportResultSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(write_intu32(stream, pointer->currentTime));
 	CHK(write_intu16(stream, pointer->event_type));
 	CHK(encode_any(stream, &pointer->event_reply_info));
 	// Any event_reply_info
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1660,14 +1624,14 @@ int encode_eventreportresultsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_type(ByteStreamWriter *stream, TYPE *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->partition));
 	CHK(write_intu16(stream, pointer->code));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1675,13 +1639,13 @@ int encode_type(ByteStreamWriter *stream, TYPE *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_metricspecsmall(ByteStreamWriter *stream, MetricSpecSmall *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, *pointer));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1689,16 +1653,16 @@ int encode_metricspecsmall(ByteStreamWriter *stream, MetricSpecSmall *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_observationscanfixed(ByteStreamWriter *stream,
 				 ObservationScanFixed *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_octet_string(stream, &pointer->obs_val_data));
 	// octet_string obs_val_data
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1706,17 +1670,17 @@ int encode_observationscanfixed(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_dataresponse(ByteStreamWriter *stream, DataResponse *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu32(stream, pointer->rel_time_stamp));
 	CHK(write_intu16(stream, pointer->data_req_result));
 	CHK(write_intu16(stream, pointer->event_type));
 	CHK(encode_any(stream, &pointer->event_info));
 	// Any event_info
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1724,16 +1688,16 @@ int encode_dataresponse(ByteStreamWriter *stream, DataResponse *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_prodspecentry(ByteStreamWriter *stream, ProdSpecEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->spec_type));
 	CHK(write_intu16(stream, pointer->component_id));
 	CHK(encode_octet_string(stream, &pointer->prod_spec));
 	// octet_string prod_spec
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1741,17 +1705,17 @@ int encode_prodspecentry(ByteStreamWriter *stream, ProdSpecEntry *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scalerangespec16(ByteStreamWriter *stream,
 			     ScaleRangeSpec16 *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_float(stream, pointer->lower_absolute_value));
 	CHK(write_float(stream, pointer->upper_absolute_value));
 	CHK(write_intu16(stream, pointer->lower_scaled_value));
 	CHK(write_intu16(stream, pointer->upper_scaled_value));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1759,18 +1723,18 @@ int encode_scalerangespec16(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentryelem(ByteStreamWriter *stream, SegmEntryElem *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->class_id));
 	CHK(encode_type(stream, &pointer->metric_type));
 	// TYPE metric_type
 	CHK(write_intu16(stream, pointer->handle));
 	CHK(encode_attrvalmap(stream, &pointer->attr_val_map));
 	// AttrValMap attr_val_map
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1778,13 +1742,13 @@ int encode_segmentryelem(ByteStreamWriter *stream, SegmEntryElem *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_abrt_apdu(ByteStreamWriter *stream, ABRT_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->reason));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1792,16 +1756,16 @@ int encode_abrt_apdu(ByteStreamWriter *stream, ABRT_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_datareqmodecapab(ByteStreamWriter *stream,
 			     DataReqModeCapab *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->data_req_mode_flags));
 	CHK(write_intu8(stream, pointer->data_req_init_agent_count));
 	CHK(write_intu8(stream, pointer->data_req_init_manager_count));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1809,21 +1773,14 @@ int encode_datareqmodecapab(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_supplementaltypelist(ByteStreamWriter *stream,
 				 SupplementalTypeList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_type(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(type);
+	L_EPILOGUE();
 }
 
 /**
@@ -1831,21 +1788,14 @@ int encode_supplementaltypelist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_observationscanfixedlist(ByteStreamWriter *stream,
 				     ObservationScanFixedList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_observationscanfixed(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(observationscanfixed);
+	L_EPILOGUE();
 }
 
 /**
@@ -1853,15 +1803,15 @@ int encode_observationscanfixedlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_trigsegmdataxferrsp(ByteStreamWriter *stream,
 				TrigSegmDataXferRsp *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->seg_inst_no));
 	CHK(write_intu16(stream, pointer->trig_segm_xfer_rsp));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1869,15 +1819,15 @@ int encode_trigsegmdataxferrsp(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_data_apdu(ByteStreamWriter *stream, DATA_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->invoke_id));
 	CHK(encode_data_apdu_message(stream, &pointer->message));
 	// Data_apdu_message message
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1885,15 +1835,15 @@ int encode_data_apdu(ByteStreamWriter *stream, DATA_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_aarq_apdu(ByteStreamWriter *stream, AARQ_apdu *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu32(stream, pointer->assoc_version));
 	CHK(encode_dataprotolist(stream, &pointer->data_proto_list));
 	// DataProtoList data_proto_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1901,20 +1851,13 @@ int encode_aarq_apdu(ByteStreamWriter *stream, AARQ_apdu *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_typeverlist(ByteStreamWriter *stream, TypeVerList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_typever(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(typever);
+	L_EPILOGUE();
 }
 
 /**
@@ -1922,16 +1865,16 @@ int encode_typeverlist(ByteStreamWriter *stream, TypeVerList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_regcertdata(ByteStreamWriter *stream, RegCertData *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_authbodyandstructype(stream, &pointer->auth_body_and_struc_type));
 	// AuthBodyAndStrucType auth_body_and_struc_type
 	CHK(encode_any(stream, &pointer->auth_body_data));
 	// Any auth_body_data
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1939,16 +1882,16 @@ int encode_regcertdata(ByteStreamWriter *stream, RegCertData *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_nuobsvalue(ByteStreamWriter *stream, NuObsValue *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->metric_id));
 	CHK(write_intu16(stream, pointer->state));
 	CHK(write_intu16(stream, pointer->unit_code));
 	CHK(write_float(stream, pointer->value));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1956,21 +1899,14 @@ int encode_nuobsvalue(ByteStreamWriter *stream, NuObsValue *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_scanreportpervarlist(ByteStreamWriter *stream,
 				 ScanReportPerVarList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_scanreportpervar(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(scanreportpervar);
+	L_EPILOGUE();
 }
 
 /**
@@ -1978,15 +1914,15 @@ int encode_scanreportpervarlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_settimeinvoke(ByteStreamWriter *stream, SetTimeInvoke *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(encode_absolutetime(stream, &pointer->date_time));
 	// AbsoluteTime date_time
 	CHK(write_float(stream, pointer->accuracy));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -1994,20 +1930,13 @@ int encode_settimeinvoke(ByteStreamWriter *stream, SetTimeInvoke *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmentinfolist(ByteStreamWriter *stream, SegmentInfoList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_segmentinfo(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(segmentinfo);
+	L_EPILOGUE();
 }
 
 /**
@@ -2015,17 +1944,17 @@ int encode_segmentinfolist(ByteStreamWriter *stream, SegmentInfoList *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_actionresultsimple(ByteStreamWriter *stream,
 			       ActionResultSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(write_intu16(stream, pointer->action_type));
 	CHK(encode_any(stream, &pointer->action_info_args));
 	// Any action_info_args
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2033,18 +1962,18 @@ int encode_actionresultsimple(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_segmelemstaticattrentry(ByteStreamWriter *stream,
 				    SegmElemStaticAttrEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->class_id));
 	CHK(encode_type(stream, &pointer->metric_type));
 	// TYPE metric_type
 	CHK(encode_attributelist(stream, &pointer->attribute_list));
 	// AttributeList attribute_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2052,14 +1981,14 @@ int encode_segmelemstaticattrentry(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_basicnuobsvalue(ByteStreamWriter *stream,
 			       BasicNuObsValue *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_sfloat(stream, *pointer));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2067,21 +1996,14 @@ int encode_basicnuobsvalue(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_basicnuobsvaluecmp(ByteStreamWriter *stream,
 			       BasicNuObsValueCmp *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(write_intu16(stream, *(pointer->value + i)));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN_SFLOAT();
+	L_EPILOGUE();
 }
 
 /**
@@ -2089,21 +2011,14 @@ int encode_basicnuobsvaluecmp(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_configobjectlist(ByteStreamWriter *stream,
 			     ConfigObjectList *pointer)
 {
-	int ok = 1;
-	CHK(write_intu16(stream, pointer->count));
-	CHK(write_intu16(stream, pointer->length));
-	int i;
-
-	for (i = 0; i < pointer->count; i++) {
-		CHK(encode_configobject(stream, pointer->value + i));
-	}
-
-	return ok;
+	CL_PROLOGUE();
+	CHILDREN(configobject);
+	L_EPILOGUE();
 }
 
 /**
@@ -2111,15 +2026,15 @@ int encode_configobjectlist(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_setresultsimple(ByteStreamWriter *stream, SetResultSimple *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attributelist(stream, &pointer->attribute_list));
 	// AttributeList attribute_list
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2127,16 +2042,16 @@ int encode_setresultsimple(ByteStreamWriter *stream, SetResultSimple *pointer)
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_handleattrvalmapentry(ByteStreamWriter *stream,
 				  HandleAttrValMapEntry *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, pointer->obj_handle));
 	CHK(encode_attrvalmap(stream, &pointer->attr_val_map));
 	// AttrValMap attr_val_map
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2144,14 +2059,14 @@ int encode_handleattrvalmapentry(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_simplenuobsvalue(ByteStreamWriter *stream,
 			     SimpleNuObsValue *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_float(stream, *pointer));
-	return ok;
+	EPILOGUE();
 }
 
 /**
@@ -2159,13 +2074,13 @@ int encode_simplenuobsvalue(ByteStreamWriter *stream,
  *
  * @param *stream
  * @param *pointer
- * @return 1 if ok, 0 if error
+ * @return encoded byte count if ok, 0 if error
  */
 int encode_configid(ByteStreamWriter *stream, ConfigId *pointer)
 {
-	int ok = 1;
+	PROLOGUE();
 	CHK(write_intu16(stream, *pointer));
-	return ok;
+	EPILOGUE();
 }
 
 /** @} */

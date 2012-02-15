@@ -399,12 +399,13 @@ void ext_configurations_register_conf(octet_string *system_id,
 
 	int size = object_list->length + 2 * sizeof(object_list->count);
 	ByteStreamWriter *stream = byte_stream_writer_instance(size);
+	DEBUG("Encoding %x to index", config_id);
 	encode_configobjectlist(stream, object_list);
 
 	struct ExtConfig *cfg = ext_configurations_get_config(system_id, config_id);
 	if (!cfg) {
 		int error = 0;
-		DEBUG("Adding new ext config to index");
+		DEBUG("Adding new ext config %x to index", config_id);
 		new = 1;
 		ext_configuration_size++;
 		ext_configuration_list = realloc(ext_configuration_list,

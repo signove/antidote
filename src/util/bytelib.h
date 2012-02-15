@@ -94,9 +94,11 @@ ByteStreamWriter *byte_stream_writer_instance(intu32 size);
 
 intu32 write_intu8(ByteStreamWriter *stream, intu8 data);
 
-intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len);
+intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *error);
 
 intu32 write_intu16(ByteStreamWriter *stream, intu16 data);
+intu32 reserve_intu16(ByteStreamWriter *stream, intu16 **position);
+void commit_intu16(intu16 *position, intu16 data);
 
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data);
 

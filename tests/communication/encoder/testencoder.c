@@ -163,6 +163,11 @@ void test_encoder_h212_apdu_encoder()
 
 	for (i = 0; i < h212_size; ++i) {
 		CU_ASSERT_EQUAL(stream_writer->buffer[i], h212_buffer[i]);
+		if (stream_writer->buffer[i] != h212_buffer[i]) {
+			fprintf(stderr, "       @%d actual %x expected %x\n", i,
+				(unsigned char) stream_writer->buffer[i],
+				(unsigned char) h212_buffer[i]);
+		}
 	}
 
 	del_byte_stream_writer(stream_writer, 1);
