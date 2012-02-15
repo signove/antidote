@@ -3,7 +3,7 @@
 
 Name:       antidote
 Summary:    IEEE 11073 Protocol Implementation
-Version:    1.0.0
+Version:    2.0.0
 Release:    3
 Group:      System/Daemons
 License:    LGPLv2.1 
