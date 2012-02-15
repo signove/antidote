@@ -11,7 +11,7 @@
 
 static LinkedList *_plugins = NULL;
 
-extern CommunicationPlugin *trans_comm_plugin;
+CommunicationPlugin *trans_comm_plugin = 0;
 
 typedef struct TransDevice
 {

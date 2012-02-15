@@ -45,8 +45,8 @@
 #include "src/trans/trans.h"
 #include "src/util/log.h"
 
-// Used at src/trans/trans.c
-CommunicationPlugin *trans_comm_plugin = 0;
+// From src/trans/trans.c
+extern CommunicationPlugin *trans_comm_plugin;
 
 /**
  * Starts Transcoding dummy plug-in
