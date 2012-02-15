@@ -37,6 +37,7 @@ void test_encoder_h222_apdu_encoder();
 void test_encoder_h232_apdu_encoder();
 void test_encoder_h242_apdu_encoder();
 void test_encoder_h243_apdu_encoder();
+void test_encoder_h243_apdu_encoder_open();
 void test_encoder_data_apdu_encoder_1();
 void test_encoder_data_apdu_encoder_2();
 void test_encoder_data_apdu_encoder_3();

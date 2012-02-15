@@ -55,6 +55,9 @@ ASN.1: mitigate the need of Any structures. Points:
 	* currently, decoder reports all errors as hard
 	* many 'flavors' of Any in every place it is used,
 	  each one with union of possible decoded outcomes.
+	* Where Any can't be removed, make it easier to
+	  copy writer stream to Any (a single function
+	  instead of getting stream buffer and size)
 
 Clearer, simpler rules of ownership, in particular when
 involving APDU data. (This will be easier once the

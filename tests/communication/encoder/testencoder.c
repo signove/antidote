@@ -106,6 +106,8 @@ void testencoder_add_suite()
 		    test_encoder_h242_apdu_encoder);
 	CU_add_test(suite, "test_encoder_h243_apdu_encoder",
 		    test_encoder_h243_apdu_encoder);
+	CU_add_test(suite, "test_encoder_h243_apdu_encoder_open",
+		    test_encoder_h243_apdu_encoder_open);
 
 	CU_add_test(suite, "test_encoder_byte_stream_writer",
 		    test_enconder_byte_stream_writer);
@@ -330,6 +332,63 @@ void test_encoder_h243_apdu_encoder(void)
 
 	del_byte_stream_writer(stream_writer, 1);
 	del_byte_stream_writer(stream_writer2, 1);
+}
+
+void test_encoder_h243_apdu_encoder_open(void)
+{
+	APDU apdu;
+	apdu.choice = PRST_CHOSEN;
+	// apdu.length = 30;
+	// all 'length's are automatically overwritten by encoder
+	apdu.length = 999;
+	// apdu.u.prst.length = 28;
+	apdu.u.prst.length = 999;
+
+	DATA_apdu data_apdu;
+	data_apdu.invoke_id = 0x7654;
+	data_apdu.message.choice = ROIV_CMIP_CONFIRMED_ACTION_CHOSEN;
+	// data_apdu.message.length = 22;
+	data_apdu.message.length = 9999;
+	data_apdu.message.u.roiv_cmipConfirmedAction.obj_handle = 0x0000;
+	data_apdu.message.u.roiv_cmipConfirmedAction.action_type = MDC_ACT_DATA_REQUEST;
+	// data_apdu.message.u.roiv_cmipConfirmedAction.action_info_args.length = 16;
+	// data_apdu.message.u.roiv_cmipConfirmedAction.action_info_args.length = 999;
+
+	DataRequest data_request;
+	data_request.data_req_id = 0x0100;
+	data_request.data_req_mode = DATA_REQ_START_STOP | DATA_REQ_SCOPE_TYPE | DATA_REQ_MODE_SINGLE_RSP;
+	data_request.data_req_time = 0x00000000;
+	data_request.data_req_person_id = 0x0000;
+	data_request.data_req_class = MDC_MOC_VMO_METRIC_NU;
+	data_request.data_req_obj_handle_list.count = 0x0000;
+	// data_request.data_req_obj_handle_list.length = 0x0000;
+
+	ByteStreamWriter *w = open_stream_writer(20);
+	CU_ASSERT_PTR_NOT_NULL(w);
+
+	encode_datarequest(w, &data_request);
+	// in this case, length is transposed manually because of Any type.
+	data_apdu.message.u.roiv_cmipConfirmedAction.action_info_args.length = w->size;
+	data_apdu.message.u.roiv_cmipConfirmedAction.action_info_args.value = w->buffer;
+
+	encode_set_data_apdu(&apdu.u.prst, &data_apdu);
+
+	ByteStreamWriter *stream_writer = open_stream_writer(500);
+	CU_ASSERT_PTR_NOT_NULL(stream_writer);
+
+	encode_apdu(stream_writer, &apdu);
+
+	int i;
+
+	for (i = 0; i < h243_size; ++i) {
+
+		CU_ASSERT_EQUAL(stream_writer->buffer[i], h243_buffer[i]);
+	}
+
+	CU_ASSERT_EQUAL(h243_size, stream_writer->size);
+
+	del_byte_stream_writer(stream_writer, 1);
+	del_byte_stream_writer(w, 1);
 }
 
 void test_enconder_byte_stream_writer()
