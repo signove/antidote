@@ -197,7 +197,8 @@ static inline char *xmlescape(char *s)
 	char *se = xmlescapec(s, s, '&', "&amp;", 5);
 	se = xmlescapec(s, se, '<', "&lt;", 4);
 	se = xmlescapec(s, se, '>', "&gt;", 4);
-	// FIXME escape simple and double quotes
+	se = xmlescapec(s, se, '"', "&quot;", 6);
+	se = xmlescapec(s, se, '\'', "&apos;", 6);
 	return se;
 }
 
