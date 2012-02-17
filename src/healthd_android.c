@@ -382,11 +382,12 @@ static void notif_java_disassociated(ContextId conn_handle)
 }
 
 
-/*Callback used to request mds attributes
+/**
+ * Callback used to request mds attributes
  *
  *\param ctx
  *\param response_apdu
- * */
+ */
 static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	DEBUG("Medical Device Attributes");
@@ -404,11 +405,13 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
 }
 
 
-/*interface to request mds attributes
+/**
+ * Interface to request mds attributes
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ */
 void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmdsattr");
@@ -417,11 +420,13 @@ void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject 
 	manager_request_get_all_mds_attributes(cid, device_reqmdsattr_callback);
 }
 
-/*interface to get device configuration
+/**
+ * Interface to get device configuration
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ */
 jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobject obj, jint handle)
 {
 	DataList *list;
@@ -445,11 +450,13 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
 	return jxml;
 }
 
-/*interface to request measuremens
+/**
+ * interface to request measuremens
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ */
 void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_reqmeasurement");
@@ -458,11 +465,14 @@ void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobj
 	manager_request_measurement_data_transmission(cid, NULL);
 }
 
-/*interface to activate scanner
+/**
+ * interface to activate scanner
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ */
 void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqactivationscanner");
@@ -471,11 +481,14 @@ void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env
 	manager_set_operational_state_of_the_scanner(cid, (HANDLE) ihandle, os_enabled, NULL);
 }
 
-/*interface to deactivate scanner
+/**
+ * interface to deactivate scanner
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ */
 void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("device_reqdeactivationscanner");
@@ -484,11 +497,13 @@ void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *e
 	manager_set_operational_state_of_the_scanner(cid, (HANDLE) ihandle, os_disabled, NULL);
 }
 
-/*interface to release association
+/**
+ * interface to release association
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ */
 void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_releaseassoc");
@@ -497,11 +512,13 @@ void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobjec
 	manager_request_association_release(cid);
 }
 
-/*interface to abort association
+/**
+ * interface to abort association
  *
- *\param obj
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ */
 void Java_com_signove_health_service_JniBridge_Cabortassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("device_abortassoc");
@@ -510,12 +527,13 @@ void Java_com_signove_health_service_JniBridge_Cabortassoc(JNIEnv *env, jobject 
 	manager_request_association_release(cid);
 }
 
-/*Callback for PM-Store GET
+/**
+ * Callback for PM-Store GET
  *
- *\param ctx
- *\param r Request object
- *\param response_apdu
- * */
+ * \param ctx
+ * \param r Request object
+ * \param response_apdu
+ */
 static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetRet *ret = (PMStoreGetRet*) r->return_data;
@@ -534,13 +552,14 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 	}
 }
 
-/*interface to get PM-Store attributes
+/**
+ * interface to get PM-Store attributes
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ */
 jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 						jobject obj, jint handle, jint ihandle)
 {
@@ -550,12 +569,13 @@ jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 	return 0;
 }
 
-/*Callback for PM-Store get segment info response
+/**
+ * Callback for PM-Store get segment info response
  *
  *\param ctx
  *\param r Request object
  *\param response_apdu
- * */
+ */
 static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetSegmInfoRet *ret = (PMStoreGetSegmInfoRet*) r->return_data;
@@ -574,11 +594,12 @@ static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response
 	}
 }
 
-/*Callback for PM-Store segment data response
+/**
+ * Callback for PM-Store segment data response
  *
  *\param ctx
  *\param response_apdu
- * */
+ */
 static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetSegmDataRet *ret = (PMStoreGetSegmDataRet*) r->return_data;
@@ -589,11 +610,12 @@ static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response
 	notif_java_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
-/*Callback for PM-Store clear segment response
+/**
+ * Callback for PM-Store clear segment response
  *
  *\param ctx
  *\param response_apdu
- * */
+ */
 static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreClearSegmRet *ret = (PMStoreClearSegmRet*) r->return_data;
@@ -604,13 +626,14 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
 	notif_java_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
-/* interface to get segments info from a PM-Store
+/**
+ * interface to get segments info from a PM-Store
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ */
 jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	Request *req;
@@ -623,14 +646,15 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject
 	return req ? 0 : 1;
 }
 
-/*interface to get segments data from a PM-Segment
+/**
+ * interface to get segments data from a PM-Segment
  *
- *\param obj
- *\param handle PM-Store handle
- *\param instnumber PM-Segment InstNumber
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ * \param instnumber PM-Segment Instance number
+ */
 jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
@@ -644,14 +668,15 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 	return req ? 0 : 1;
 }
 
-/*interface to clear a PM-store segment
+/**
+ * interface to clear a PM-store segment
  *
- *\param obj
- *\param handle PM-Store handle
- *\param instnumber PM-Segment InstNumber
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ * \param instnumber PM-Segment Instance number
+ */
 jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobject obj,
 					jint handle, jint ihandle, jint instnumber)
 {
@@ -665,13 +690,15 @@ jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobje
 	return req ? 0 : 1;
 }
 
-/* facade to clear all segments of a PM-Store
+/**
+ * Facade to clear all segments of a PM-Store
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ *
+ * \param env JNI thread environment
+ * \param obj JNI bridge object
+ * \param handle Context ID
+ * \param ihandle Object handle
+ */
 jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jobject obj,
 								jint handle, jint ihandle)
 {
