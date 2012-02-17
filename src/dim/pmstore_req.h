@@ -33,30 +33,102 @@
 
 #include <communication/service.h>
 
+/**
+ * Struct returned to client in Request->ret in PM-Store-Get callback
+ * Extends RequestRet.
+ */
 typedef struct PMStoreGetRet {
+	/**
+	 * Cleanup function for this struct
+	 */
 	request_ret_data_free del_function;
+
+	/**
+	 * PM-Store handle originally requested
+	 */
 	int handle;
+
+	/**
+	 * 11073-level response code. 0 = ok
+	 */
 	int response;
 } PMStoreGetRet;
 
+/**
+ * Struct returned to client in Request->ret in Get-Segment-Data callback
+ * Extends RequestRet.
+ */
 typedef struct PMStoreGetSegmDataRet {
+	/**
+	 * Cleanup function for this struct
+	 */
 	request_ret_data_free del_function;
+
+	/**
+	 * PM-Store handle originally requested
+	 */
 	int handle;
+
+	/**
+	 * PM-Instance originally requested
+	 */
 	int inst;
+
+	/**
+	 * 11073-level response code. 0 = ok
+	 */
 	int response; 
 } PMStoreGetSegmDataRet;
 
+/**
+ * Struct returned to client in Request->ret in Get-Segment-Info callback
+ * Extends RequestRet.
+ */
 typedef struct PMStoreGetSegmInfoRet {
+	/**
+	 * Cleanup function for this struct
+	 */
 	request_ret_data_free del_function;
+
+	/**
+	 * PM-Store handle originally requested
+	 */
 	int handle;
+
+	/**
+	 * 11073-level response code. 0 = ok
+	 */
 	int response;
 } PMStoreGetSegmInfoRet;
 
+/**
+ * Struct returned to client in Request->ret in Clear-Segment callback
+ * Extends RequestRet.
+ */
 typedef struct PMStoreClearSegmRet {
+	/**
+	 * Cleanup function for this struct
+	 */
 	request_ret_data_free del_function;
+
+	/**
+	 * PM-Store handle originally requested
+	 */
 	int handle;
+
+	/**
+	 * PM-Instance originally requested
+	 */
 	int inst;
+
+	/**
+	 * 11073-level response code. 0 = ok
+	 */
 	int response;
+
+	/**
+	 * Segment selection originally requested
+	 */
 	SegmSelection segm_selection;
 } PMStoreClearSegmRet;
 

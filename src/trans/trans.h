@@ -24,10 +24,29 @@ typedef int (*agent_disconnected_cb)(ContextId id, const char *lladdr);
  */
 typedef struct TransPlugin 
 {
+	/**
+	 * Plug-in initialization function (called by engine)
+	 */
 	int (*init)();
+
+	/**
+	 * Plug-in finalization function (called by engine)
+	 */
 	int (*finalize)();
+
+	/**
+	 * Connection forced closing function (called by engine)
+	 */
 	void (*force_disconnect)(const char *);
+
+	/**
+	 * Agent connected callback
+	 */
 	agent_connected_cb conn_cb;
+
+	/**
+	 * Agent disconnected callback
+	 */
 	agent_disconnected_cb disconn_cb;
 } TransPlugin;
 
