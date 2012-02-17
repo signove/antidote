@@ -32,25 +32,35 @@
 #ifndef CONTEXT_H_
 #define CONTEXT_H_
 
-typedef struct ContextId {
-	unsigned int plugin;
-	unsigned long long connid;
-} ContextId;
-
-typedef struct Context Context;
-
 /**
  * \ingroup Communication
  * @{
  */
 
+/**
+ * Context identification struct. Should be handled as
+ * opaque most of the time, unless you are a plugin writer.
+ */
+typedef struct ContextId {
+	/**
+	 * Plugin ID, attributed by plug-in management
+	 */
+	unsigned int plugin;
+	/**
+	 * Connection ID, normally attributed by communication plug-in.
+	 * Namespace of this ID is the plug-in.
+	 */
+	unsigned long long connid;
+} ContextId;
+
 struct MDS;
 struct Service;
+struct Context;
 
 /**
  * Function prototype to represent callback action
  */
-typedef void (*timer_callback_function)(Context *ctx);
+typedef void (*timer_callback_function)(struct Context *ctx);
 
 /**
  * The callback structure
@@ -75,7 +85,7 @@ typedef struct timeout_callback {
 /**
  * This represents the Connection Context of IEEE Agent
  */
-struct Context {
+typedef struct Context {
 	/**
          * Context is Manager or Agent
 	 */
@@ -118,7 +128,7 @@ struct Context {
 	 */
 	timeout_callback timeout_action;
 
-};
+} Context;
 
 #define MANAGER_CONTEXT 1
 #define AGENT_CONTEXT 2
