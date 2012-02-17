@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup android
+ * @addtogroup Android
  * @{
  */
 

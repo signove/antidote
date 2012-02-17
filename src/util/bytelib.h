@@ -28,9 +28,7 @@
  */
 
 /**
- * \defgroup ByteLib ByteLib
- * \brief Byte manipulation module.
- * \ingroup Parser
+ * \addtogroup ASN1Codec
  *
  * @{
  */

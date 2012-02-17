@@ -30,8 +30,7 @@
 
 
 /**
- * \addtogroup ASN1Encoder
- * \ingroup Parser
+ * \addtogroup ASN1Codec
  *
  * @{
  */

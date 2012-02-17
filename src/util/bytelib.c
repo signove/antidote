@@ -28,9 +28,7 @@
  */
 
 /**
- * \addtogroup ByteLib
- *
- * \ingroup Parser
+ * \addtogroup ASN1
  *
  * @{
  */

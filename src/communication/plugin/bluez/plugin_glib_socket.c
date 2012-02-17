@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup Plugin
+ * @addtogroup GlibTcpPlugin
  * @{
  */
 

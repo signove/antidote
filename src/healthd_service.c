@@ -31,7 +31,7 @@
  */
 
 /**
- * @addtogroup main
+ * @addtogroup Healthd
  * @{
  */
 

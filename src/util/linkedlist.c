@@ -28,6 +28,11 @@
  * \date Aug 26, 2010
  */
 
+/**
+ * \addtogroup Utility
+ * @{
+ */
+
 #include "linkedlist.h"
 #include <stdlib.h>
 
@@ -290,3 +295,5 @@ int llist_iterate(LinkedList *list, llist_handle_element handle_iteration)
 
 	return 1;
 }
+
+/*! @} */

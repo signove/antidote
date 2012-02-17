@@ -41,7 +41,7 @@
 #define DIR_SEP '/'
 
 /**
- * \addtogroup UtilitiesFunctions
+ * \addtogroup Utility
  * @{
  */
 

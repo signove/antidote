@@ -30,7 +30,7 @@
  */
 
 /**
- * @addtogroup Plugin
+ * @addtogroup PThreadPlugin
  * @{
  */
 

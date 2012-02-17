@@ -114,7 +114,7 @@ static int manager_listener_count = 0;
 static void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
 
 
-/*! \mainpage IEEE 11073-20601 Implementation
+/*! \mainpage Antidote: IEEE 11073-20601 Implementation
  *
  * This API implements the IEEE 11073-20601 Standard and some device
  * specializations (IEEE 11073-104XX).
@@ -339,7 +339,7 @@ int manager_notify_evt_measurement_data_updated(Context *ctx, DataList *data_lis
  * @param ctx
  * @param handle PM-Store handle
  * @param instnumber PM-Segment instance number
- * @param data_list with the segment data.
+ * @param data_list with the segment data. Ownership is transferred; delete with data_list_del.
  * @return 1 if any listener catches the notification, 0 if not
  */
 int manager_notify_evt_segment_data(Context *ctx, int handle, int instnumber,
@@ -423,9 +423,10 @@ void manager_stop()
 
 /**
  * Runs connection loop over communication layer.
- * This function must run after 'manager_start()'operation if no mainloop
- * implementation is used e.g. GMainLoop.
- *
+ * This function must run after 'manager_start()' operation if
+ * no event loop framework is used e.g. GLib. It is meant for
+ * simple tests only.
+ * 
  * @param context_id Current context.
  */
 void manager_connection_loop(ContextId context_id)

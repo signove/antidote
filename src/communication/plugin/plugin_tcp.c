@@ -32,7 +32,7 @@
  */
 
 /**
- * @addtogroup Plugin
+ * @addtogroup TcpPlugin
  */
 
 #include "src/util/strbuff.h"

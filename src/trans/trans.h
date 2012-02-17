@@ -4,9 +4,24 @@
 #include <src/asn1/phd_types.h>
 #include <src/communication/context.h>
 
+/**
+ * \defgroup Transcoding Transcoding
+ * \brief Transcoding layer API for non-11073 devices
+ * @{
+ */
+
+/**
+ * Function called by transcoding plugin when agent connects
+ */
 typedef int (*agent_connected_cb)(ContextId id, const char *lladdr);
+/**
+ * Function called by transcoding plugin when agent disconnects
+ */
 typedef int (*agent_disconnected_cb)(ContextId id, const char *lladdr);
 
+/**
+ * Transcoding plugin structure
+ */
 typedef struct TransPlugin 
 {
 	int (*init)();
@@ -37,5 +52,7 @@ int trans_disconnected(TransPlugin *plugin, char *lladdr);
 
 /* Called by dummy trans communication plug-in */
 void trans_force_disconnect(ContextId id);
+
+/** @} */
 
 #endif

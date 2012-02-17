@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup PluginTrans
+ * @addtogroup Transcoding
  * @{
  */
 
@@ -49,7 +49,7 @@
 extern CommunicationPlugin *trans_comm_plugin;
 
 /**
- * Starts Transcoding dummy plug-in
+ * Starts Transcoding dummy plug-in.
  *
  * @return success status
  */
@@ -60,7 +60,7 @@ static int init()
 }
 
 /**
- * Stops Transcoded devices. May be restarted again afterwards.
+ * Stops dummy transcoding plug-in. May be restarted again afterwards.
  *
  * @return success status
  */
@@ -103,7 +103,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 }
 
 /**
- * Forces closure of a channel
+ * Forces closure of a channel. Forwards request to transcoding layer.
  */
 static int force_disconnect_channel(Context *c)
 {
@@ -112,7 +112,10 @@ static int force_disconnect_channel(Context *c)
 }
 
 /**
- * Configure plugin
+ * Configure dummy transcoding plugin. This plugin is basically
+ * a placeholder that aids transcoding debugging. The only real
+ * tasks that this plugin intermediates are: forcing disconnections
+ * and timer servicing.
  */
 void plugin_trans_setup(CommunicationPlugin *plugin)
 {

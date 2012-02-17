@@ -9,10 +9,27 @@
 #include <src/dim/mds.h>
 #include "trans.h"
 
+/**
+ * \addtogroup Transcoding
+ * \brief Transcoding layer implementation for non-11073 devices
+ * @{
+ */
+
+/**
+ * List of loaded transcoding plugins
+ */
 static LinkedList *_plugins = NULL;
 
+/**
+ * Pointer to 'dummy' communication plugin that represents transcoded devices.
+ * The only task that this plugin actually does it timer servicing.
+ */
 CommunicationPlugin *trans_comm_plugin = 0;
 
+/**
+ * Internal structure representing a known transcoded device.
+ * It relates a low-level address with a context.
+ */
 typedef struct TransDevice
 {
 	char *lladdr;
@@ -20,10 +37,20 @@ typedef struct TransDevice
 	TransPlugin *plugin;
 } TransDevice;
 
+/**
+ * Context ID generator for all transcoded devices
+ */
 static unsigned long long int new_context = 991;
 
+/**
+ * List of known transcoded devices
+ */
 static LinkedList *_devices = NULL;
 
+/**
+ * Returns the list of loaded transcodings plugins
+ * @return list of transcoding plugins
+ */
 static LinkedList *plugins()
 {
 	if (! _plugins) {
@@ -32,6 +59,10 @@ static LinkedList *plugins()
 	return _plugins;
 }
 
+/**
+ * Returns the list of loaded transcodings plugins
+ * @return list of transcoding plugins
+ */
 static LinkedList *devices()
 {
 	if (! _devices) {
@@ -52,6 +83,11 @@ static int search_by_addr(void *parg, void *pelement)
 	return 0;
 }
 
+/**
+ * Returns a transcoded device struct, search by low-level addr
+ * @param lladdr low-level address as string
+ * @return transcoded device or NULL if not found
+ */
 static TransDevice *get_device_by_addr(char *lladdr)
 {
 	TransDevice *dev = llist_search_first(devices(), lladdr,
@@ -232,3 +268,5 @@ void trans_force_disconnect(ContextId id)
 	dev->plugin->force_disconnect(dev->lladdr);
 	communication_transport_disconnect_indication(id);
 }
+
+/** @} */

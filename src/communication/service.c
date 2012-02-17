@@ -214,6 +214,14 @@ Request *service_send_remote_operation_request(Context *ctx, APDU *apdu, timeout
 	return NULL;
 }
 
+/**
+ * Callback for requests related to transcoded devices.
+ * Transcoded devices don't implement 11073, so there is no
+ * actual 11073 request going through the wire. FLow is
+ * simulated by scheduling this callback as a 0ms timeout.
+ *
+ * @param ctx Current context.
+ */
 void service_trans_request_cb(Context *ctx)
 {
 	int invoke_id = (16

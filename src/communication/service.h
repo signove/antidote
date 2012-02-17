@@ -88,8 +88,16 @@ static const intu16 REQUEST_INVALID = 0;
  */
 static const InvokeIDType INVOKE_ID_ERROR = -1;
 
+/**
+ * Function to be called to free request response, which
+ * may be a subclass of RequestRet
+ */
 typedef void (*request_ret_data_free)(void *);
 
+/**
+ * Request response structure, "abstract class"
+ * Actual responses are extensions of this.
+ */
 struct RequestRet {
 	request_ret_data_free del_function;
 };

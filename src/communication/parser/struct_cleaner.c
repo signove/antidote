@@ -29,9 +29,7 @@
  */
 
 /**
- * \addtogroup StructCleaner
- *
- * \ingroup Parser
+ * \addtogroup ASN1Codec
  *
  * @{
  */

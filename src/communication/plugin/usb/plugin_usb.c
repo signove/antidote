@@ -29,7 +29,7 @@
  */
 
 /**
- * @addtogroup Communication
+ * @addtogroup UsbPlugin
  */
 
 // TODO support hotplugging (depends on future version of libusb: 1.1)

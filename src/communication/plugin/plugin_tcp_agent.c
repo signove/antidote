@@ -33,7 +33,7 @@
  */
 
 /**
- * @addtogroup AgentTCP
+ * @addtogroup AgentTcpPlugin
  * @{
  */
 

@@ -35,7 +35,7 @@
 
 
 /**
- * \addtogroup UtilitiesFunctions
+ * \addtogroup Utility
  *
  *  String buffer utilities aims to help string concatenation and memory allocation
  *  in a easy way to developer
