@@ -96,6 +96,9 @@ static void timer_reset_timeout(Context *ctx)
  * Timer callback.
  * Calls the supplied callback when timer reaches timeout, and cancels timer.
  *
+ * @param env JNI thread environment
+ * @param obj JNI bridge object
+ * @param id Context id (supplied when timer was created)
  */
 void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject obj, jint id)
 {
@@ -113,6 +116,7 @@ void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject 
 /**
  * Initiates a timer in behalf of IEEE library
  *
+ * @param ctx Context
  * @return The timer handle
  */
 static int timer_count_timeout(Context *ctx)
@@ -681,6 +685,9 @@ jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jo
 
 /**
  * Main function
+ * @param env JNI thread environment
+ * @param obj JNI bridge object
+ * @param tmp_path Path where application is allowed to write files
  * @return int
  */
 void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject obj, jstring tmp_path)

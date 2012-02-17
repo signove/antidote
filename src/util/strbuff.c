@@ -197,9 +197,17 @@ static inline char *xmlescape(char *s)
 	char *se = xmlescapec(s, s, '&', "&amp;", 5);
 	se = xmlescapec(s, se, '<', "&lt;", 4);
 	se = xmlescapec(s, se, '>', "&gt;", 4);
+	// FIXME escape simple and double quotes
 	return se;
 }
 
+/**
+ * Concatenates the string with buffer, escaping XML 'forbidden' characters
+ *
+ * @param sb string buffer
+ * @param str string to append
+ * @return 1 if succeeds, 0 if not
+ */
 int strbuff_xcat(StringBuffer *sb, char *s)
 {
 	char *se = xmlescape(s);

@@ -182,7 +182,8 @@ void context_remove_all()
 /**
  * @brief Get execution context.
  *
- * @return context or NULL if cannot find.
+ * @param id Context ID
+ * @return pointer to context struct or NULL if cannot find.
  */
 Context *context_get(ContextId id)
 {

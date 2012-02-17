@@ -72,7 +72,15 @@ static int agent_listener_count = 0;
  * and callbacks that supply data
  */
 ConfigId agent_specialization;
+
+/**
+ * Function called to generate data when measurement event is being prepared
+ */
 void *(*agent_event_report_cb)();
+
+/**
+ * Function called when agent's system id is needed by stack
+ */
 struct mds_system_data *(*agent_mds_data_cb)();
 
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);

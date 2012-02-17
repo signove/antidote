@@ -465,6 +465,7 @@ FSM_PROCESS_EVT_STATUS fsm_process_evt(FSMContext *ctx, fsm_events evt, FSMEvent
 
 /**
  * Gets current state name
+ * @param fsm State machine
  * @return the name of the state
  */
 char *fsm_get_current_state_name(FSM *fsm)
@@ -474,6 +475,7 @@ char *fsm_get_current_state_name(FSM *fsm)
 
 /**
  * Convert state code to text representation
+ * @param state State machine's state value
  * @return string representation of sate
  */
 char *fsm_state_to_string(fsm_states state)
@@ -487,6 +489,7 @@ char *fsm_state_to_string(fsm_states state)
 
 /**
  * Convert event code to text representation
+ * @param evt State machine event
  * @return string representation of event
  */
 char *fsm_event_to_string(fsm_events evt)

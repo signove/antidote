@@ -254,7 +254,12 @@ FLOAT_Type read_float(ByteStreamReader *stream, int *error)
 	return output;
 }
 
-/* round number n to d decimal points */
+/**
+ * Round number to "d" decimal places
+ * @param n number
+ * @param d decimal places
+ * @return rounded number
+ */
 inline double fround(double n, unsigned d)
 {
 	return floor(n * pow(10., d) + .5) / pow(10., d);

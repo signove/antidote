@@ -116,6 +116,8 @@ static int force_disconnect_channel(Context *c)
  * a placeholder that aids transcoding debugging. The only real
  * tasks that this plugin intermediates are: forcing disconnections
  * and timer servicing.
+ *
+ * @param plugin Pointer to Communication Plugin struct
  */
 void plugin_trans_setup(CommunicationPlugin *plugin)
 {
