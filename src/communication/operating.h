@@ -87,8 +87,6 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
 
 void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r);
 
-void operating_decode_segment_data(Any *event, HANDLE obj_handle);
-
 void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event);
 
