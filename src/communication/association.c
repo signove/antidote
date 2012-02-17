@@ -232,6 +232,8 @@ static void association_process_aare_apdu(Context *ctx, APDU *apdu)
  * @param ctx
  * @param agent_assoc_information Agent Association Information
  * @param trans 0 if regular agent, 1 if transcoded 'agent'
+ * @return 1 if incompatible protocol version, 2 if config known,
+ *         3 if config unknown
  */
 int association_accept_data_protocol_20601_in(Context *ctx,
 					PhdAssociationInformation agent_assoc_information,
@@ -488,6 +490,14 @@ static void populate_aare(APDU *apdu, PhdAssociationInformation *response_info)
 static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 				DataProto *proto);
 
+/**
+ * Send apdu association request (normally, Agent does this)
+ *
+ * @param ctx connection context
+ * @param evt input event
+ * @param data fsm data, unused
+ *
+ */
 void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	APDU config_apdu;
@@ -510,6 +520,13 @@ void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 	del_phdassociationinformation(&config_info);
 }
 
+/**
+ * Populate AARQ APDU (Normally, Agent uses this)
+ *
+ * @param apdu APDU structure
+ * @param config_info Configuration to send
+ * @param proto Data protocol to send
+ */
 static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 				DataProto *proto)
 {
@@ -552,6 +569,13 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 }
 
 
+/**
+ * Send apdu association rejected (normally, Agent does this if Manager tries to associate)
+ *
+ * @param ctx connection context
+ * @param evt input event
+ * @param data fsm data, unused
+ */
 void association_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	APDU response_apdu;

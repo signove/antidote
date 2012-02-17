@@ -633,6 +633,7 @@ void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data)
  * @param attributeids_list_count number of attribute ids 0 if you want to get all attributes
  * @param timeout
  * @param request_callback
+ * @return Request descriptor struct, or NULL if request could not be sent
  */
 Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributeids_list,
 				int attributeids_list_count, intu32 timeout,

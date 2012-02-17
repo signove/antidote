@@ -96,6 +96,7 @@ struct StdConfiguration *std_configurations_get_supported_standard(ConfigId conf
  * Check if agent system id is supported
  *
  * @param system_id agent system id
+ * @return 0 if not supported, >0 if supported
  */
 int std_configurations_is_system_id_supported(octet_string system_id)
 {
