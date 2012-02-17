@@ -4,8 +4,6 @@
  * \cond Undocumented
  */
 
-#ifndef __dbus_glib_marshal_srv_MARSHAL_H__
-
 #ifndef __dbus_glib_marshal_device_MARSHAL_H__
 #define __dbus_glib_marshal_device_MARSHAL_H__
 
