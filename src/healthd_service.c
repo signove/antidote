@@ -448,6 +448,10 @@ typedef struct {
 	GObjectClass parent;
 } DeviceClass;
 
+/**
+ * \cond Undocumented
+ */
+
 GType srv_object_get_type(void);
 GType device_object_get_type(void);
 
@@ -505,6 +509,10 @@ static void device_object_init(Device *obj)
 	obj->path = NULL;
 	obj->addr = NULL;
 }
+
+/**
+ * \endcond
+ */
 
 
 static char *client_agent = NULL;

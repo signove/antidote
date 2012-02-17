@@ -40,6 +40,10 @@
 #include "src/communication/parser/encoder_ASN1.h"
 #include "src/dim/nomenclature.h"
 
+/**
+ * \cond Undocumented
+ */
+
 #define QUOTE(x) #x
 
 #define CLVC()				\
@@ -59,6 +63,10 @@
 
 #define DEL_FUNCTION(type) del_##type
 #define CHILDREN(lctype) CHILDREN_GENERIC(DEL_FUNCTION(lctype))
+
+/**
+ * \endcond
+ */
 
 /**
  * Delete SegmentDataResult

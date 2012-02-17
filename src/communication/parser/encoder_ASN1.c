@@ -41,7 +41,13 @@
 #include "src/communication/parser/encoder_ASN1.h"
 
 
+/**
+ * \cond Undocumented
+ */
 #define CHK(fff) if (! (fff)) { ERROR("%s encoding", __func__); ok = 0; }
+/**
+ * \endcond
+ */
 
 
 /**

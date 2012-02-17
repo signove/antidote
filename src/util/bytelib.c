@@ -41,6 +41,10 @@
 #include "bytelib.h"
 #include "src/util/log.h"
 
+/**
+ * \cond Undocumented
+ */
+
 typedef enum {
 	MDER_POSITIVE_INFINITY = 0x007FFFFE,
 	MDER_NaN = 0x007FFFFF,
@@ -90,6 +94,10 @@ const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
 
 
 const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
+
+/**
+ * \endcond
+ */
 
 /**
  * Bytelib constructor.

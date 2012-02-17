@@ -25,6 +25,9 @@
  * \author Jose Luis do Nascimento
  */
 
+/**
+ * \cond Undocumented
+ */
 
 #include <errno.h>
 #include <signal.h>
@@ -139,3 +142,7 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
+/**
+ * \endcond
+ */
