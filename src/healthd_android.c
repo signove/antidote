@@ -124,7 +124,8 @@ static int timer_count_timeout(Context *ctx)
 	JNIEnv *env = java_get_env();
 	ctx->timeout_action.id = (int) (*env)->CallIntMethod(env, bridge_obj,
 					jni_up_create_timer,
-					ctx->timeout_action.timeout * 1000, ctx->id);
+					(jint) ctx->timeout_action.timeout * 1000,
+					(jint) ctx->id.connid);
 	return ctx->timeout_action.id;
 }
 
