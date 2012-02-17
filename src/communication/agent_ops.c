@@ -40,53 +40,122 @@
 #include "src/agent_p.h"
 #include <string.h>
 
+/**
+ * Answer to unexpected AARQ (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_aare_rejected_permanent_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* TODO */
 }
 
+/**
+ * Answer to unexpected ROIV (e.g. in config phase) (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roer_no_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* TODO */
 }
 
+/**
+ * Respond to a ROIV that is not ROIV GET
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
+	/* TODO */
 }
 
+/**
+ * Respond to a ROIV event report
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_event_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
 }
 
+/**
+ * Respond to a confirmed ROIV event report
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_confirmed_error_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
+	/* FIXME function name */
 }
 
-void communication_agent_roiv_all_except_confirmed_error_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
-{
-	/* TODO */
-}
-
+/**
+ * Respond to ROIV SET request (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_set_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
 }
 
+/**
+ * Respond to confirmed ROIV SET request (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_confirmed_set_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
 }
 
+/**
+ * Respond to confirmed ROIV Action request (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_confirmed_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
 }
 
+/**
+ * Respond to ROIV Action request (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
 }
 
+/**
+ * React to "Send Event" request to state machine (Agent)
+ *
+ * @param ctx state machine context
+ * @param evt state machine event
+ * @param data state machine event data
+ */
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
 {
 	APDU *apdu = calloc(sizeof(APDU), 1);
