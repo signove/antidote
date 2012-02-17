@@ -40,9 +40,19 @@
 #include "src/util/log.h"
 #include "plugin_android.h"
 
+/**
+ * Plugin ID attribued by stack
+ */
 unsigned int plugin_id = 0;
 
+/**
+ * Current data APDU waiting for collection by stack
+ */
 static char *current_data = NULL;
+
+/**
+ * Size of data APDU waiting for collection by stack
+ */
 static int data_len = 0;
 
 static int init();
@@ -51,11 +61,31 @@ static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static int force_disconnect_channel(struct Context *ctx);
 
+/**
+ * Cached Java VM context
+ */
 extern JavaVM *cached_jvm;
+
+/**
+ * Get Java Environment
+ * @return env
+ */
 JNIEnv *java_get_env();
+
+/**
+ * Proxy object in Java level that uses our functions
+ * as native methods
+ */
 extern jobject bridge_obj;
 
+/**
+ * Method ID of Java method to disconnect channel
+ */
 jmethodID jni_up_disconnect_channel;
+
+/**
+ * Method ID of Java method to send data
+ */
 jmethodID jni_up_send_data;
 
 /**
@@ -88,6 +118,11 @@ void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env,
 	communication_transport_disconnect_indication(cid);
 }
 
+/**
+ * Plugin setup.
+ *
+ * @param plugin the plugin descriptor structure to fill in
+ */
 void plugin_android_setup(CommunicationPlugin *plugin)
 {
 	plugin->network_init = init;
@@ -173,6 +208,11 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 
 /**
  * Socket data receiving callback
+ *
+ * @param env JNI thread environment
+ * @param obj JNI bridge object
+ * @param handle Connection handle (maps to a ContextID)
+ * @param buf Byte array containing data
  */
 void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobject obj,
 							jint handle, jbyteArray buf)
@@ -194,6 +234,8 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
 /**
  * Sends IEEE data to HDP channel
  *
+ * @param ctx Communication context
+ * @param stream Byte stream
  * @return success status
  */
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)

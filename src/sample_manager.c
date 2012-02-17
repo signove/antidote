@@ -127,10 +127,8 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 	free(data);
 }
 
-/*
+/**
  * Request all MDS attributes
- *\param obj
- *\param err
  *
  */
 void device_reqmdsattr()

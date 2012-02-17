@@ -42,6 +42,9 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0190();
 
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0191();
 
+/**
+ * Event report data, used in Agent role
+ */
 struct oximeter_event_report_data {
 	BasicNuObsValue beats;
 	BasicNuObsValue oximetry;
