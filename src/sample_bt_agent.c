@@ -43,6 +43,10 @@
 #include "specializations/pulse_oximeter.h"
 #include "agent.h"
 
+/**
+ * \cond Undocumented
+ */
+
 static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 		0xbb, 0xdd, 0xff};
 
@@ -53,6 +57,7 @@ guint16 hdp_data_types[] = {0x1004, 0x00};
  * Plugin definition
  */
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
+
 static PluginBluezListener bluez_listener;
 static GMainLoop *mainloop = NULL;
 
@@ -61,6 +66,10 @@ static guint alrm_handle = 0;
 
 // WARNING TODO limits to 1 manager connection at a time
 static ContextId cid;
+
+/**
+ * \endcond
+ */
 
 /**
  * App clean-up in termination phase
@@ -74,6 +83,8 @@ static void app_clean_up()
 
 /**
  * Resets a framework-depende timer
+ *
+ * @param ctx Context
  */
 static void timer_reset_timeout(Context *ctx)
 {
@@ -86,6 +97,7 @@ static void timer_reset_timeout(Context *ctx)
  * Timer callback.
  * Calls the supplied callback when timer reaches timeout, and cancels timer.
  *
+ * @param data Callback pointer that contains Context
  * @return FALSE (to cancel the timeout)
  */
 static gboolean timer_alarm(gpointer data)
@@ -99,6 +111,7 @@ static gboolean timer_alarm(gpointer data)
 /**
  * Initiates a timer in behalf of IEEE library
  *
+ * @param ctx Context
  * @return The timer handle
  */
 static int timer_count_timeout(Context *ctx)
@@ -113,6 +126,8 @@ static gboolean sigalrm(gpointer data);
 /**
  * Initiates a timer for agent-related actions
  *
+ * @param id Context ID
+ * @param to timeout in seconds
  * @return The timer handle
  */
 static void schedule_alarm(ContextId id, int to)
@@ -126,6 +141,9 @@ static void schedule_alarm(ContextId id, int to)
 
 /**
  * Callback for agent actions
+ *
+ * @param data callback pointer (unused)
+ * @return FALSE (meaning: alarm is non-recurrent)
  */
 static gboolean sigalrm(gpointer data)
 {
@@ -196,6 +214,10 @@ void device_connected(Context *ctx)
 
 /**
  * Callback when a Bluetooth device connects
+ *
+ * @param context Context ID
+ * @param btaddr Bluetooth MAC address
+ * @return TRUE
  */
 static gboolean bt_connected(ContextId context, const char *btaddr)
 {
@@ -205,6 +227,9 @@ static gboolean bt_connected(ContextId context, const char *btaddr)
 
 /**
  * Callback when a Bluetooth device disconnects
+ * @param context Context Id
+ * @param btaddr Bluetooth MAC address
+ * @return TRUE
  */
 static gboolean bt_disconnected(ContextId context, const char *btaddr)
 {
@@ -242,6 +267,8 @@ static void *event_report_cb()
 
 /**
  * Generate data for MDS
+ *
+ * @return MDS system data, particularly the system id
  */
 static struct mds_system_data *mds_data_cb()
 {
@@ -252,6 +279,9 @@ static struct mds_system_data *mds_data_cb()
 
 /**
  * Main function
+ * @param argc Argument count
+ * @param argv Argument strings
+ * @return status
  */
 int main(int argc, char **argv)
 {
