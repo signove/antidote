@@ -42,6 +42,7 @@
 #include "src/communication/fsm.h"
 #include "src/communication/service.h"
 
+/*
 typedef struct EventReportResult {
 	InvokeIDType invoke_id;
 	HANDLE obj_handle;
@@ -49,6 +50,7 @@ typedef struct EventReportResult {
 	OID_Type event_type;
 	Any event_reply_info;
 } EventReportResult;
+*/
 
 /**
  * Process the incoming APDU calling to proper procedure
