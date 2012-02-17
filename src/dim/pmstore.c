@@ -244,6 +244,7 @@ static void del_PMStoreClearSegmRet(void *p)
  * \param pm_store the PMStore struct to have the segments cleared.
  * \param selection the selected segments.
  * \param request_callback
+ * \return Request structure, NULL if request could not be sent
  *
  */
 Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct PMStore *pm_store,

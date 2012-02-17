@@ -130,7 +130,7 @@ struct PMStore {
 
 	/**
 	 * This attribute is the number of currently instantiated PMsegments
-	 * contained in the PMstore.
+	 * contained in the PMstore (as reported by agent)
 	 *
 	 * Qualifier: Mandatory
 	 *
@@ -147,8 +147,17 @@ struct PMStore {
 	 */
 	RelativeTime clear_timeout;
 
-	// local attributes
+	/**
+	 * Count of actual segments in list (segm_list).
+	 * Might differ from number_of_segments because
+	 * number_of_segments is reported by Agent while
+	 * this member is determined locally.
+	 */
 	intu16 segment_list_count;
+
+	/**
+	 * List of PM-Segments belonging to this PM-Store
+	 */
 	struct PMSegment **segm_list;
 };
 

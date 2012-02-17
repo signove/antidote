@@ -34,15 +34,21 @@
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/context_manager.h"
 
-/**
- * If process is agent role, this variable tells the config-id
- * and callbacks supply variable data (MDS and event reports)
- */
-
 struct mds_system_data;
 
+/**
+ * Agent role specialization
+ */
 extern ConfigId agent_specialization;
+
+/**
+ * Agent role event report callback
+ */
 extern void *(*agent_event_report_cb)();
+
+/**
+ * Agent role MDS system data fetch callback
+ */
 extern struct mds_system_data *(*agent_mds_data_cb)();
 
 /**
