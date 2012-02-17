@@ -58,7 +58,9 @@ typedef enum {
 	fsm_state_size // !< The last value of states enumeration, it does not represent a real state
 } fsm_states;
 
-/* Machine Events */
+/**
+ *  Machine Events
+ */
 typedef enum {
 	// IND - Transport layer indications
 	fsm_evt_ind_transport_connection = 0,
@@ -136,6 +138,9 @@ typedef enum {
 	FSM_SVT_PHD_ASSOC_INFORMATION
 } FSMEventData_choice_values;
 
+/**
+ * Event status
+ */
 typedef enum {
 	FSM_PROCESS_EVT_RESULT_STATE_UNCHANGED = 0, // !<  Represent the result of event processing when machine state keeps the state
 	FSM_PROCESS_EVT_RESULT_STATE_CHANGED, // !< Represent the result of event processing when machine go to new state
@@ -156,6 +161,9 @@ typedef struct FSMEventData {
 	 * Union type selected
 	 */
 	FSMEventData_choice_values choice;
+	/**
+	 * Possible data tokens, given the choice
+	 */
 	union {
 		Associate_result association_result;
 		Release_request_reason release_request_reason;
@@ -187,6 +195,9 @@ typedef struct FSM {
 } FSM;
 
 
+/**
+ * FSM typedef for Context
+ */
 typedef struct Context FSMContext;
 
 /**
