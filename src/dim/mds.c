@@ -65,27 +65,25 @@
  * @{
  */
 
-/*
+/**
  * Time out (seconds) release MDS constant
  */
 static const intu32 MDS_TO_CONFIRM_ACTION = 3;
 
-/*
+/**
  * Time out (seconds) GET
  */
 static const intu32 MDS_TO_GET = 3;
 
-/*
+/**
  * Time out (seconds) Confirm Set
  */
 static const intu32 MDS_TO_CONFIRM_SET = 3;
 
-/*
+/**
  * Time out (seconds) Inter Service
  */
 static const intu32 MDS_TO_INTER_SERVICE = 3;
-
-void mds_fill_attribute_data_entry(DataEntry *entry, char *att_name, OID_Type attribute_id);
 
 /**
  * Returns a new instance of an MDS object, with an empty object list.
@@ -1054,6 +1052,7 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
  * \param mds the mds.
  * \param count The number of attributes
  * \param tot_length The total length of the MDS
+ * \return Array of AVA_Type with attributes
  */
 AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *tot_length)
 {

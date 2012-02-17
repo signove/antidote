@@ -34,6 +34,9 @@
 #include "src/asn1/phd_types.h"
 #include "dim.h"
 
+/**
+ * Metric object structure
+ */
 struct Metric {
 	/**
 	 * The DIM structure

@@ -47,9 +47,13 @@
  */
 #define MDS_HANDLE 0
 
-/* Medical Device System Attributes*/
+/**
+ * Medical Device System structure
+ */
 typedef struct MDS {
-
+	/**
+	 * DIM
+	 */
 	struct DIM dim;
 
 	/**
@@ -266,17 +270,34 @@ typedef struct MDS {
 	 */
 	DataReqModeCapab data_req_mode_capab;
 
+	/**
+	 * List of children objects
+ 	 */
 	struct MDS_object *objects_list;
+
+	/**
+	 * Count of children objects
+ 	 */
 	int objects_list_count;
+
+	/**
+	 * Count of PM-Store objects among children
+ 	 */
 	int pmstore_count;
 } MDS;
 
+/**
+ * Enumeration of choices inside Metric
+ */
 typedef enum {
 	METRIC_NUMERIC = 0,
 	METRIC_ENUM,
 	METRIC_RTSA
 } Metric_choice;
 
+/**
+ * Metric object structure
+ */
 struct Metric_object {
 	Metric_choice choice;
 	union {
@@ -287,11 +308,17 @@ struct Metric_object {
 };
 
 
+/**
+ * Enumeration of choices inside Scanner
+ */
 typedef enum {
 	EPI_CFG_SCANNER = 0,
 	PERI_CFG_SCANNER
 } Scanner_choice;
 
+/**
+ * Scanner object structure
+ */
 struct Scanner_object {
 	Scanner_choice choice;
 	union {

@@ -33,6 +33,9 @@
 
 #include "metric.h"
 
+/**
+ * Enumeration object struct
+ */
 struct Enumeration {
 	/**
 	 * The DIM structure
@@ -95,6 +98,10 @@ struct Enumeration {
 	 * Qualifier: Optional
 	 */
 	NomPartition enum_observed_value_partition;
+
+	/**
+	 * Use nomenclature partition
+	 */
 	int use_nom_partition;
 };
 

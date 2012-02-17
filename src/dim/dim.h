@@ -33,6 +33,9 @@
 
 #include "src/asn1/phd_types.h"
 
+/**
+ * DIM struct
+ */
 struct DIM {
 	/**
 	 * Class identification nomenclature code attribute

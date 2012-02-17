@@ -74,7 +74,4 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 		HandleAttrValMapEntry *val_map_entry,
 		DataEntry *measurement_entry);
 
-void dimutil_fill_configuration_attributes(const OID_Type supertype,
-					const AttributeList *atts,
-					DataEntry *entry);
 #endif /* DIMUTIL_H_ */

@@ -33,6 +33,9 @@
 
 #include "metric.h"
 
+/**
+ * Numeric object struct
+ */
 struct Numeric {
 	/**
 	 * The DIM structure

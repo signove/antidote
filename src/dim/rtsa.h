@@ -71,13 +71,35 @@ struct RTSA {
 	 * values as well as measurement range. The type depend on
 	 * sample resolution (sample-size field within sample-type
 	 * field of Sa-Specification). Exactly one of the three
-	 * specifications shall be included. This attribute shall
+	 * specifications (8, 16 or 32) shall be included. This attribute shall
 	 * remain unchanged after the configuration is agreed upon
 	 *
 	 * Qualifier: Mandatory
 	 */
 	ScaleRangeSpec8 scale_and_range_specification_8;
+
+	/**
+	 * This attribute defines mapping between samples and actual
+	 * values as well as measurement range. The type depend on
+	 * sample resolution (sample-size field within sample-type
+	 * field of Sa-Specification). Exactly one of the three
+	 * specifications (8, 16 or 32) shall be included. This attribute shall
+	 * remain unchanged after the configuration is agreed upon
+	 *
+	 * Qualifier: Mandatory
+	 */
 	ScaleRangeSpec16 scale_and_range_specification_16;
+
+	/**
+	 * This attribute defines mapping between samples and actual
+	 * values as well as measurement range. The type depend on
+	 * sample resolution (sample-size field within sample-type
+	 * field of Sa-Specification). Exactly one of the three
+	 * specifications (8, 16 or 32) shall be included. This attribute shall
+	 * remain unchanged after the configuration is agreed upon
+	 *
+	 * Qualifier: Mandatory
+	 */
 	ScaleRangeSpec32 scale_and_range_specification_32;
 
 	/**
