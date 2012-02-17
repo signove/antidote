@@ -154,7 +154,7 @@ void communication_agent_roiv_action_respond_tx(FSMContext *ctx, fsm_events evt,
  *
  * @param ctx state machine context
  * @param evt state machine event
- * @param data state machine event data
+ * @param evtdata state machine event data
  */
 void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEventData *evtdata)
 {

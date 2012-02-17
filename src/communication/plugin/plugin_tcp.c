@@ -53,20 +53,48 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+/**
+ * Plugin ID attributed by stack
+ */
 static unsigned int plugin_id = 0;
 
+/**
+ * \cond Undocumented
+ */
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
+/**
+ * \endcond
+ */
 
 /**
  * Struct which contains network context
  */
 typedef struct NetworkSocket {
+	/**
+	 * Listener socket
+	 */
 	int server_sk;
+
+	/**
+	 * Connection socket
+	 */
 	int client_sk;
+
+	/**
+	 * TCP port to listen
+	 */
 	int tcp_port;
+	
+	/**
+	 * Server sockaddr
+ 	 */
 	struct sockaddr_in server;
+
+	/**
+	 * Connected status
+	 */
 	int connected;
 } NetworkSocket;
 
@@ -76,11 +104,7 @@ typedef struct NetworkSocket {
 static LinkedList *sockets = NULL;
 
 /**
- * @TODO_REVIEW_DOC
- *
- * @param arg
- * @param element
- * @return
+ * \cond Undocumented
  */
 static int search_socket_by_port(void *arg, void *element)
 {
@@ -93,6 +117,10 @@ static int search_socket_by_port(void *arg, void *element)
 
 	return port == sk->tcp_port;
 }
+
+/**
+ * \endcond
+ */
 
 /**
  * Gets a Network socket
@@ -183,6 +211,7 @@ static int init_socket(void *element)
  * Initialize network layer, in this case opens and initializes
  *  the file descriptors
  *
+ * @param plugin_label the Plugin ID or label attributed by stack to this plugin
  * @return TCP_ERROR_NONE if operation succeeds
  */
 static int network_init(unsigned int plugin_label)
@@ -319,7 +348,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 /**
  * Sends an encoded apdu
  *
- * @param ctx
+ * @param ctx Context
  * @param stream the apdu to be sent
  * @return TCP_ERROR_NONE if data sent successfully and TCP_ERROR otherwise
  */
@@ -346,6 +375,11 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	return TCP_ERROR;
 }
 
+/**
+ * Destroys a socket and its NetworkSocket descriptor
+ *
+ * @param element contains a NetworkSocket struct pointer
+ */
 static int destroy_socket(void *element)
 {
 	NetworkSocket *socket = (NetworkSocket *) element;
@@ -387,6 +421,12 @@ static int network_finalize()
 	return TCP_ERROR_NONE;
 }
 
+/**
+ * Creates a listener socket and NetworkSocket struct for the given port
+ *
+ * @param port TCP port
+ * @return TCP_ERROR_NONE if ok
+ */
 static int create_socket(int port)
 {
 
