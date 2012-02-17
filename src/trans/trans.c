@@ -32,8 +32,24 @@ CommunicationPlugin *trans_comm_plugin = 0;
  */
 typedef struct TransDevice
 {
+	/**
+	 * Low level address. Actual format is defined by transcoding plug-in.
+	 * At this level, it is essentially opaque. The plug-in is responsible
+	 * by generating unique lladdrs across all plug-ins.
+	 */
 	char *lladdr;
+
+	/**
+	 * Related stack Context id of the device.
+	 * The "plugin id" inside this is always the same:
+	 * the dummy communication plug-in at communication/plugin/trans.
+	 */
 	ContextId context;
+
+	/**
+	 * Origin transcoding plug-in for this device.
+	 * The transcoding plug-in where the device is really brought to life.
+	 */
 	TransPlugin *plugin;
 } TransDevice;
 
@@ -95,6 +111,9 @@ static TransDevice *get_device_by_addr(char *lladdr)
 	return dev;
 }
 
+/**
+ * \cond Undocumented
+ */
 static int search_by_context(void *parg, void *pelement)
 {
 	TransDevice *element = element;
@@ -107,7 +126,16 @@ static int search_by_context(void *parg, void *pelement)
 
 	return 0;
 }
+/**
+ * \endcond
+ */
 
+/**
+ * Find device by context id
+ *
+ * @param id Context id
+ * @return TransDevice struct or NULL if not found
+ */
 static TransDevice *get_device_by_context(ContextId id)
 {
 	TransDevice *dev = llist_search_first(devices(), &id,
@@ -126,6 +154,14 @@ static char *get_addr_by_context(ContextId id)
 }
 */
 
+/**
+ * Get a context ID for a transcoded device
+ * Implicitly generates a new context if device is new
+ *
+ * @param lladdr Low-level address, format is opaque
+ * @param plugin The related transcoding plug-in for the device
+ * @return Context ID
+ */
 ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 {
 	TransDevice *dev = get_device_by_addr(lladdr);
@@ -150,12 +186,27 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 	return c;
 }
 
+/**
+ * Register a transcoding plug-in at this engine
+ *
+ * @param plugin the plug-in descriptor
+ */
 void trans_register_plugin(TransPlugin *plugin)
 {
 	llist_add(plugins(), plugin);
 	plugin->init();
 }
 
+/**
+ * Called by any transcoding plug-in when a device connects
+ *
+ * @param plugin the transcoding plugin
+ * @param lladdr low-level address of device (opaque at this level)
+ * @param spec MDS attributes, at the very least must contain specialization
+ * @param assoc_info association information in 11073 format
+ * @param config device configuration in 11073 format
+ * @return 0 if error, >0 if ok
+ */
 int trans_connected(TransPlugin *plugin,
 			char *lladdr,
 			AttributeList spec,
@@ -198,6 +249,14 @@ int trans_connected(TransPlugin *plugin,
 	return 1;
 }
 
+/**
+ * Called by any transcoding plug-in when measurement data is received
+ *
+ * @param plugin the transcoding plugin
+ * @param lladdr low-level address of device (opaque at this level)
+ * @param report Measurement data in 11073 format
+ * @return 0 if error, >0 if ok
+ */
 int trans_event_report_fixed(TransPlugin *plugin,
 				char *lladdr,
 				ScanReportInfoFixed report)
@@ -220,6 +279,14 @@ int trans_event_report_fixed(TransPlugin *plugin,
 	return 1;
 }
 
+/**
+ * Called by any transcoding plug-in when measurement data is received
+ *
+ * @param plugin the transcoding plugin
+ * @param lladdr low-level address of device (opaque at this level)
+ * @param report Measurement data in 11073 format
+ * @return 0 if error, >0 if ok
+ */
 int trans_event_report_var(TransPlugin *plugin,
 			char *lladdr,
 			ScanReportInfoVar report)
@@ -242,6 +309,13 @@ int trans_event_report_var(TransPlugin *plugin,
 	return 1;
 }
 
+/**
+ * Called by any transcoding plug-in when a device disconnects
+ *
+ * @param plugin the transcoding plugin
+ * @param lladdr low-level address of device (opaque at this level)
+ * @return 0 if error, >0 if ok
+ */
 int trans_disconnected(TransPlugin *plugin, char *lladdr)
 {
 	// passing plugin = NULL indirectly blocks creation
@@ -259,6 +333,11 @@ int trans_disconnected(TransPlugin *plugin, char *lladdr)
 	return 1;
 }
 
+/**
+ * Called by 11073 stack when a connection must be brought down
+ *
+ * @param id the Context id of device
+ */
 void trans_force_disconnect(ContextId id)
 {
 	TransDevice *dev = get_device_by_context(id);
