@@ -83,6 +83,8 @@ CommunicationPlugin plugin;
 
 /**
  * Resets a framework-depende timer
+ *
+ * @param ctx Context
  */
 static void timer_reset_timeout(Context *ctx)
 {

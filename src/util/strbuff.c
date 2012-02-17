@@ -205,7 +205,7 @@ static inline char *xmlescape(char *s)
  * Concatenates the string with buffer, escaping XML 'forbidden' characters
  *
  * @param sb string buffer
- * @param str string to append
+ * @param s string to append
  * @return 1 if succeeds, 0 if not
  */
 int strbuff_xcat(StringBuffer *sb, char *s)

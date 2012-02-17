@@ -283,6 +283,8 @@ static void tcp_announce(const char *command, const char *path, const char *arg)
 
 /**
  * Resets a framework-depende timer
+ *
+ * @param ctx Context
  */
 static void timer_reset_timeout(Context *ctx)
 {
@@ -294,6 +296,7 @@ static void timer_reset_timeout(Context *ctx)
  * Timer callback.
  * Calls the supplied callback when timer reaches timeout, and cancels timer.
  *
+ * @param data Pointer to context
  * @return FALSE (to cancel the timeout)
  */
 static gboolean timer_alarm(gpointer data)
@@ -309,6 +312,7 @@ static gboolean timer_alarm(gpointer data)
 /**
  * Initiates a timer in behalf of IEEE library
  *
+ * @param ctx Context
  * @return The timer handle
  */
 static int timer_count_timeout(Context *ctx)
@@ -531,6 +535,11 @@ static void get_agent_proxy();
  * Called when D-Bus service client wants to initiate a connection.
  * Currently not supported, always returns error.
  *
+ * @param obj Serv object (GObject)
+ * @param agent D-Bus agent address
+ * @param addr target 11073 agent to connect to
+ * @param data_types list of data specialization types to support
+ * @param call Method invocation struct
  * @return success status
  */
 gboolean srv_configure(Serv *obj, gchar *agent, gchar *addr,
@@ -561,6 +570,10 @@ gboolean srv_configure(Serv *obj, gchar *agent, gchar *addr,
  * Callback related to manager.ConfigurePassive D-Bus method.
  * Called when D-Bus service client wants to accept connections.
  *
+ * @param obj Serv object (GObject)
+ * @param agent D-Bus agent address
+ * @param data_types list of data specialization types to support
+ * @param call Method invocation struct
  * @return success status
  */
 gboolean srv_configurepassive(Serv *obj, gchar *agent,
@@ -619,6 +632,7 @@ void self_configure()
 /**
  * Finds device object given handle
  *
+ * @param handle Context ID
  * @return device pointer or NULL if not found
  */
 static Device *device_by_handle(ContextId handle)
@@ -640,6 +654,12 @@ static Device *device_by_handle(ContextId handle)
 	return device;
 }
 
+/**
+ * Finds device object given an address
+ *
+ * @param low_addr device address (e.g. Bluetooth MAC)
+ * @return device pointer or NULL if not found
+ */
 static Device *device_by_addr(const char *low_addr)
 {
 	GSList *i;
@@ -660,6 +680,7 @@ static Device *device_by_addr(const char *low_addr)
 
 /**
  * Destroys a device object, given handle and/or device pointer
+ * @param device Device object to destroy
  */
 static void destroy_device(Device *device)
 {
@@ -710,6 +731,8 @@ void client_disconnected()
 /**
  * Creates a com.signove.Health.Device object.
  *
+ * @param low_addr Device address (e.g. Bluetooth MAC)
+ * @param conn_handle Context ID
  * @return a copy of object path (does not transfer ownership)
  */
 static const char *get_device_object(const char *low_addr, ContextId conn_handle)
@@ -754,6 +777,8 @@ static const char *get_device_object(const char *low_addr, ContextId conn_handle
 /**
  * Handles agent interface proxy destruction, when D-Bus client disappears.
  *
+ * @param proxy D-Bus proxy
+ * @param data Callback context pointer (unused)
  * @return success
  */
 gboolean agent_proxy_destroyed(DBusGProxy *proxy, gpointer data)
@@ -793,6 +818,10 @@ static void get_agent_proxy()
 /**
  * Asynchronous agent call return handler.
  * Does nothing because calls to agent never return data.
+ *
+ * @param proxy D-Bus proxy
+ * @param call D-Bus call struct
+ * @param user_data Unused call context pointer
  */
 static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointer user_data)
 {
@@ -810,6 +839,10 @@ static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointe
 
 /**
  * Function that calls D-Bus agent.Connected method.
+ *
+ * @param conn_handle Context ID
+ * @param low_addr Device address e.g. Bluetooth MAC
+ * @return TRUE if success
  */
 static gboolean call_agent_connected(ContextId conn_handle, const char *low_addr)
 {
@@ -855,6 +888,8 @@ static gboolean call_agent_connected(ContextId conn_handle, const char *low_addr
 /**
  * Function that calls D-Bus agent.Associated method.
  *
+ * @param conn_handle Context ID
+ * @param xml Data in XML format
  * @return success status
  */
 static gboolean call_agent_associated(ContextId conn_handle, char *xml)
@@ -952,6 +987,7 @@ static gboolean call_agent_measurementdata(ContextId conn_handle, gchar *xml)
 /**
  * Function that calls D-Bus agent.SegmentInfo method.
  *
+ * @param conn_handle Context ID
  * @param handle PM-Store handle
  * @param xml PM-Segment instance data in XML format
  * @return success status
@@ -1234,6 +1270,8 @@ static gboolean call_agent_segmentcleared(ContextId conn_handle, guint handle,
 /**
  * Function that calls D-Bus agent.DeviceAttributes method.
  *
+ * @param conn_handle Context ID
+ * @param xml Data in xml format
  * @return success status
  */
 static gboolean call_agent_deviceattributes(ContextId conn_handle, gchar *xml)
@@ -1280,6 +1318,7 @@ static gboolean call_agent_deviceattributes(ContextId conn_handle, gchar *xml)
 /**
  * Function that calls D-Bus agent.Disassociated method.
  *
+ * @param conn_handle Context ID
  * @return success status
  */
 static gboolean call_agent_disassociated(ContextId conn_handle)
@@ -1325,6 +1364,8 @@ static gboolean call_agent_disassociated(ContextId conn_handle)
 /**
  * Function that calls D-Bus agent.Disconnected method.
  *
+ * @param conn_handle Context ID
+ * @param low_addr Device address e.g. Bluetooth MAC
  * @return success status
  */
 static gboolean call_agent_disconnected(ContextId conn_handle, const char *low_addr)
@@ -1370,11 +1411,11 @@ static gboolean call_agent_disconnected(ContextId conn_handle, const char *low_a
 
 #include "serv_dbus_api.h"
 
-/*DBUS facade to connect
+/** DBUS facade to connect
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_connect(Device *obj, GError **err)
 {
 	DEBUG("device_connect");
@@ -1382,11 +1423,11 @@ gboolean device_connect(Device *obj, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to disconnect
+/** DBUS facade to disconnect
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_disconnect(Device *obj, GError **err)
 {
 	DEBUG("device_disconnect");
@@ -1395,11 +1436,13 @@ gboolean device_disconnect(Device *obj, GError **err)
 }
 
 
-/*Callback used to request mds attributes
+/**
+ * Callback used to request mds attributes
  *
- *\param ctx
- *\param response_apdu
- * */
+ * \param ctx Context
+ * \param r Related request struct (the same returned to request caller)
+ * \param response_apdu Data APDU
+ */
 static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	DEBUG("Medical Device Attributes");
@@ -1417,11 +1460,11 @@ static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *resp
 }
 
 
-/*DBUS facade to request mds attributes
+/** DBUS facade to request mds attributes
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_reqmdsattr(Device *obj, GError **err)
 {
 	DEBUG("device_reqmdsattr");
@@ -1429,11 +1472,14 @@ gboolean device_reqmdsattr(Device *obj, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to get device configuration
+/**
+ * DBUS facade to get device configuration
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param xml_out pointer to string to be filled with result XML
+ * \param err
+ * \return TRUE if success
+ */
 gboolean device_getconfig(Device *obj, char** xml_out, GError **err)
 {
 	DataList *list;
@@ -1451,11 +1497,12 @@ gboolean device_getconfig(Device *obj, char** xml_out, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to request measuremens
+/**
+ * DBUS facade to request measuremens
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_reqmeasurement(Device *obj, GError **err)
 {
 	DEBUG("device_reqmeasurement");
@@ -1463,11 +1510,13 @@ gboolean device_reqmeasurement(Device *obj, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to activate scanner
+/**
+ * DBUS facade to activate scanner
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param handle Object handle
+ * \param err
+ */
 gboolean device_reqactivationscanner(Device *obj, gint handle, GError **err)
 {
 	DEBUG("device_reqactivationscanner");
@@ -1475,11 +1524,13 @@ gboolean device_reqactivationscanner(Device *obj, gint handle, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to deactivate scanner
+/**
+ * DBUS facade to deactivate scanner
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param handle Object handle
+ * \param err
+ */
 gboolean device_reqdeactivationscanner(Device *obj, gint handle, GError **err)
 {
 	DEBUG("device_reqdeactivationscanner");
@@ -1487,11 +1538,12 @@ gboolean device_reqdeactivationscanner(Device *obj, gint handle, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to release association
+/**
+ * DBUS facade to release association
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_releaseassoc(Device *obj, GError **err)
 {
 	DEBUG("device_releaseassoc");
@@ -1499,11 +1551,12 @@ gboolean device_releaseassoc(Device *obj, GError **err)
 	return TRUE;
 }
 
-/*DBUS facade to abort association
+/**
+ * DBUS facade to abort association
  *
- *\param obj
- *\param err
- * */
+ * \param obj
+ * \param err
+ */
 gboolean device_abortassoc(Device *obj, GError **err)
 {
 	DEBUG("device_abortassoc");
@@ -1513,10 +1566,10 @@ gboolean device_abortassoc(Device *obj, GError **err)
 
 /*Callback for PM-Store GET
  *
- *\param ctx
- *\param r Request object
- *\param response_apdu
- * */
+ * \param ctx Context
+ * \param r Request object
+ * \param response_apdu response Data APDU
+ */
 static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetRet *ret = (PMStoreGetRet*) r->return_data;
@@ -1535,13 +1588,14 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 	}
 }
 
-/*DBUS facade to get PM-Store attributes
+/**
+ * DBUS facade to get PM-Store attributes
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param obj
+ * \param handle PM-Store handle
+ * \param ret Preliminary return status (actual data goes via Agent callback)
+ * \param err
+ */
 gboolean device_get_pmstore(Device *obj, gint handle,
 				gint* ret, GError **err)
 {
@@ -1553,10 +1607,10 @@ gboolean device_get_pmstore(Device *obj, gint handle,
 
 /*Callback for PM-Store get segment info response
  *
- *\param ctx
- *\param r Request object
- *\param response_apdu
- * */
+ * \param ctx
+ * \param r Request object
+ * \param response_apdu
+ */
 static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetSegmInfoRet *ret = (PMStoreGetSegmInfoRet*) r->return_data;
@@ -1577,9 +1631,10 @@ static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response
 
 /*Callback for PM-Store segment data response
  *
- *\param ctx
- *\param response_apdu
- * */
+ * \param ctx
+ * \param r Request struct, the same originally returned to invoker
+ * \param response_apdu Response data APDU
+ */
 static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreGetSegmDataRet *ret = (PMStoreGetSegmDataRet*) r->return_data;
@@ -1592,9 +1647,10 @@ static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response
 
 /*Callback for PM-Store clear segment response
  *
- *\param ctx
- *\param response_apdu
- * */
+ * \param ctx
+ * \param r Request struct, the same originally returned to invoker
+ * \param response_apdu
+ */
 static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	PMStoreClearSegmRet *ret = (PMStoreClearSegmRet*) r->return_data;
@@ -1605,13 +1661,14 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
 	call_agent_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
-/*DBUS facade to get segments info from a PM-Store
+/**
+ * DBUS facade to get segments info from a PM-Store
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param obj
+ * \param handle PM-Store handle
+ * \param ret Preliminary return status (actual data goes via Agent callback)
+ * \param err
+ */
 gboolean device_get_segminfo(Device *obj, gint handle,
 				gint* ret, GError **err)
 {
@@ -1624,14 +1681,15 @@ gboolean device_get_segminfo(Device *obj, gint handle,
 	return TRUE;
 }
 
-/*DBUS facade to get segments data from a PM-Segment
+/**
+ * DBUS facade to get segments data from a PM-Segment
  *
- *\param obj
- *\param handle PM-Store handle
- *\param instnumber PM-Segment InstNumber
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param obj
+ * \param handle PM-Store handle
+ * \param instnumber PM-Segment InstNumber
+ * \param ret Preliminary return status (actual data goes via Agent callback)
+ * \param err
+ */
 gboolean device_get_segmdata(Device *obj, gint handle, gint instnumber,
 				gint* ret, GError **err)
 {
@@ -1644,14 +1702,15 @@ gboolean device_get_segmdata(Device *obj, gint handle, gint instnumber,
 	return TRUE;
 }
 
-/*DBUS facade to clear a PM-store segment
+/**
+ * DBUS facade to clear a PM-store segment
  *
- *\param obj
- *\param handle PM-Store handle
- *\param instnumber PM-Segment InstNumber
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param obj
+ * \param handle PM-Store handle
+ * \param instnumber PM-Segment InstNumber
+ * \param ret Preliminary return status (actual data goes via Agent callback)
+ * \param err
+ */
 gboolean device_clearsegmdata(Device *obj, gint handle, gint instnumber,
 				gint *ret, GError **err)
 {
@@ -1664,13 +1723,14 @@ gboolean device_clearsegmdata(Device *obj, gint handle, gint instnumber,
 	return TRUE;
 }
 
-/*DBUS facade to clear all segments of a PM-Store
+/**
+ * DBUS facade to clear all segments of a PM-Store
  *
- *\param obj
- *\param handle PM-Store handle
- *\param ret Preliminary return status (actual data goes via Agent callback)
- *\param err
- * */
+ * \param obj
+ * \param handle PM-Store handle
+ * \param ret Preliminary return status (actual data goes via Agent callback)
+ * \param err
+ */
 gboolean device_clearallsegmdata(Device *obj, gint handle,
 				gint *ret, GError **err)
 {
@@ -1684,6 +1744,10 @@ gboolean device_clearallsegmdata(Device *obj, gint handle,
 }
 
 #include "serv_dbus_api_device.h"
+
+/**
+ * \cond Undocumented
+ */
 
 static void srv_object_class_init(ServClass *klass)
 {
@@ -1699,6 +1763,10 @@ static void device_object_class_init(DeviceClass *klass)
 	dbus_g_object_type_install_info(DEVICE_TYPE_OBJECT,
 					&dbus_glib_device_object_info);
 }
+
+/**
+ * \endcond
+ */
 
 static GMainLoop *mainloop = NULL;
 
@@ -1721,6 +1789,7 @@ static void app_clean_up()
 
 /**
  * Stops main loop (which causes application quit)
+ * @param int Signal code that is terminating the app
  */
 static void app_finalize(int sig)
 {
@@ -1739,7 +1808,9 @@ static void app_setup_signals()
 
 /**
  * Main function
- * @return int
+ * @param argc number of command-line arguments + 1
+ * @param argv list of argument strings
+ * @return status (0 = ok)
  */
 int main(int argc, char *argv[])
 {
