@@ -51,7 +51,14 @@
 #include "src/util/log.h"
 #include "plugin_bluez.h"
 
+/**
+ * Plugin ID attributed by stack
+ */
 static unsigned int plugin_id = 0;
+
+/**
+ * \cond Undocumented
+ */
 
 static DBusGConnection *conn = NULL;
 static DBusGProxy *manager = NULL;
@@ -91,6 +98,13 @@ static GSList *devices = NULL;
 static GSList *channels = NULL;
 static guint64 last_handle = 0;
 
+/**
+ * \endcond
+ */
+
+/**
+ * Plugin listener for non-stack events e.g. connection
+ */
 static PluginBluezListener *listener = NULL;
 
 static int send_data(uint64_t connid, unsigned char *data, int len);
@@ -133,8 +147,11 @@ static void device_disconnected(guint64 handle, const char *device)
 	}
 }
 
-
-
+/**
+ * Setup BlueZ plugin
+ *
+ * @param plugin the Plugin descriptor to be filled in
+ */
 void plugin_bluez_setup(CommunicationPlugin *plugin)
 {
 	plugin->network_init = init;
@@ -904,6 +921,9 @@ static const app_object *find_application_by_type(guint16 data_type)
 
 /**
  * Creates the HealthApplication's by calling BlueZ
+ *
+ * @param is_sink TRUE if data type is Sink role
+ * @param data_type Specialization or data type 
  */
 gboolean create_health_application(gboolean is_sink, guint16 data_type)
 {
@@ -1014,7 +1034,6 @@ gboolean create_health_application(gboolean is_sink, guint16 data_type)
 /**
  * Destroy health applications
  */
-
 static void destroy_health_applications()
 {
 	DBusGProxy *proxy;
@@ -1054,8 +1073,12 @@ static void destroy_health_applications()
 }
 
 
-/*
+/**
  * Create health applications for data types requested by client
+ *
+ * @param is_sink True if data types are of Sink role
+ * @param hdp_data_types List of HDP data types (specializations)
+ * @return TRUE if success
  */
 gboolean plugin_bluez_update_data_types(gboolean is_sink, guint16 hdp_data_types[])
 {

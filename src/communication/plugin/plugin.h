@@ -37,7 +37,14 @@
 
 #include <util/bytelib.h>
 
+/**
+ * Value returned to signal error condition
+ */
 #define NETWORK_ERROR 0
+
+/**
+ * Value returned to signal success
+ */
 #define NETWORK_ERROR_NONE 1
 
 /**
@@ -60,6 +67,9 @@
 			.type = 0 \
 			}
 
+/**
+ * Plugin-private typedef for Context
+ */
 typedef struct Context PluginContext;
 
 /**

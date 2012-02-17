@@ -34,6 +34,10 @@
 #include <string.h>
 #include <unistd.h>
 
+/**
+ * \cond Undocumented
+ */
+
 static const int MAX_BUFFER_SIZE = 1024;
 
 static void (*schedule_timeout)(int);
@@ -651,3 +655,7 @@ int poll_phdc_device(usb_phdc_device *phdc_device, usb_phdc_context *ctx)
 
 	return has_events;
 }
+
+/**
+ * \endcond
+ */

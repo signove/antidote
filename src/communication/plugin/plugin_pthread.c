@@ -195,7 +195,9 @@ void plugin_pthread_manager_stop()
 	manager_stop();
 }
 
-// Timer
+/**
+ * Timer run
+ */
 static void *timer_run(void *arg)
 {
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);

@@ -46,11 +46,22 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+/**
+ * Plugin ID attributed by stack
+ */
 static unsigned int plugin_id = 0;
+
+/**
+ * \cond Undocumented
+ */
 
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
+
+/**
+ * \endcond
+ */
 
 /**
  * Struct which contains network context
@@ -69,11 +80,11 @@ static LinkedList *sockets = NULL;
 
 
 /**
- * @TODO_REVIEW_DOC
+ * Search socket by port number - comparison function
  *
- * @param arg
- * @param element
- * @return
+ * @param arg Port number
+ * @param element element to compare
+ * @return non-0 if matches
  */
 static int search_socket_by_port(void *arg, void *element)
 {
@@ -87,8 +98,10 @@ static int search_socket_by_port(void *arg, void *element)
 	return port == sk->tcp_port;
 }
 /**
- * @TODO_REVIEW_DOC
- * @pararm port
+ * Get NetworkSocket given port number
+ *
+ * @param port
+ * @return NetworkSocket or NULL if not found
  */
 static NetworkSocket *get_socket(int port)
 {
@@ -96,6 +109,14 @@ static NetworkSocket *get_socket(int port)
 			&search_socket_by_port);
 }
 
+/**
+ * Data or condition received callback
+ *
+ * @param source GLib struct representing connection
+ * @param condition condition received
+ * @param data Related Context
+ * @return TRUE if connection stays open, FALSE otherwise
+ */
 gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 			   gpointer data)
 {
@@ -160,6 +181,15 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	return FALSE;
 }
 
+/**
+ * New TCP connection callback
+ *
+ * @param service Listener
+ * @param connection New connection
+ * @param source_object unused
+ * @param user_data related NetworkSocket
+ * @return FALSE
+ */
 gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 			GObject *source_object, gpointer user_data)
 {
@@ -232,8 +262,9 @@ static int init_socket(void *element)
 
 /**
  * Initialize network layer, in this case opens and initializes
- *  the file descriptors
+ * the file descriptors
  *
+ * @param Plugin id label determined by stack.
  * @return TCP_ERROR_NONE if operation succeeds
  */
 static int network_init(unsigned int plugin_label)
@@ -248,8 +279,10 @@ static int network_init(unsigned int plugin_label)
 }
 
 /**
- * Unused function
- * @param ctx
+ * Called by stack to block/sleep while waiting for data.
+ * Not implemented in this plugin because it works in non-blocking mode.
+ *
+ * @param ctx Context
  * @return TCP_ERROR
  */
 static int network_wait_for_data(Context *ctx)
@@ -259,9 +292,10 @@ static int network_wait_for_data(Context *ctx)
 }
 
 /**
- * Unused function
- * @param ctx
- * @return NULL
+ * Called by stack to fetch received APDU
+ *
+ * @param ctx Context
+ * @return Byte stream containing APDU data
  */
 static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 {
@@ -309,6 +343,12 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	return TCP_ERROR;
 }
 
+/**
+ * Destroy socket structure
+ *
+ * @param element Pointer to NetworkSocket
+ * @return 0 if failure
+ */
 static int destroy_socket(void *element)
 {
 	NetworkSocket *socket = (NetworkSocket *) element;
@@ -343,6 +383,12 @@ static int network_finalize()
 	return TCP_ERROR_NONE;
 }
 
+/**
+ * Create listening socket for a given port
+ *
+ * @param port TCP port to listen
+ * @param TCP_ERROR_NONE if ok
+ */
 static int create_socket(int port)
 {
 	DEBUG("network tcp: creating socket configuration on port %d", port);
