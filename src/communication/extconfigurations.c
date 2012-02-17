@@ -47,16 +47,42 @@
 #include "src/util/ioutil.h"
 #include "src/util/log.h"
 
+/**
+ * Index file that lists saved configurations.
+ * Internal structure is an encoded array of ExtConfig
+ */
 #define EXT_CONFIG_FILE "config_list.bin"
 
+/**
+ * Extended configuration structure.
+ * The index file is an encoded array of this struct.
+ */
 struct ExtConfig {
+	/**
+	 * System ID of device
+	 */
 	octet_string system_id;
+	/**
+	 * Configuration ID (namespace = system id)
+	 */
 	ConfigId config_id;
+	/**
+	 * Configuration object size.
+	 * Every configuration is written in a separate file.
+	 * The index only knows (and checks) the size.
+	 */
 	intu16 obj_size;
 };
 
+/**
+ * List of extended configurations in memory
+ * Loaded from index file at startup
+ */
 static struct ExtConfig *ext_configuration_list = NULL;
 
+/**
+ * Size of extended configuration list in memory
+ */
 static int ext_configuration_size = 0;
 
 static char *ext_configurations_get_file_name(octet_string *system_id,
@@ -70,6 +96,10 @@ static struct ExtConfig *ext_configurations_get_config(
 
 static void ext_configurations_create_environment();
 
+/**
+ * Returns fully qualified index file name
+ * @return Heap-allocated of file name string
+ */
 static char *ext_concat_path_file()
 {
 	char *tmp = ioutil_get_tmp();
@@ -80,6 +110,9 @@ static char *ext_concat_path_file()
 	return path;
 }
 
+/**
+ * Creates extended configuration environment
+ */
 static void ext_configurations_create_environment()
 {
 	struct stat st;
@@ -118,6 +151,12 @@ static void ext_configurations_create_environment()
 	free(concat);
 }
 
+/**
+ * Get the file name related to a system id/config id tuple
+ * 
+ * @param system_id system id of device
+ * @param config_id id of extented configuration
+ */
 static char *ext_configurations_get_file_name(octet_string *system_id,
 		ConfigId config_id)
 {
@@ -161,6 +200,9 @@ void ext_configurations_destroy()
 	}
 }
 
+/**
+ * Removes all saved configurations from disk
+ */
 void ext_configurations_remove_all_configs()
 {
 	int index;
@@ -282,6 +324,15 @@ exit:
 	free(stream);
 }
 
+/**
+ * Write extended configuration to disk
+ *
+ * @param system_id System ID (device identification)
+ * @param config_id Extended configuration ID
+ * @param stream Stream of bytes with encoded configuration
+ * @param new If not 0, indicates that config id was unknown
+ *        Otherwise, overwrites old saved config with same ID
+ */
 static void ext_configurations_write_file(octet_string *system_id,
 		ConfigId config_id, ByteStreamWriter *stream,
 		int new)
@@ -386,6 +437,13 @@ void ext_configurations_register_conf(octet_string *system_id,
 	del_byte_stream_writer(stream, 1);
 }
 
+/**
+ * Get extended configuration for a given system and config id
+ *
+ * @param system_id System ID (device identification)
+ * @param config_id Extended configuration ID
+ * @return Extended configuration structure or NULL if not found
+ */
 static struct ExtConfig *ext_configurations_get_config(octet_string *system_id,
 		ConfigId config_id) {
 	int index;
