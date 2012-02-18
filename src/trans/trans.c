@@ -63,6 +63,8 @@ static unsigned long long int new_context = 991;
  */
 static LinkedList *_devices = NULL;
 
+// TODO multithreading protection
+
 /**
  * Returns the list of loaded transcodings plugins
  * @return list of transcoding plugins

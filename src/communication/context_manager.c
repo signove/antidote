@@ -52,6 +52,8 @@
  */
 static LinkedList *context_list = NULL;
 
+// TODO multithreading protection
+
 /**
  * @brief Destroys the given context.
  *
