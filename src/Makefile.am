@@ -110,3 +110,7 @@ healthd_LDADD = \
              @DBUS_LIBS@ \
              @DBUS_GLIB_LIBS@ \
 	     @USB1_LIBS@
+
+install-data-local: healthd.conf
+	$(mkinstalldirs) $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL_DATA) $(srcdir)/healthd.conf $(DESTDIR)/etc/dbus-1/system.d/
