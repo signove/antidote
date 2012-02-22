@@ -1,6 +1,10 @@
 Roadmap/TODO
 ------------
 
+Move sample/testing programs to their own sources
+
+Fragment healthd in several modules
+
 System-ID: limit to 64 bits (see USB, transcoding plugins)
 
 Make sure unknown attributes are properly dealt with
