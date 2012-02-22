@@ -82,6 +82,9 @@ cp -a doc/html %{buildroot}%{_docdir}/antidote/
 %{_libdir}/libantidote.*
 
 %exclude %{_bindir}/ieee_manager
+%exclude %{_bindir}/ieee_agent
+%exclude %{_bindir}/simple_main
+%exclude %{_bindir}/sample_bt_agent
 %exclude %{_bindir}/ieee_manager_console
 %exclude %{_bindir}/main_test_suite
 
@@ -89,6 +92,7 @@ cp -a doc/html %{buildroot}%{_docdir}/antidote/
 %defattr(-,root,root,-)
 %{_includedir}/antidote/*
 %{_libdir}/pkgconfig/antidote.pc
+%{_libdir}/libbluezplugin*
 
 %files devel-doc
 %defattr(-,root,root,-)
