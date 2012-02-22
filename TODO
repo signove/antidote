@@ -1,11 +1,15 @@
 Roadmap/TODO
 ------------
 
-Connection/disconnection callback: move from plugins to core
+System-ID: limit to 64 bits (see USB, transcoding plugins)
 
-Document Agent, PM-Store and GetConfiguration ops
+Make sure unknown attributes are properly dealt with
+(i.e. ignored instead of provoking an error)
 
-Review documents
+Connection/disconnection callback: move from plugins to core,
+removing the need of having every plugin implementing a listener
+for the application
+(make every plugin implement those callbacks)
 
 Add unit testing cases for Agent and PM-Store.
 
@@ -15,9 +19,6 @@ Timer alarm review
 
 Transcoding:
 	Blocking/rerouting of requests like PM-Store
-	Doxygen
-	Documenting
-	Proper fencing of include files
 
 Add System-Type-Spec-List (and others) for Agent
 
