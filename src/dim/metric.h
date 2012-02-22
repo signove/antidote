@@ -31,7 +31,7 @@
 #ifndef METRIC_H_
 #define METRIC_H_
 
-#include "src/asn1/phd_types.h"
+#include "asn1/phd_types.h"
 #include "dim.h"
 
 /**

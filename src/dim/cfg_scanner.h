@@ -31,7 +31,7 @@
 #ifndef CFGSCANNER_H_
 #define CFGSCANNER_H_
 
-#include "scanner.h"
+#include <dim/scanner.h>
 
 /**
  * \brief The CfgScanner is a specialization of structure Scanner and define

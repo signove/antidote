@@ -38,9 +38,9 @@
 #include "peri_cfg_scanner.h"
 #include "pmstore.h"
 #include "rtsa.h"
-#include "src/api/api_definitions.h"
-#include "src/asn1/phd_types.h"
-#include "src/util/bytelib.h"
+#include "api/api_definitions.h"
+#include "asn1/phd_types.h"
+#include "util/bytelib.h"
 
 
 int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,

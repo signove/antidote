@@ -37,8 +37,8 @@
 #define STDCONFIGURATION_H_
 
 #include <stdlib.h>
-#include "src/asn1/phd_types.h"
-#include "src/dim/mds.h"
+#include <asn1/phd_types.h>
+#include <dim/mds.h>
 
 /**
  * This Function Pointer return the Extended Configuration described

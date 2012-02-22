@@ -42,7 +42,23 @@ pkgconfig_DATA = antidote.pc
 					communication/context_manager.h \
 					communication/service.h \
 					communication/fsm.h \
+					communication/stdconfigurations.h \
 					communication/communication.h
+@PACKAGE@_include_dimdir = $(pkgincludedir)/dim
+@PACKAGE@_include_dim_HEADERS = dim/mds.h \
+				dim/numeric.h \
+				dim/pmstore.h \
+				dim/pmstore_req.h \
+				dim/scanner.h \
+				dim/peri_cfg_scanner.h \
+				dim/epi_cfg_scanner.h \
+				dim/cfg_scanner.h \
+				dim/nomenclature.h \
+				dim/pmsegment.h \
+				dim/rtsa.h \
+				dim/metric.h \
+				dim/enumeration.h \
+				dim/dim.h
 @PACKAGE@_include_plugindir = $(pkgincludedir)/communication/plugin
 @PACKAGE@_include_plugin_HEADERS = communication/plugin/plugin.h \
                                    communication/plugin/plugin_tcp.h \

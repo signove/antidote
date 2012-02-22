@@ -31,8 +31,8 @@
 #ifndef SCANNER_H_
 #define SCANNER_H_
 
-#include "src/asn1/phd_types.h"
-#include "src/communication/service.h"
+#include "asn1/phd_types.h"
+#include "communication/service.h"
 #include "nomenclature.h"
 #include "dim.h"
 

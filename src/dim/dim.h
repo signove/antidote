@@ -31,7 +31,7 @@
 #ifndef DIM_H_
 #define DIM_H_
 
-#include "src/asn1/phd_types.h"
+#include <asn1/phd_types.h>
 
 /**
  * DIM struct

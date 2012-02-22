@@ -31,16 +31,16 @@
 #ifndef MDS_H_
 #define MDS_H_
 
-#include "src/api/api_definitions.h"
-#include "src/asn1/phd_types.h"
-#include "dim.h"
-#include "enumeration.h"
-#include "numeric.h"
-#include "rtsa.h"
-#include "pmstore.h"
-#include "scanner.h"
-#include "peri_cfg_scanner.h"
-#include "epi_cfg_scanner.h"
+#include <api/api_definitions.h>
+#include <asn1/phd_types.h>
+#include <dim/dim.h>
+#include <dim/enumeration.h>
+#include <dim/numeric.h>
+#include <dim/rtsa.h>
+#include <dim/pmstore.h>
+#include <dim/scanner.h>
+#include <dim/peri_cfg_scanner.h>
+#include <dim/epi_cfg_scanner.h>
 
 /*
  * Static mds handle value

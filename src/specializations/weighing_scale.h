@@ -31,7 +31,7 @@
 #ifndef BODY_COMPOSITION_MONITOR_H_
 #define BODY_COMPOSITION_MONITOR_H_
 
-#include "src/communication/stdconfigurations.h"
+#include <communication/stdconfigurations.h>
 
 /** /brief Body composition monitor
  */

@@ -31,7 +31,7 @@
 #ifndef BLOOD_PRESSURE_MONITOR_H_
 #define BLOOD_PRESSURE_MONITOR_H_
 
-#include "src/communication/stdconfigurations.h"
+#include <communication/stdconfigurations.h>
 
 /* Blood pressure monitor */
 #define MDC_PULS_RATE_NON_INV 18474 /* */

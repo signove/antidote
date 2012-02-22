@@ -34,10 +34,10 @@
 #include "nomenclature.h"
 #include "dim.h"
 #include "pmsegment.h"
-#include "src/util/bytelib.h"
-#include "src/communication/service.h"
-#include "src/asn1/phd_types.h"
-#include "src/api/api_definitions.h"
+#include "util/bytelib.h"
+#include "communication/service.h"
+#include "asn1/phd_types.h"
+#include "api/api_definitions.h"
 
 
 /**

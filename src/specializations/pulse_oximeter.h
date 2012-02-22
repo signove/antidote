@@ -31,7 +31,7 @@
 #ifndef PULSE_OXIMETER_H_
 #define PULSE_OXIMETER_H_
 
-#include "src/communication/stdconfigurations.h"
+#include <communication/stdconfigurations.h>
 
 /* Pulse oximeter nomenclature */
 #define MDC_PULS_OXIM_SAT_O2 19384

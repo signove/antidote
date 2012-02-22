@@ -32,7 +32,7 @@
 #define PMSEGMENT_H_
 
 #include <stdlib.h>
-#include "src/asn1/phd_types.h"
+#include "asn1/phd_types.h"
 #include "nomenclature.h"
 #include "dim.h"
 
