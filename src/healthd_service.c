@@ -1419,7 +1419,6 @@ static gboolean call_agent_disconnected(ContextId conn_handle, const char *low_a
 gboolean device_connect(Device *obj, GError **err)
 {
 	DEBUG("device_connect");
-	manager_start();
 	return TRUE;
 }
 
@@ -1431,7 +1430,6 @@ gboolean device_connect(Device *obj, GError **err)
 gboolean device_disconnect(Device *obj, GError **err)
 {
 	DEBUG("device_disconnect");
-	manager_stop();
 	return TRUE;
 }
 
