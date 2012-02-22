@@ -46,9 +46,9 @@
 #ifndef SERVICE_H_
 #define SERVICE_H_
 
-#include "src/asn1/phd_types.h"
-#include "src/communication/fsm.h"
-#include "src/communication/communication.h"
+#include <asn1/phd_types.h>
+#include <communication/fsm.h>
+#include <communication/communication.h>
 
 /**
  * Service states

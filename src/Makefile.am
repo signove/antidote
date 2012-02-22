@@ -38,7 +38,11 @@ pkgconfig_DATA = antidote.pc
 @PACKAGE@_include_asn1dir = $(pkgincludedir)/asn1
 @PACKAGE@_include_asn1_HEADERS = asn1/phd_types.h
 @PACKAGE@_include_communicationdir = $(pkgincludedir)/communication
-@PACKAGE@_include_communication_HEADERS = communication/context.h                                           
+@PACKAGE@_include_communication_HEADERS = communication/context.h \
+					communication/context_manager.h \
+					communication/service.h \
+					communication/fsm.h \
+					communication/communication.h
 @PACKAGE@_include_plugindir = $(pkgincludedir)/communication/plugin
 @PACKAGE@_include_plugin_HEADERS = communication/plugin/plugin.h \
                                    communication/plugin/plugin_tcp.h \

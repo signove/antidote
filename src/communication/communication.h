@@ -30,9 +30,9 @@
 #ifndef COMMUNICATION_H_
 #define COMMUNICATION_H_
 
-#include "src/communication/fsm.h"
-#include "src/communication/plugin/plugin.h"
-#include "src/communication/context_manager.h"
+#include <communication/fsm.h>
+#include <communication/plugin/plugin.h>
+#include <communication/context_manager.h>
 
 struct mds_system_data;
 

@@ -30,7 +30,7 @@
 #ifndef CONTEXT_MANAGER_H_
 #define CONTEXT_MANAGER_H_
 
-#include "src/communication/context.h"
+#include <communication/context.h>
 
 /**
  * Function to handle context during an iteration
