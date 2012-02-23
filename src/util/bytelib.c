@@ -358,8 +358,9 @@ intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len)
 		stream->size += len;
 		return 1; // true
 	} else {
-		ERROR("write_intu8_many %d > %d",
-			len, stream->buffer_end - stream->buffer_cur + 1);
+		long int ldiff = stream->buffer_end - stream->buffer_cur + 1;
+		ERROR("write_intu8_many %d > %ld",
+			len, ldiff);
 		return 0; // false
 	}
 

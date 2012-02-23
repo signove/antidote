@@ -324,7 +324,7 @@ static gboolean data_received_cb(GIOChannel *src, GIOCondition cond, gpointer da
 	int fd = g_io_channel_unix_get_fd(src);
 	count = recv(fd, buf, 256, 0);
 
-	DEBUG("Transcoding example oximeter: recv %d", count);
+	DEBUG("Transcoding example oximeter: recv %" G_GSIZE_FORMAT "", count);
 
 	if (count == 0) {
 		disconnected_cb();
