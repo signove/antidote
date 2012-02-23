@@ -46,7 +46,8 @@ typedef struct ManagerListener {
 	 */
 	void (*measurement_data_updated)(Context *ctx, DataList *list);
 	/**
-	 *  Called when PM-Segment data event is received
+	 *  Called when PM-Segment data event is received. In this case,
+	 *  DataList ownership is passed to the caller.
 	 */
 	void (*segment_data_received)(Context *ctx, int handle, int instnumber,
 					DataList *list);
