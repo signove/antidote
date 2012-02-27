@@ -7,56 +7,21 @@ import dbus.service
 import dbus.mainloop.glib
 import os
 import glib
-from xml.dom.minidom import *
+from test_healthd_parser import *
 
 dump_prefix = "XML"
 
-# TODO create module to interpret XML and show condensed results
-
 system_ids = {}
-
-def getText(node):
-    rc = []
-    for node in node.childNodes:
-        if node.nodeType == node.TEXT_NODE:
-            rc.append(node.data)
-    return ''.join(rc)
-
 
 def get_system_id(path, xmldata):
 	if path in system_ids:
 		return system_ids[path]
 	sid = ""
-
-	if not xmldata:
-		return sid
-
-	try:
-		doc = parseString(xmldata)
-	except:
-		return sid
-
-	for entry in doc.getElementsByTagName("entry"):
-		for simple in entry.getElementsByTagName("simple"):
-			for name in simple.getElementsByTagName("name"):
-				sname = getText(name).strip()
-				if "System-Id" != sname:
-					continue
-				values = simple.getElementsByTagName("value")
-				if values:
-					sid = getText(values[0]).strip()
-					system_ids[path] = sid
-					return sid
+	sid = get_system_id_from_mds(xmldata)
+	if sid:
+		system_ids[path] = sid
 	return sid
-
-def beautify(xmldata):
-	try:
-		doc = parseString(xmldata)
-	except:
-		print "Bad XML, keeping it ugly"
-		return xmldata
-	return doc.toprettyxml(indent="   ")
-
+	
 def dump(path, suffix, xmldata):
 	xmldata = beautify(xmldata)
 	rsid = get_system_id(path, None)
