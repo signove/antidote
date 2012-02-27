@@ -720,7 +720,7 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 		Any data = att.attribute_value;
 		ByteStreamReader *r = byte_stream_reader_instance(data.value, data.length);
 		DataEntry *entry = &(superentry->u.compound.entries[j]);
-		int res;
+		int res = 0;
 
 		if (supertype == MDC_MOC_VMO_METRIC_NU) {
 			res = dimutil_fill_numeric_attr(numeric, type, r, entry);

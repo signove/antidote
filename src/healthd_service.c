@@ -194,7 +194,9 @@ static void tcp_send(tcp_client *client, const char *msg)
 
 	DEBUG("TCP: scheduling write %p", client);
 
-	asprintf(&newbuf, "%s%s", client->buf, msg);
+	if (asprintf(&newbuf, "%s%s", client->buf, msg) < 0) {
+		return;
+	}
 
 	free(client->buf);
 	client->buf = newbuf;
@@ -266,7 +268,10 @@ static void tcp_announce(const char *command, const char *path, const char *arg)
 		if ((*j == '\t') || (*j == '\n'))
 			*j = ' ';
 
-	asprintf(&msg, "%s\t%s\t%s\n", command, path, arg2);
+	if (asprintf(&msg, "%s\t%s\t%s\n", command, path, arg2) < 0) {
+		free(arg2);
+		return;
+	}
 
 	printf("%s\n", msg);
 	
@@ -758,8 +763,10 @@ static const char *get_device_object(const char *low_addr, ContextId conn_handle
 	if (!device) {
 		device = g_object_new(DEVICE_TYPE_OBJECT, NULL);
 		device->addr = g_strdup(low_addr);
-		asprintf(&(device->path), "%s/%ld", DEVICE_OBJECT_PATH,
-			 ++dev_counter);
+		if (asprintf(&(device->path), "%s/%ld",
+				DEVICE_OBJECT_PATH, ++dev_counter) < 0) {
+			// TODO handle error;
+		}
 		DEBUG("Create device object in %s", device->path);
 		if (opmode != AUTOTESTING) {
 			dbus_g_connection_register_g_object(bus, device->path,
@@ -1011,7 +1018,9 @@ static gboolean call_agent_segmentinfo(ContextId conn_handle, guint handle, gcha
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
 		char *params;
-		asprintf(&params, "%d %s", handle, xml);
+		if (asprintf(&params, "%d %s", handle, xml) < 0) {
+			return FALSE;
+		}
 		tcp_announce("SEGMENTINFO", device_path, params);
 		free(params);
 		return TRUE;
@@ -1068,7 +1077,9 @@ static gboolean call_agent_segmentdataresponse(ContextId conn_handle,
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
 		char *params;
-		asprintf(&params, "%d %d %d", handle, instnumber, retstatus);
+		if (asprintf(&params, "%d %d %d", handle, instnumber, retstatus) < 0) {
+			return FALSE;
+		}
 		tcp_announce("SEGMENTDATARESPONSE", device_path, params);
 		free(params);
 		return TRUE;
@@ -1126,7 +1137,9 @@ static gboolean call_agent_segmentdata(ContextId conn_handle, guint handle,
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
 		char *params;
-		asprintf(&params, "%d %d %s", handle, instnumber, xml);
+		if (asprintf(&params, "%d %d %s", handle, instnumber, xml) < 0) {
+			return FALSE;
+		}
 		tcp_announce("SEGMENTDATA", device_path, params);
 		free(params);
 		return TRUE;
@@ -1182,7 +1195,9 @@ static gboolean call_agent_pmstoredata(ContextId conn_handle, guint handle, gcha
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
 		char *params;
-		asprintf(&params, "%d %s", handle, xml);
+		if (asprintf(&params, "%d %s", handle, xml) < 0) {
+			return FALSE;
+		}
 		tcp_announce("PMSTOREDATA", device_path, params);
 		free(params);
 		return TRUE;
@@ -1239,7 +1254,9 @@ static gboolean call_agent_segmentcleared(ContextId conn_handle, guint handle,
 		return TRUE;
 	} else if (opmode == TCP_SERVER) {
 		char *params;
-		asprintf(&params, "%d %d %d", handle, instnumber, retstatus);
+		if (asprintf(&params, "%d %d %d", handle, instnumber, retstatus) < 0) {
+			return FALSE;
+		}
 		tcp_announce("SEGMENTCLEARED", device_path, params);
 		free(params);
 		return TRUE;

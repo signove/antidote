@@ -477,8 +477,11 @@ void data_set_absolute_time_adj(DataEntry *data, char *att_name, AbsoluteTimeAdj
 	// the value in two parts than can easily be combined by
 	// client.
 
-	intu16 hi = ntohs(*((intu16*) &(adj->value[0])));
-	intu32 lo = ntohl(*((intu32*) &(adj->value[2])));
+	const intu16* phi = (const intu16*) &adj->value[0];
+	const intu32* plo = (const intu32*) &adj->value[2];
+
+	intu16 hi = ntohs(*phi);
+	intu32 lo = ntohl(*plo);
 
 	set_cmp(data, data_strcp(att_name), 2);
 	fill_cmp_child(data, 0, data_strcp("hi"), APIDEF_TYPE_INTU16, intu16_2str(hi));

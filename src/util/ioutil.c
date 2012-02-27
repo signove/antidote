@@ -94,7 +94,9 @@ intu8 *ioutil_buffer_from_file(const char *file_path,
 	*buffer_size = fileLen;
 
 	// Read file contents into buffer_cur
-	fread(buffer, fileLen, 1, file);
+	if (fread(buffer, fileLen, 1, file) != fileLen) {
+		// TODO handle error
+	}
 	fclose(file);
 
 	// Do what ever with buffer_cur

@@ -178,8 +178,12 @@ static void remove_device(const usb_phdc_device *impl)
 static char *get_device_addr(const usb_phdc_device *impl)
 {
 	char *sn;
-	asprintf(&sn, "%04x:%04x:%s", impl->vendor_id, impl->product_id,
-			impl->serial_number);
+	// TODO relation with system-id?
+	int res = asprintf(&sn, "%04x:%04x:%s", impl->vendor_id,
+				impl->product_id, impl->serial_number);
+	if (res < 0) {
+		// TODO handle error
+	}
 	return sn;
 }
 
