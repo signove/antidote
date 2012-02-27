@@ -317,7 +317,12 @@ static void request_usb_data_cb(struct libusb_transfer *transfer)
 static void send_data_cb(struct libusb_transfer *transfer)
 {
 	DEBUG("send_data_cb completed: %d", transfer->status);
-	libusb_free_transfer(transfer);
+	if (transfer->status == 0) {
+		// Not freeing when status != 0 leaks, but freeing it
+		// makes valgrind complain about double freeing a
+		// region. libusb bug?
+		libusb_free_transfer(transfer);
+	}
 }
 
 static void query_phdc(usb_phdc_device *phdc_device)
