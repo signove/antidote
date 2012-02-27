@@ -260,7 +260,7 @@ while i < len(args):
 	elif arg == '--prefix':
 		dump_prefix = args[i + 1]
 		i += 1
-	elif arg == '--segment':
+	elif arg == '--get-segment':
 		get_segment = 1
 		get_pmstore = 1
 	elif arg == '--clear-segment':
