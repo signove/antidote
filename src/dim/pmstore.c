@@ -497,6 +497,7 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 			ok = pmstore_fill_segment_attr(pmsegment, attr_id, stream);
 			free(stream);
 			if (! ok) {
+				DEBUG("Trouble decoding segmentinfo attr %d", attr_id);
 				free(pmsegment);
 				pmsegment = 0;
 				break;
@@ -779,8 +780,21 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 		pm_segment->transfer_timeout = s;
 		break;
 	}
+	case MDC_ATTR_ID_INSTNO: {
+		intu16 s = read_intu16(stream, &error);
+		if (error) {
+			result = 0;
+			break;
+		}
+		if (pm_segment->instance_number != s) {
+			DEBUG("instance number mismatch %d x %d",
+				pm_segment->instance_number, s);
+		}
+		break;
+	}
 	default:
-		// can't decode
+		// unknown attr, ignore
+		DEBUG("segment info attr %d unknown", attr_id);
 		result = 0;
 		break;
 	}
@@ -1013,7 +1027,8 @@ int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamR
 		break;
 	}
 	default:
-		result = 0;
+		// unknown attr, ignore
+		DEBUG("pmstore attr %d ignored", attr_id);
 		break;
 	}
 
@@ -1190,7 +1205,8 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 			for (k = 0; k < attr_count; ++k) {
 				DataEntry *entry = &obj_data_entry->u.compound.entries[k];
 
-				offset += val_map.value[k].attribute_len;
+				int len = val_map.value[k].attribute_len;
+				offset += len;
 
 				switch (metric_obj->choice) {
 				case METRIC_NUMERIC: {
@@ -1221,8 +1237,12 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 				}
 				break;
 				default: {
-					// unknown type, unknown size = BAD
-					ok = 0;
+					// unknown type
+					DEBUG("segment data: jumping %d", metric_obj->choice);
+					while (--len >= 0) {
+						int error = 0;
+						read_intu8(stream, &error);
+					}
 				}
 				}
 			}
@@ -1511,7 +1531,8 @@ static void data_set_segment_stat_entry(struct MDS *mds,
 		for (k = 0; k < attr_count; ++k) {
 			DataEntry *entry = &obj_data_entry->u.compound.entries[k];
 
-			offset += val_map.value[k].attribute_len;
+			int len = val_map.value[k].attribute_len;
+			offset += len;
 
 			switch (metric_obj->choice) {
 			case METRIC_NUMERIC: {
@@ -1542,8 +1563,12 @@ static void data_set_segment_stat_entry(struct MDS *mds,
 			}
 			break;
 			default: {
-				// unknown type, unknown size = BAD
-				ok = 0;
+				// unknown type
+				DEBUG("segment stats: jumping %d", metric_obj->choice);
+				while (--len >= 0) {
+					int error = 0;
+					read_intu8(stream, &error);
+				}
 			}
 			}
 		}
@@ -1623,7 +1648,9 @@ static void pmstore_get_segment_data_as_datalist(struct MDS *mds,
 	char *s_inst_number;
 
 	entry->choice = COMPOUND_DATA_ENTRY;
-	asprintf(&s_inst_number, "%d", segment->instance_number);
+	if (asprintf(&s_inst_number, "%d", segment->instance_number) < 0) {
+		// TODO failure
+	}
 	data_set_meta_att(entry, data_strcp("Instance-Number"), s_inst_number);
 
 	entry->u.compound.entries_count = count;
