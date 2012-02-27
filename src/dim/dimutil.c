@@ -325,7 +325,6 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 		break;
 	default:
 		ERROR("Unrecognized metric attribute-id %d", attr_id);
-		result = 0;
 		break;
 	}
 
@@ -874,7 +873,6 @@ int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
 		break;
 	default:
 		ERROR("Can't fill pmstore attribute attribute id is %d", attr_id);
-		result = 0;
 		break;
 	}
 
@@ -935,7 +933,6 @@ static int dimutil_fill_scanner_attr(struct Scanner *scanner,
 		break;
 	default:
 		ERROR("Can't fill scanner attribute attribute id is %d", attr_id);
-		result = 0;
 		break;
 	}
 
