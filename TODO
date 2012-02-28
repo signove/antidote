@@ -9,8 +9,6 @@ v21: Update document regarding:
 
 Move sample/testing programs to their own sources
 
-Remove wait_for_timeout obsolete item in comm plugin
-
 Fragment healthd in several modules
 
 Connection/disconnection callback: move from plugins to core,
