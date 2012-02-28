@@ -983,7 +983,7 @@ static int dimutil_fill_cfg_scanner_attr(struct CfgScanner *cfg_scanner,
 		data_set_intu16(data_entry, "Transmit-Window", &cfg_scanner->transmit_window);
 		break;
 	default:
-		DEBUG("Can't fill cfg_scanner attribute attribute id is %d", attr_id);
+		// DEBUG("Can't fill cfg_scanner attribute attribute id is %d", attr_id);
 		result = dimutil_fill_scanner_attr(&cfg_scanner->scanner, attr_id, stream, data_entry);
 		break;
 	}
@@ -1018,7 +1018,7 @@ int dimutil_fill_peri_scanner_attr(struct PeriCfgScanner *peri_scanner,
 		data_set_intu32(data_entry, "Reporting-Interval", &peri_scanner->reporting_interval);
 		break;
 	default:
-		DEBUG("Can't fill peri_scanner attribute attribute id is %d", attr_id);
+		// DEBUG("Can't fill peri_scanner attribute attribute id is %d", attr_id);
 		result = dimutil_fill_cfg_scanner_attr(&peri_scanner->scanner, attr_id, stream, data_entry);
 		break;
 	}
@@ -1053,7 +1053,7 @@ int dimutil_fill_epi_scanner_attr(struct EpiCfgScanner *epi_scanner,
 		data_set_intu32(data_entry, "Min-Reporting-Interval", &epi_scanner->min_reporting_interval);
 		break;
 	default:
-		DEBUG("Can't fill epi_scanner attribute, attribute id is %d", attr_id);
+		// DEBUG("Can't fill epi_scanner attribute, attribute id is %d", attr_id);
 		result = dimutil_fill_cfg_scanner_attr(&epi_scanner->scanner, attr_id, stream, data_entry);
 		break;
 	}
