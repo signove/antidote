@@ -189,8 +189,9 @@ class Configuration(object):
 				print
 
 class Measurement(object):
-	def __init__(self, datalist):
+	def __init__(self, datalist, inside_segment=0):
 		self.data = datalist
+		self.inside_segment = inside_segment
 		self.handlers = {}
 		self.handlers["Simple-Nu-Observed-Value"] = self.simple_nu
 		self.handlers["Basic-Nu-Observed-Value"] = self.basic_nu
@@ -219,7 +220,8 @@ class Measurement(object):
 		s += ") " + unit
 		print s,
 
-	def absolute_timestamp(self, entry):
+	@staticmethod
+	def absolute_timestamp(entry):
 		k = ["century", "year", "month", "day", "hour", "minute", "second", "sec_fractions"]
 		try:
 			ats = [entry.entries_map[ks].value for ks in k]
@@ -235,13 +237,16 @@ class Measurement(object):
 			
 
 	def describe(self):
-		print
-		print "Measurement"
+		if not self.inside_segment:
+			print
+			print "Measurement"
 	
 		for obj in self.data.entries:
-			print "\t",
+			if not self.inside_segment:
+				print "\t",
 			if not obj.entries:
-				print "(empty %s)" % obj.name
+				if not self.inside_segment:
+					print "(empty %s)" % obj.name
 				continue
 			for sub in obj.entries:
 				try:
@@ -249,7 +254,8 @@ class Measurement(object):
 					handler(sub)
 				except KeyError:
 					print "(unparsed %s)" % sub.name,
-			print
+			if not self.inside_segment:
+				print
 
 
 class DeviceAttributes(object):
@@ -293,17 +299,106 @@ class DeviceAttributes(object):
 class PMStore(object):
 	def __init__(self, datalist):
 		self.data = datalist
+		self.handlers = {}
+		self.handlers["Store-Capacity-Count"] = self.capacity
+		self.handlers["Store-Usage-Count"] = self.usage
+		self.handlers["Number-Of-Segments"] = self.nosegments
 
+	def capacity(self, e):
+		print "Capacity:", e.value,
+
+	def usage(self, e):
+		print "Usage:", e.value,
+
+	def nosegments(self, e):
+		print "# segments:", e.value,
+
+	def describe(self):
+		print
+		print "PM-Store Attributes"
+		
+		for obj in self.data.entries_map["Attributes"].entries:
+			try:
+				handler = self.handlers[obj.name]
+			except KeyError:
+				# print "(unparsed %s)" % obj.name,
+				continue
+			print "\t",
+			handler(obj)
+			print
+	
 
 class SegmentInfo(object):
 	def __init__(self, datalist):
 		self.data = datalist
 
+	def describe_segm(self, e):
+		print "\t#" + e.entries_map["Instance-Number"].value,
+		print e.entries_map["PM-Segment-Label"].value,
+		print "count " + e.entries_map["Usage-Count"].value
+
+	def describe(self):
+		print
+		print "Segment Info"
+		segments = self.data.entries_map["Segments"]
+		for segm in segments.entries:
+			self.describe_segm(segm)
+	
 
 class SegmentData(object):
 	def __init__(self, datalist):
 		self.data = datalist
 
+	def describe_timestamp(self, e):
+		try:
+			tm = e.entries_map["Segment-Absolute-Time"]
+			Measurement.absolute_timestamp(tm)
+			print "",
+			return
+		except KeyError:
+			pass
+
+		try:
+			tm = e.entries_map["Segment-Relative-Time"]
+			print "r@" + tm.value,
+			return
+		except KeyError:
+			pass
+
+		try:
+			tm = e.entries_map["Segment-Hires-Relative-Time"]
+			try:
+				hi = int(tm.entries_map["hi"].value)
+				lo = int(tm.entries_map["lo"].value)
+			except (KeyError, ValueError):
+				return
+			print "hr@" + hi * 2**32 + lo,
+			return
+		except KeyError:
+			pass
+
+	def describe_entry(self, e):
+		Measurement(e, True).describe()
+
+	def describe(self):
+		print
+		print "Segment Data"
+		data = self.data.entries_map["PM-Segment"]
+		total = len(data.entries)
+		too_long = total > 10
+		too_long_warn = False
+		for i, entry in enumerate(data.entries):
+			if too_long and i > 1 and i < (total - 2):
+				if not too_long_warn:
+					print "\t... more %d entries ..." % (total - 4)
+					too_long_warn = True
+				continue
+			print "\t",
+			header = entry.entries_map["Segm-Entry-Header"]
+			self.describe_timestamp(header)
+			actual = entry.entries_map["Segm-Entry-Elem-List"]
+			self.describe_entry(actual)
+			print
 
 # testing
 
