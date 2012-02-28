@@ -143,11 +143,16 @@ static PhdAssociationInformation generate_assoc_data()
 	config_info.functionalUnits = 0x00000000;
 	config_info.systemType = SYS_TYPE_AGENT;
 
-	config_info.system_id.length = strlen(lladdr);
-	config_info.system_id.value = malloc(config_info.system_id.length);
-	memcpy(config_info.system_id.value,
-		lladdr,
-		config_info.system_id.length);
+	// If you are using this plug-in as example code for your plug-in,
+	// make sure that system_id is 8 bytes and unique across devices
+	config_info.system_id.length = 8;
+	config_info.system_id.value = malloc(8);
+	memcpy(config_info.system_id.value, lladdr, 8);
+
+	// set locally administrated bit. Remove or comment this if
+	// you are using a really unique system_id (e.g. the MAC
+	// address of a non-Continua device)
+	config_info.system_id.value[0] |= 0x2;
 
 	config_info.dev_config_id = config_id;
 

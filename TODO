@@ -4,13 +4,14 @@ Roadmap/TODO
 Document Set-Time
 Document --tcpp
 
+v21: Update document regarding:
+	* transcoding system_ids
+
 Move sample/testing programs to their own sources
 
 Remove wait_for_timeout obsolete item in comm plugin
 
 Fragment healthd in several modules
-
-System-ID: limit to 64 bits (transcoding plugins)
 
 Make sure unknown attributes are properly dealt with
 (i.e. ignored instead of provoking an error)
