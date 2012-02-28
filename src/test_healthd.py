@@ -49,6 +49,7 @@ clear_segment = 0
 get_segment = 0
 get_pmstore = 0
 get_mds = 0
+interpret_data = 0
 
 class Agent(dbus.service.Object):
 
@@ -96,7 +97,10 @@ class Agent(dbus.service.Object):
 	def MeasurementData(self, dev, xmldata):
 		print
 		print "MeasurementData dev %s" % dev
-		print "=== Data: ", xmldata
+		if interpret_data:
+			Measurement(DataList(xmldata)).describe()
+		else:
+			print "=== Data: ", xmldata
 		dump(dev, "measurement", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
@@ -167,6 +171,8 @@ def getConfiguration(dev, devpath):
 	print "Configuration: XML with %d bytes" % len(config)
 	print
 	dump(devpath, "config", config)
+	if interpret_data:
+		Configuration(DataList(config)).describe()
 	return False
 
 def getSegmentInfo(dev, handle):
@@ -222,6 +228,8 @@ while i < len(args):
 
 	if arg == '--mds':
 		get_mds = 1
+	elif arg == "--interpret" or arg == "--interpret-xml":
+		interpret_data = 1
 	elif arg == '--prefix':
 		dump_prefix = args[i + 1]
 		i += 1

@@ -51,6 +51,7 @@ class DataList(object):
 
 		self.valid = False
 		self.entries = []
+		self.entries_map = {}
 		try:
 			doc = parseString(xmldata)
 		except:
@@ -70,6 +71,7 @@ class DataList(object):
 			except InvalidEntryNode:
 				continue
 			self.entries.append(o)
+			self.entries_map[o.name] = o
 
 		self.status = 1
 
@@ -127,6 +129,7 @@ class Entry(object):
 
 	def parse_children(self, node):
 		l = []
+		d = {}
 		cc = childrenByTag(node, "entries")
 		if len(cc) != 1:
 			print "Compound with wrong number off entries tag"
@@ -138,8 +141,9 @@ class Entry(object):
 			except InvalidEntryNode:
 				continue
 			l.append(o)
+			d[o.name] = o
 
-		return l
+		return l, d
 
 	def parse_simple(self, node):
 		t = childrenByTag(node, "type")
@@ -157,15 +161,97 @@ class Entry(object):
 		is_compound, cnode = self.detect_type(node)
 		self.name = self.parse_name(cnode)
 		if is_compound:
-			self.entries = self.parse_children(cnode)
+			self.entries, self.entries_map = self.parse_children(cnode)
 			self.compound = True
 		else:
 			self.dtype, self.value = self.parse_simple(cnode)
 			self.compound = False
 
+
+# Objects that interpret a data list
+
+class Configuration(object):
+	def __init__(self, datalist):
+		self.data = datalist
+
+	def describe(self):
+		print
+		print "Configuration"
+		for obj in self.data.entries:
+			print "\t" + obj.name,
+			if obj.name == "Numeric":
+				print " unit ",
+				print obj.entries_map["Unit-Code"].value
+			elif obj.name == "PM-Store":
+				print " handle ",
+				print obj.meta["HANDLE"]
+			else:
+				print
+
+class Measurement(object):
+	def __init__(self, datalist):
+		self.data = datalist
+		self.handlers = {}
+		self.handlers["Simple-Nu-Observed-Value"] = self.simple_nu
+		self.handlers["Basic-Nu-Observed-Value"] = self.basic_nu
+
+	def unit(self, entry):
+		if "unit" in entry.meta:
+			return entry.meta["unit"]
+		return "(unit %s)" % entry.meta["unit-code"]
+
+	def simple_nu(self, entry):
+		print entry.value + self.unit(entry),
+
+	def basic_nu(self, entry):
+		print entry.value + self.unit(entry),
+
+	def describe(self):
+		print
+		print "Measurement ",
+	
+		for obj in self.data.entries:
+			if not obj.entries:
+				continue
+			if obj.entries[0].name in self.handlers:
+				handler = self.handlers[obj.entries[0].name]
+				handler(obj.entries[0])
+			else:
+				print obj.name,
+
+		print
+
+
+class DeviceAttributes(object):
+	def __init__(self, datalist):
+		self.data = datalist
+
+	def describe(self):
+		print "Device Attributes"
+		
+
+
+class PMStore(object):
+	def __init__(self, datalist):
+		self.data = datalist
+
+
+class SegmentInfo(object):
+	def __init__(self, datalist):
+		self.data = datalist
+
+
+class SegmentData(object):
+	def __init__(self, datalist):
+		self.data = datalist
+
+
+# testing
+
 if __name__ == '__main__':
 	import sys
-	d = DataList(file(sys.argv[1]).read())
+	f = sys.argv[1]
+	d = DataList(file(f).read())
 
 	def print_entries(d, indent):
 		for e in d.entries:
@@ -178,8 +264,25 @@ if __name__ == '__main__':
 			else:
 				print_entries(e, indent + "    ")
 
-	print_entries(d, "")
+	# print_entries(d, "")
+
+	if f.find("config") >= 0:
+		Configuration(d).describe()
+	elif f.find("measure") >= 0:
+		Measurement(d).describe()
+	elif f.find("assoc") >= 0:
+		DeviceAttributes(d).describe()
+	elif f.find("attrib") >= 0:
+		DeviceAttributes(d).describe()
+	elif f.find("pmstore") >= 0:
+		PMStore(d).describe()
+	elif f.find("segmentinfo") >= 0:
+		SegmentInfo(d).describe()
+	elif f.find("segmentdata") >= 0:
+		SegmentData(d).describe()
+	
 	sys.exit(0)
+
 	print
 	print 
 	print
