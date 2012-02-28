@@ -54,7 +54,11 @@
 #include "src/communication/parser/struct_cleaner.h"
 #include "src/util/log.h"
 
+// #define APDU_DUMP
 
+#ifdef APDU_DUMP
+#include <util/ioutil.h>
+#endif
 
 /**
  * Represents the network layer status
@@ -526,6 +530,12 @@ void communication_process_input_data(Context *ctx, ByteStreamReader *stream)
 			return;
 		}
 
+#ifdef APDU_DUMP
+		ioutil_buffer_to_file("apdu_dump", 5, (unsigned char *) "recv ", 1);
+		ioutil_buffer_to_file("apdu_dump", stream->unread_bytes, stream->buffer, 1);
+		ioutil_buffer_to_file("apdu_dump", 1, (unsigned char *) "\n", 1);
+#endif
+
 		// Decode the APDU
 		APDU apdu;
 		decode_apdu(stream, &apdu, &error);
@@ -697,6 +707,12 @@ int communication_send_apdu(Context *ctx, APDU *apdu)
 	encoded_apdu = byte_stream_writer_instance(apdu->length + 4/*apdu header*/);
 
 	encode_apdu(encoded_apdu, apdu);
+
+#ifdef APDU_DUMP
+	ioutil_buffer_to_file("apdu_dump", 5, (unsigned char *) "send ", 1);
+	ioutil_buffer_to_file("apdu_dump", encoded_apdu->size, encoded_apdu->buffer, 1);
+	ioutil_buffer_to_file("apdu_dump", 1, (unsigned char *) "\n", 1);
+#endif
 
 	// send encoded_apdu bytes
 	int return_val = comm_plugin->network_send_apdu_stream(ctx, encoded_apdu);
