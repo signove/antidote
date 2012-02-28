@@ -7,7 +7,7 @@ Remove wait_for_timeout obsolete item in comm plugin
 
 Fragment healthd in several modules
 
-System-ID: limit to 64 bits (see USB, transcoding plugins)
+System-ID: limit to 64 bits (transcoding plugins)
 
 Make sure unknown attributes are properly dealt with
 (i.e. ignored instead of provoking an error)
