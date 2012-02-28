@@ -34,6 +34,7 @@
 typedef struct StringBuffer {
 	char *str;
 	int size;
+	int len;
 } StringBuffer;
 
 StringBuffer *strbuff_new(int initial_size);

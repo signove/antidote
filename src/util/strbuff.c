@@ -62,29 +62,27 @@ static int ADDITIONAL_BUFF_SIZE = 100;
  */
 static int strbuff_alloc(StringBuffer *sb, int len)
 {
-	int cur_len = strlen(sb->str);
-	int new_len = cur_len + len;
+	int needed_len = sb->len + len + 1;
 
-	if (new_len <= sb->size) {
+	if (needed_len <= sb->size) {
 		// Buffer supports to write length
 		return 1;
 	}
 
 	// Should allocate more memory
-	int new_size = new_len + ADDITIONAL_BUFF_SIZE;
+	sb->size = needed_len * 2 + ADDITIONAL_BUFF_SIZE;
 
 	if (sb->str == NULL) {
-		sb->str = calloc(new_size, sizeof(char));
+		sb->str = malloc(sb->size);
+		sb->str[0] = '\0';
 	} else {
-		sb->str = realloc(sb->str, sizeof(char) * new_size);
+		sb->str = realloc(sb->str, sb->size);
 	}
 
 	// error if cannot allocate
 	if (sb->str == NULL) {
 		return 0;
 	}
-
-	sb->size = new_size;
 
 	return 1;
 }
@@ -99,9 +97,11 @@ static int strbuff_alloc(StringBuffer *sb, int len)
 StringBuffer *strbuff_new(int initial_size)
 {
 	StringBuffer *sb = calloc(1, sizeof(StringBuffer));
-	sb->size = initial_size;
+	sb->size = initial_size + 1;
+	sb->len = 0;
 
-	sb->str = calloc(initial_size, sizeof(char));
+	sb->str = malloc(sb->size);
+	sb->str[0] = '\0';
 
 	if (sb->str == NULL) {
 		return NULL;
@@ -124,7 +124,9 @@ static int strbuff_ncat(StringBuffer *sb, char *str, int len)
 		return 0;
 	}
 
-	strncat(sb->str, str, len);
+	memcpy(sb->str + sb->len, str, len);
+	sb->len += len;
+	sb->str[sb->len] = '\0';
 	return 1;
 }
 
@@ -142,7 +144,7 @@ int strbuff_cat(StringBuffer *sb, char *str)
 		return 0;
 	}
 
-	return strbuff_ncat(sb, str, strlen(str)+1);
+	return strbuff_ncat(sb, str, strlen(str));
 }
 
 
