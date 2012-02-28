@@ -107,15 +107,20 @@ class Agent(dbus.service.Object):
 	def PMStoreData(self, dev, pmstore_handle, xmldata):
 		print
 		print "PMStore dev %s handle %d" % (dev, pmstore_handle)
-		print "=== Data: XML with %d bytes" % len(xmldata)
+		if interpret_data:
+			PMStore(DataList(xmldata)).describe()
+		else:
+			print "=== Data: XML with %d bytes" % len(xmldata)
 		dump(dev, "pmstore_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="sis", out_signature="")
 	def SegmentInfo(self, dev, pmstore_handle, xmldata):
 		print
 		print "SegmentInfo dev %s PM-Store handle %d" % (dev, pmstore_handle)
-		print "=== XML with %d bytes" % len(xmldata)
-		# print "\tData:\t", data
+		if interpret_data:
+			SegmentInfo(DataList(xmldata)).describe()
+		else:
+			print "=== XML with %d bytes" % len(xmldata)
 		dump(dev, "segmentinfo_%d" % pmstore_handle, xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
@@ -132,9 +137,12 @@ class Agent(dbus.service.Object):
 	@dbus.service.method("com.signove.health.agent", in_signature="siis", out_signature="")
 	def SegmentData(self, dev, pmstore_handle, pmsegment, xmldata):
 		print
-		print "SegmentData dev %s PM-Store handle %d" % (dev, pmstore_handle)
-		print "=== InstNumber %d" % pmsegment
-		print "=== Data: %d bytes XML" % len(xmldata)
+		print "SegmentData dev %s PM-Store handle %d inst %d" % \
+			(dev, pmstore_handle, pmsegment)
+		if interpret_data:
+			SegmentInfo(DataList(xmldata)).describe()
+		else:
+			print "=== Data: %d bytes XML" % len(xmldata)
 		dump(dev, "segmentdata_%d_%d" % (pmstore_handle, pmsegment), xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="siii", out_signature="")
@@ -148,7 +156,10 @@ class Agent(dbus.service.Object):
 	def DeviceAttributes(self, dev, xmldata):
 		print
 		print "DeviceAttributes dev %s" % dev
-		print "=== Data: XML with %d bytes" % len(xmldata)
+		if interpret_data:
+			DeviceAttributes(DataList(xmldata)).describe()
+		else:
+			print "=== Data: XML with %d bytes" % len(xmldata)
 		dump(dev, "attributes", xmldata)
 
 	@dbus.service.method("com.signove.health.agent", in_signature="s", out_signature="")

@@ -194,6 +194,9 @@ class Measurement(object):
 		self.handlers = {}
 		self.handlers["Simple-Nu-Observed-Value"] = self.simple_nu
 		self.handlers["Basic-Nu-Observed-Value"] = self.basic_nu
+		self.handlers["Compound-Basic-Nu-Observed-Value"] = self.compound_basic_nu
+		self.handlers["Compound-Simple-Nu-Observed-Value"] = self.compound_basic_nu
+		self.handlers["Absolute-Time-Stamp"] = self.absolute_timestamp
 
 	def unit(self, entry):
 		if "unit" in entry.meta:
@@ -206,20 +209,47 @@ class Measurement(object):
 	def basic_nu(self, entry):
 		print entry.value + self.unit(entry),
 
+	def compound_basic_nu(self, entry):
+		unit = self.unit(entry)
+		s = "("
+		for sub in entry.entries:
+			if len(s) > 1:
+				s += ", "
+			s += sub.value
+		s += ") " + unit
+		print s,
+
+	def absolute_timestamp(self, entry):
+		k = ["century", "year", "month", "day", "hour", "minute", "second", "sec_fractions"]
+		try:
+			ats = [entry.entries_map[ks].value for ks in k]
+		except KeyError:
+			print "(invalid timestamp)",
+			return
+		try:
+			ats = [ int(n) for n in ats ]
+		except ValueError:
+			print "(bad timestamp)",
+			return
+		print " @ %02d%02d/%02d/%02d-%02d:%02d:%02d.%02d" % tuple(ats),
+			
+
 	def describe(self):
 		print
-		print "Measurement ",
+		print "Measurement"
 	
 		for obj in self.data.entries:
+			print "\t",
 			if not obj.entries:
+				print "(empty %s)" % obj.name
 				continue
-			if obj.entries[0].name in self.handlers:
-				handler = self.handlers[obj.entries[0].name]
-				handler(obj.entries[0])
-			else:
-				print obj.name,
-
-		print
+			for sub in obj.entries:
+				try:
+					handler = self.handlers[sub.name]
+					handler(sub)
+				except KeyError:
+					print "(unparsed %s)" % sub.name,
+			print
 
 
 class DeviceAttributes(object):
