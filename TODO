@@ -48,20 +48,8 @@ FSMEventData.
 
 ASN.1: use "open" stream writers, no need to specify count.
 
-ASN.1: mitigate the need of Any structures. Points:
-	* handle Anys in decoder level
-	* soft error (choice unknown) x hard errors
-		(stream underflow)
-	* currently, decoder reports all errors as hard
-	* many 'flavors' of Any in every place it is used,
-	  each one with union of possible decoded outcomes.
-	* Where Any can't be removed, make it easier to
-	  copy writer stream to Any (a single function
-	  instead of getting stream buffer and size)
-
-Clearer, simpler rules of ownership, in particular when
-involving APDU data. (This will be easier once the
-need of pre-encoding Any types is eliminated.)
+ASN.1: mitigate the need of Any structures and intermediate
+       encoding. Create helper functions
 
 Search for FIXMEs and TODOs in code and deal with them
 
