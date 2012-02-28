@@ -255,10 +255,39 @@ class Measurement(object):
 class DeviceAttributes(object):
 	def __init__(self, datalist):
 		self.data = datalist
+		self.handlers = {}
+		self.handlers["System-Model"] = self.system_model
+		self.handlers["System-Id"] = self.system_id
+		self.handlers["System-Type-Spec-List"] = self.system_type
+
+	def system_model(self,  e):
+		print "Manufacturer:", e.entries_map["manufacturer"].value,
+		print "Model:", e.entries_map["model-number"].value,
+
+	def system_id(self, e):
+		print "System ID", e.value,
+
+	def system_type(self, e):
+		if e.entries:
+			print "Specializations:",
+		for spec in e.entries:
+			num = spec.entries_map["type"].value
+			num = int(num)
+			print "0x%x" % num,
 
 	def describe(self):
+		print
 		print "Device Attributes"
-		
+	
+		for obj in self.data.entries_map["MDS"].entries:
+			try:
+				handler = self.handlers[obj.name]
+			except KeyError:
+				# print "(unparsed %s)" % obj.name,
+				continue
+			print "\t",
+			handler(obj)
+			print
 
 
 class PMStore(object):
