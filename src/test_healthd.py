@@ -140,7 +140,7 @@ class Agent(dbus.service.Object):
 		print "SegmentData dev %s PM-Store handle %d inst %d" % \
 			(dev, pmstore_handle, pmsegment)
 		if interpret_data:
-			SegmentInfo(DataList(xmldata)).describe()
+			SegmentData(DataList(xmldata)).describe()
 		else:
 			print "=== Data: %d bytes XML" % len(xmldata)
 		dump(dev, "segmentdata_%d_%d" % (pmstore_handle, pmsegment), xmldata)
