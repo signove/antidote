@@ -75,11 +75,7 @@ static const int DBUS_SERVER = 0;
 static const int TCP_SERVER = 1;
 static const int AUTOTESTING = 2;
 
-static const int COMM_BLUEZ = 0;
-static const int COMM_USB = 1;
-
 static int opmode;
-static int commmode;
 
 static gboolean call_agent_measurementdata(ContextId, char *);
 static gboolean call_agent_disassociated(ContextId);
@@ -614,9 +610,7 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 	get_agent_proxy();
 	dbus_g_method_return(call);
 
-	if (commmode == COMM_BLUEZ) {
-		plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
-	}
+	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 
 	g_free(hdp_data_types);
 
@@ -628,10 +622,8 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
  */
 void self_configure()
 {
-	if (commmode == COMM_BLUEZ) {
-		guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
-		plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
-	}
+	guint16 hdp_data_types[] = {0x1004, 0x1007, 0x1029, 0x100f, 0x0};
+	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 }
 
 /**
@@ -1831,43 +1823,38 @@ int main(int argc, char *argv[])
 	GError *error = NULL;
 	guint result;
 
-	CommunicationPlugin plugin;
+	CommunicationPlugin bt_plugin;
+	CommunicationPlugin usb_plugin;
 	CommunicationPlugin trans_plugin;
-	CommunicationPlugin *trans_plugin_p = 0;
+
+	CommunicationPlugin *plugins[] = {0, 0, 0, 0};
+	int plugin_count = 0;
 
 	int trans_support = 0;
+	int usb_support = 0;
 	int i;
 
 	opmode = DBUS_SERVER;
-	commmode = COMM_BLUEZ;
 
 	for (i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--autotest") == 0) {
 			opmode = AUTOTESTING;
-		}
-		if (strcmp(argv[i], "--autotesting") == 0) {
+		} else if (strcmp(argv[i], "--autotesting") == 0) {
 			opmode = AUTOTESTING;
-		}
-		if (strcmp(argv[i], "--auto") == 0) {
+		} else if (strcmp(argv[i], "--auto") == 0) {
 			opmode = AUTOTESTING;
-		}
-		if (strcmp(argv[i], "--tcp") == 0) {
+		} else if (strcmp(argv[i], "--tcp") == 0) {
 			opmode = TCP_SERVER;
-		}
-		if (strcmp(argv[i], "--tcpserver") == 0) {
+		} else if (strcmp(argv[i], "--tcpserver") == 0) {
 			opmode = TCP_SERVER;
-		}
-		if (strcmp(argv[i], "--bluez") == 0) {
-			commmode = COMM_BLUEZ;
-		}
-		if (strcmp(argv[i], "--trans") == 0) {
+		} else if (strcmp(argv[i], "--bluez") == 0) {
+		} else if (strcmp(argv[i], "--trans") == 0) {
 			trans_support = 1;
-		}
 #ifndef ANDROID_HEALTHD
-		if (strcmp(argv[i], "--usb") == 0) {
-			commmode = COMM_USB;
-		}
+		} else if (strcmp(argv[i], "--usb") == 0) {
+			usb_support = 1;
 #endif
+		}
 	}
 
 	app_setup_signals();
@@ -1925,34 +1912,38 @@ int main(int argc, char *argv[])
 					    G_OBJECT(srvObj));
 
 init_plugin:
-	plugin = communication_plugin();
+	bt_plugin = communication_plugin();
 	trans_plugin = communication_plugin();
+	usb_plugin = communication_plugin();
 
-	if (commmode == COMM_BLUEZ) {
-		plugin_bluez_setup(&plugin);
-		bluez_listener.peer_connected = call_agent_connected;
-		bluez_listener.peer_disconnected = call_agent_disconnected;
-		plugin_bluez_set_listener(&bluez_listener);
+	plugin_bluez_setup(&bt_plugin);
+	bluez_listener.peer_connected = call_agent_connected;
+	bluez_listener.peer_disconnected = call_agent_disconnected;
+	plugin_bluez_set_listener(&bluez_listener);
+
+	bt_plugin.timer_count_timeout = timer_count_timeout;
+	bt_plugin.timer_reset_timeout = timer_reset_timeout;
+	plugins[plugin_count++] = &bt_plugin;
+
 #ifndef ANDROID_HEALTHD
-	} else if (commmode == COMM_USB) {
-		plugin_usb_setup(&plugin);
+	if (usb_support) {
+		plugin_usb_setup(&usb_plugin);
 		usb_listener.agent_connected = call_agent_connected;
 		usb_listener.agent_disconnected = call_agent_disconnected;
 		plugin_usb_set_listener(&usb_listener);
-#endif
-	}
 
-	plugin.timer_count_timeout = timer_count_timeout;
-	plugin.timer_reset_timeout = timer_reset_timeout;
+		usb_plugin.timer_count_timeout = timer_count_timeout;
+		usb_plugin.timer_reset_timeout = timer_reset_timeout;
+		plugins[plugin_count++] = &usb_plugin;
+	}
+#endif
 
 	if (trans_support) {
 		plugin_trans_setup(&trans_plugin);
 		trans_plugin.timer_count_timeout = timer_count_timeout;
 		trans_plugin.timer_reset_timeout = timer_reset_timeout;
-		trans_plugin_p = &trans_plugin;
+		plugins[plugin_count++] = &trans_plugin;
 	}
-
-	CommunicationPlugin *plugins[] = {&plugin, trans_plugin_p, 0};
 
 	manager_init(plugins);
 
