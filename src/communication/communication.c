@@ -631,7 +631,6 @@ static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 	default:
 		// TODO error handling
 		ERROR(" service error: Invalid machine state ");
-		exit(1);
 	}
 }
 
@@ -662,7 +661,6 @@ static void communication_process_apdu_manager(Context *ctx, APDU *apdu)
 	default:
 		// TODO error handling
 		ERROR(" service error: Invalid machine state ");
-		exit(1);
 	}
 }
 

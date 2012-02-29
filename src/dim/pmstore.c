@@ -101,9 +101,6 @@ static void decode_fixed_segment_data(Context *ctx, struct PMStore *pmstore,
 struct PMStore *pmstore_instance()
 {
 	struct PMStore *store = calloc(1, sizeof(struct PMStore));
-//	if (store == NULL) {
-//		exit(1);
-//	}
 	store->dim.id = pmstore_get_nomenclature_code();
 	store->segm_list = NULL;
 	store->segment_list_count = 0;
@@ -188,7 +185,7 @@ void pmstore_service_action_clear_segments(struct PMStore *pm_store, SegmSelecti
 				  * pm_store->segment_list_count);
 
 		if (inst_num == NULL) {
-			exit(1);
+			ERROR("ERROR");
 		}
 
 		for (i = 0; i < pm_store->segment_list_count; ++i) {
@@ -335,7 +332,7 @@ void pmstore_remove_selected_segm(struct PMStore *pm_store, intu16 *selection,
 	temp_segm = malloc(sizeof(struct PMSegment) * temp_size);
 
 	if (temp_segm == NULL) {
-		exit(1);
+		ERROR("ERROR");
 	}
 
 	int j;
@@ -381,7 +378,7 @@ void pmstore_remove_selected_segm(struct PMStore *pm_store, intu16 *selection,
 
 		free(temp_segm);
 	} else {
-		exit(1);
+		ERROR("ERROR");
 	}
 
 }
@@ -795,7 +792,6 @@ static int pmstore_fill_segment_attr(struct PMSegment *pm_segment, OID_Type attr
 	default:
 		// unknown attr, ignore
 		DEBUG("segment info attr %d unknown", attr_id);
-		result = 0;
 		break;
 	}
 
@@ -884,7 +880,6 @@ void pmstore_add_segment(struct PMStore *pm_store, struct PMSegment *segment)
 
 		if (pm_store->segm_list == NULL) {
 			ERROR("PM-Store segm list");
-			exit(1);
 		}
 	}
 

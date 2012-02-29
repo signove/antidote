@@ -870,7 +870,6 @@ void mds_add_object(MDS *mds, struct MDS_object object)
 
 		if (mds->objects_list == NULL) {
 			ERROR("ERROR");
-			exit(1);
 		}
 	}
 

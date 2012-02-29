@@ -508,8 +508,8 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 					   "org.bluez.HealthChannel", "Acquire");
 
 	if (!msg) {
-		DEBUG(" network:dbus Can't allocate new method call");
-		exit(2);
+		ERROR(" network:dbus Can't allocate new method call");
+		return;
 	}
 
 	dbus_error_init(&err);
@@ -1221,11 +1221,13 @@ static int init(unsigned int plugin_label)
 
 	if (NULL == conn) {
 		ERROR(" network:dbus Connection Error, exiting");
-		exit(2);
+		return NETWORK_ERROR;
 	}
 
-	if (!create_manager_proxy())
-		exit(2);
+	if (!create_manager_proxy()) {
+		ERROR(" network:dbus fail create_manager_proxy()");
+		return NETWORK_ERROR;
+	}
 
 	connect_manager_signals();
 	find_current_adapters();

@@ -470,7 +470,7 @@ int init_phdc_usb_plugin(usb_phdc_context *phdc_context,
 	ret = libusb_init(&phdc_context->usb_context);
 	if (ret != LIBUSB_SUCCESS) {
 		DEBUG("libusb_init failure %d", ret);
-		exit(1);
+		return 0;
 	}
 
 	lpfds = libusb_get_pollfds(phdc_context->usb_context);

@@ -650,7 +650,8 @@ int encode_segmselection(ByteStreamWriter *stream, SegmSelection *pointer)
 		CHK(encode_abstimerange(stream, &pointer->u.abs_time_range));
 		break;
 	default:
-		// TODO: manage errors
+		ERROR("encoding: segm selection choice unknown");
+		return 0;
 		break;
 	}
 	return ok;
@@ -941,7 +942,8 @@ int encode_apdu(ByteStreamWriter *stream, APDU *pointer)
 		CHK(encode_prst_apdu(stream, &pointer->u.prst));
 		break;
 	default:
-		// TODO: manage errors
+		ERROR("encoding: apdu type unknown");
+		return 0;
 		break;
 	}
 	return ok;
@@ -1324,6 +1326,8 @@ int encode_enumval(ByteStreamWriter *stream, EnumVal *pointer)
 		CHK(write_intu32(stream, pointer->u.enum_bit_str));
 		break;
 	default:
+		ERROR("encoding: enumval choice unknown");
+		return 0;
 		break;
 	}
 	return ok;

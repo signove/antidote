@@ -226,7 +226,7 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			//reject_result.problem = UNRECOGNIZED_OPERATION;
+			// TODO reject_result.problem = UNRECOGNIZED_OPERATION;
 			break;
 		}
 

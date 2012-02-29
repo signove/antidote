@@ -324,7 +324,7 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 		data_set_float(data_entry, "Measure-Active-Period", &metric->measure_active_period);
 		break;
 	default:
-		ERROR("Unrecognized metric attribute-id %d", attr_id);
+		DEBUG("Unrecognized metric attribute-id %d", attr_id);
 		break;
 	}
 
@@ -872,7 +872,7 @@ int dimutil_fill_pmstore_attr(struct PMStore *pmstore, OID_Type attr_id,
 				&pmstore->clear_timeout);
 		break;
 	default:
-		ERROR("Can't fill pmstore attribute attribute id is %d", attr_id);
+		DEBUG("Can't fill pmstore attribute attribute id is %d", attr_id);
 		break;
 	}
 
@@ -932,7 +932,7 @@ static int dimutil_fill_scanner_attr(struct Scanner *scanner,
 		data_set_handle_attr_val_map(data_entry, "Scan-Handle-Attr-Val-Map", &scanner->scan_handle_attr_val_map);
 		break;
 	default:
-		ERROR("Can't fill scanner attribute attribute id is %d", attr_id);
+		DEBUG("Can't fill scanner attribute attribute id is %d", attr_id);
 		break;
 	}
 

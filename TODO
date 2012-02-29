@@ -13,13 +13,9 @@ Remove wait_for_timeout obsolete item in comm plugin
 
 Fragment healthd in several modules
 
-Make sure unknown attributes are properly dealt with
-(i.e. ignored instead of provoking an error)
-
 Connection/disconnection callback: move from plugins to core,
 removing the need of having every plugin implementing a listener
-for the application
-(make every plugin implement those callbacks)
+for the application (make every plugin implement those callbacks)
 
 Add unit testing cases for Agent and PM-Store.
 

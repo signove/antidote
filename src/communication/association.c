@@ -385,7 +385,7 @@ void association_accept_config_tx(Context *ctx, fsm_events evt,
 		} else {
 			ERROR("associating: invalid association result"
 			      " to accept configuration ");
-			exit(1);
+			return;
 		}
 
 		APDU response_apdu;
