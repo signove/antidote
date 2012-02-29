@@ -11,15 +11,6 @@
  */
 
 /**
- * Function called by transcoding plugin when agent connects
- */
-typedef int (*agent_connected_cb)(ContextId id, const char *lladdr);
-/**
- * Function called by transcoding plugin when agent disconnects
- */
-typedef int (*agent_disconnected_cb)(ContextId id, const char *lladdr);
-
-/**
  * Transcoding plugin structure
  */
 typedef struct TransPlugin 
@@ -38,16 +29,6 @@ typedef struct TransPlugin
 	 * Connection forced closing function (called by engine)
 	 */
 	void (*force_disconnect)(const char *);
-
-	/**
-	 * Agent connected callback
-	 */
-	agent_connected_cb conn_cb;
-
-	/**
-	 * Agent disconnected callback
-	 */
-	agent_disconnected_cb disconn_cb;
 
 	/**
 	 * Set-Time action ported to transcoding

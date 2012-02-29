@@ -240,7 +240,7 @@ void device_unavailable(Context *ctx)
  *
  * @param ctx current context.
  */
-void device_connected(Context *ctx)
+void device_connected(Context *ctx, const char *addr)
 {
 	fprintf(stderr, "main: Connected\n");
 	CONTEXT_ID = ctx->id;

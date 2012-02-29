@@ -271,10 +271,7 @@ int trans_connected(TransPlugin *plugin,
 		return 0;
 	}
 
-	if (plugin->conn_cb)
-		plugin->conn_cb(context, lladdr);
-
-	communication_transport_connect_indication(context);
+	communication_transport_connect_indication(context, lladdr);
 
 	Context *ctx = context_get(context);
 	if (!ctx) {
@@ -376,10 +373,7 @@ int trans_disconnected(TransPlugin *plugin, char *lladdr)
 		return 0;
 	}
 
-	communication_transport_disconnect_indication(context);
-
-	if (plugin->disconn_cb)
-		plugin->disconn_cb(context, lladdr);
+	communication_transport_disconnect_indication(context, lladdr);
 
 	return 1;
 }
@@ -396,7 +390,7 @@ void trans_force_disconnect(ContextId id)
 		DEBUG("Transcoded dev: unknown context for forced disconnection");
 	}
 	dev->plugin->force_disconnect(dev->lladdr);
-	communication_transport_disconnect_indication(id);
+	communication_transport_disconnect_indication(id, dev->lladdr);
 }
 
 /**

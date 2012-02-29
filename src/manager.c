@@ -146,6 +146,9 @@ static void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm
  * , see documentation on \ref SpecializationDescription "IEEE device specializations"
  */
 
+int manager_notify_evt_device_connected(Context *ctx, const char *addr);
+int manager_notify_evt_device_disconnected(Context *ctx, const char *addr);
+
 /**
  * Initializes the manager on application load. This function also
  * registers existing device specializations.
@@ -166,6 +169,8 @@ void manager_init(CommunicationPlugin **plugins)
 
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &manager_handle_transition_evt);
+	communication_set_connection_listeners(&manager_notify_evt_device_connected,
+						&manager_notify_evt_device_disconnected);
 
 	// Register standard configurations for each specialization.
 	// (comment these if you want to test acquisition of extended
@@ -306,6 +311,57 @@ int manager_notify_evt_device_unavailable(Context *ctx)
 	return ret_val;
 }
 
+/**
+ * Notifies 'device connected'  event.
+ * This function should be visible to source layer of events.
+ * This function must be called in a thread safe communication context.
+ *
+ * @param ctx
+ * @param addr
+ * @return 1 if any listener catches the notification, 0 if not
+ */
+int manager_notify_evt_device_connected(Context *ctx, const char *addr)
+{
+	int ret_val = 0;
+	int i;
+
+	for (i = 0; i < manager_listener_count; i++) {
+		ManagerListener *l = &manager_listener_list[i];
+
+		if (l != NULL && l->device_connected != NULL) {
+			(l->device_connected)(ctx, addr);
+			ret_val = 1;
+		}
+	}
+
+	return ret_val;
+}
+
+/**
+ * Notifies 'device disconnected'  event.
+ * This function should be visible to source layer of events.
+ * This function must be called in a thread safe communication context.
+ *
+ * @param ctx
+ * @param addr
+ * @return 1 if any listener catches the notification, 0 if not
+ */
+int manager_notify_evt_device_disconnected(Context *ctx, const char *addr)
+{
+	int ret_val = 0;
+	int i;
+
+	for (i = 0; i < manager_listener_count; i++) {
+		ManagerListener *l = &manager_listener_list[i];
+
+		if (l != NULL && l->device_disconnected != NULL) {
+			(l->device_disconnected)(ctx, addr);
+			ret_val = 1;
+		}
+	}
+
+	return ret_val;
+}
 
 /**
  * Notifies 'measurement data updated'  event.

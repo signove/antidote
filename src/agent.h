@@ -44,7 +44,11 @@ typedef struct AgentListener {
 	/**
 	 * Called after device is connected
 	 */
-	void (*device_connected)(Context *ctx);
+	void (*device_connected)(Context *ctx, const char *addr);
+	/**
+	 * Called after device is disconnected
+	 */
+	void (*device_disconnected)(Context *ctx, const char *addr);
 	/**
 	 * Called after device is operational
 	 */
@@ -61,6 +65,7 @@ typedef struct AgentListener {
 
 #define AGENT_LISTENER_EMPTY {\
 			.device_connected = NULL,\
+			.device_disconnected = NULL,\
 			.device_associated = NULL,\
 			.device_unavailable = NULL,\
 			.timeout = NULL\

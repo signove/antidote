@@ -77,7 +77,6 @@ static GSList *channels = NULL;
 static guint64 last_handle = 0;
 
 // static GSList *apps = NULL;
-static PluginUsbListener *listener = NULL;
 
 // static int send_data(guint64 handle, unsigned char *data, int len);
 
@@ -96,11 +95,7 @@ static void device_connected(guint64 handle, const char *device)
 {
 	ContextId cid = {plugin_id, handle};
 
-	if (listener) {
-		listener->agent_connected(cid, device);
-	}
-
-	communication_transport_connect_indication(cid);
+	communication_transport_connect_indication(cid, device);
 }
 
 /**
@@ -113,10 +108,7 @@ static void device_disconnected(guint64 handle, const char *device)
 {
 	ContextId cid = {plugin_id, handle};
 
-	communication_transport_disconnect_indication(cid);
-	if (listener) {
-		listener->agent_disconnected(cid, device);
-	}
+	communication_transport_disconnect_indication(cid, device);
 }
 
 
@@ -126,15 +118,6 @@ void plugin_usb_setup(CommunicationPlugin *plugin)
 	plugin->network_get_apdu_stream = get_apdu;
 	plugin->network_send_apdu_stream = send_apdu_stream;
 	plugin->network_finalize = finalize;
-}
-
-/**
- * Sets a listener to event of this plugin
- * @param plugin
- */
-void plugin_usb_set_listener(PluginUsbListener *plugin)
-{
-	listener = plugin;
 }
 
 /**

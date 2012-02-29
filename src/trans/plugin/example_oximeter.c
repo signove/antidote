@@ -452,14 +452,12 @@ static int finalize()
 	return 1;
 }
 
-void trans_plugin_oximeter_register(agent_connected_cb conn_cb, agent_disconnected_cb disconn_cb)
+void trans_plugin_oximeter_register()
 {
 	this_plugin = malloc(sizeof(TransPlugin));
 	this_plugin->init = &init;
 	this_plugin->finalize = &finalize;
 	this_plugin->force_disconnect = &force_disconnect;
-	this_plugin->conn_cb = conn_cb;
-	this_plugin->disconn_cb = disconn_cb;
 	this_plugin->set_time = &set_time_fake;
 	trans_register_plugin(this_plugin);
 }

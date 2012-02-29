@@ -110,7 +110,7 @@ static int init_socket()
 	}
 
 	ContextId cid = {plugin_id, port};
-	communication_transport_connect_indication(cid);
+	communication_transport_connect_indication(cid, "tcp");
 
 	return 1;
 }
@@ -209,7 +209,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
-			communication_transport_disconnect_indication(cid);
+			communication_transport_disconnect_indication(cid, "tcp");
 			DEBUG(" network:tcp error");
 			sk = -1;
 			return NULL;
@@ -218,7 +218,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
-			communication_transport_disconnect_indication(cid);
+			communication_transport_disconnect_indication(cid, "tcp");
 			DEBUG(" network:tcp closed");
 			sk = -1;
 			return NULL;

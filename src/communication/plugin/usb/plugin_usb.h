@@ -28,21 +28,4 @@
  * \date Mar 25, 2011
  */
 
-
-/**
- * Usb plugin listener definition
- */
-typedef struct PluginUsbListener {
-	/**
-	 * Called when agent connects
-	 */
-	gboolean (*agent_connected)(ContextId conn_handle, const char *addr);
-
-	/**
-	 * Called when agent disconnects
-	 */
-	gboolean (*agent_disconnected)(ContextId conn_handle, const char *addr);
-} PluginUsbListener;
-
 void plugin_usb_setup(CommunicationPlugin *plugin);
-void plugin_usb_set_listener(PluginUsbListener *plugin);

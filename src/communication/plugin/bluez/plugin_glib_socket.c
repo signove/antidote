@@ -73,11 +73,6 @@ static const int BACKLOG = 1;
  */
 
 /**
- * Plugin listener for non-stack events e.g. connection
- */
-static PluginGlibSocketListener *listener = NULL;
-
-/**
  * Struct which contains network context
  */
 typedef struct NetworkSocket {
@@ -215,10 +210,7 @@ static gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	if (condition & (G_IO_ERR | G_IO_HUP)) {
 		DEBUG(" glib socket: conn closed with error");
 		ContextId cid = {plugin_id, conn->conn_id};
-		communication_transport_disconnect_indication(cid);
-		if (listener) {
-			listener->peer_disconnected(cid, conn->addr);
-		}
+		communication_transport_disconnect_indication(cid, conn->addr);
 		g_io_channel_unref(source);
 		close(fd);
 		remove_connection(conn);
@@ -233,10 +225,7 @@ static gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	if (bytes_read <= 0) {
 		DEBUG(" glib socket: connection closed read %" G_GSIZE_FORMAT "", bytes_read);
 		ContextId cid = {plugin_id, conn->conn_id};
-		communication_transport_disconnect_indication(cid);
-		if (listener) {
-			listener->peer_disconnected(cid, conn->addr);
-		}
+		communication_transport_disconnect_indication(cid, conn->addr);
 		close(fd);
 		g_io_channel_unref(source);
 		remove_connection(conn);
@@ -337,8 +326,9 @@ static gboolean new_connection(GSocketService *service, GSocketConnection *conne
 		// TODO handle error
 	}
 	free(saddr);
+	saddr = NULL;
 
-	Context *ctx = communication_transport_connect_indication(cid);
+	Context *ctx = communication_transport_connect_indication(cid, lladdr);
 
 	if (ctx != NULL && channel != NULL) {
 		Connection *conn = calloc(1, sizeof(Connection));
@@ -353,10 +343,6 @@ static gboolean new_connection(GSocketService *service, GSocketConnection *conne
 		g_io_add_watch(channel, G_IO_IN | G_IO_HUP | G_IO_ERR,
 					(GIOFunc) network_read_apdu,
 					GUINT_TO_POINTER(conn_id));
-
-		if (listener) {
-			listener->peer_connected(cid, conn->addr);
-		}
 	} else {
 		DEBUG("Could not add watch");
 		g_object_unref(connection);
@@ -601,15 +587,6 @@ int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts,
 	plugin->network_finalize = network_finalize;
 
 	return TCP_ERROR_NONE;
-}
-
-/**
- * Sets a listener to event of this plugin
- * @param slistener Socket listener
- */
-void plugin_glib_socket_set_listener(PluginGlibSocketListener *slistener)
-{
-	listener = slistener;
 }
 
 /** @} */

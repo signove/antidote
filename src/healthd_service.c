@@ -67,12 +67,6 @@
 
 #define AGENT_INTERFACE "com.signove.health.agent"
 
-static PluginBluezListener bluez_listener;
-#ifndef ANDROID_HEALTHD
-static PluginUsbListener usb_listener;
-#endif
-static PluginGlibSocketListener tcpp_listener;
-
 static const int DBUS_SERVER = 0;
 static const int TCP_SERVER = 1;
 static const int AUTOTESTING = 2;
@@ -844,10 +838,11 @@ static void call_agent_epilogue(DBusGProxy *proxy, DBusGProxyCall *call, gpointe
  * @param low_addr Device address e.g. Bluetooth MAC
  * @return TRUE if success
  */
-static gboolean call_agent_connected(ContextId conn_handle, const char *low_addr)
+static gboolean call_agent_connected(Context *ctx, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
+	ContextId conn_handle = ctx->id;
 
 	DEBUG("call_agent_connected");
 
@@ -1378,10 +1373,11 @@ static gboolean call_agent_disassociated(ContextId conn_handle)
  * @param low_addr Device address e.g. Bluetooth MAC
  * @return success status
  */
-static gboolean call_agent_disconnected(ContextId conn_handle, const char *low_addr)
+static gboolean call_agent_disconnected(Context *ctx, const char *low_addr)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
+	ContextId conn_handle = ctx->id;
 
 	DEBUG("call_agent_disconnected");
 
@@ -1963,10 +1959,6 @@ init_plugin:
 	tcp_plugin = communication_plugin();
 
 	plugin_bluez_setup(&bt_plugin);
-	bluez_listener.peer_connected = call_agent_connected;
-	bluez_listener.peer_disconnected = call_agent_disconnected;
-	plugin_bluez_set_listener(&bluez_listener);
-
 	bt_plugin.timer_count_timeout = timer_count_timeout;
 	bt_plugin.timer_reset_timeout = timer_reset_timeout;
 	plugins[plugin_count++] = &bt_plugin;
@@ -1974,10 +1966,6 @@ init_plugin:
 #ifndef ANDROID_HEALTHD
 	if (usb_support) {
 		plugin_usb_setup(&usb_plugin);
-		usb_listener.agent_connected = call_agent_connected;
-		usb_listener.agent_disconnected = call_agent_disconnected;
-		plugin_usb_set_listener(&usb_listener);
-
 		usb_plugin.timer_count_timeout = timer_count_timeout;
 		usb_plugin.timer_reset_timeout = timer_reset_timeout;
 		plugins[plugin_count++] = &usb_plugin;
@@ -1994,10 +1982,6 @@ init_plugin:
 #ifndef ANDROID_HEALTHD
 	if (tcpp_support) {
 		plugin_glib_socket_setup(&tcp_plugin, 1, 6024);
-		tcpp_listener.peer_connected = call_agent_connected;
-		tcpp_listener.peer_disconnected = call_agent_disconnected;
-		plugin_glib_socket_set_listener(&tcpp_listener);
-
 		tcp_plugin.timer_count_timeout = timer_count_timeout;
 		tcp_plugin.timer_reset_timeout = timer_reset_timeout;
 		plugins[plugin_count++] = &tcp_plugin;
@@ -2011,13 +1995,14 @@ init_plugin:
 	listener.segment_data_received = &segment_data_received;
 	listener.device_available = &device_associated;
 	listener.device_unavailable = &device_disassociated;
+	listener.device_connected = &call_agent_connected;
+	listener.device_disconnected = &call_agent_disconnected;
 
 	manager_add_listener(listener);
 	manager_start();
 
 	if (trans_support) {
-		trans_plugin_oximeter_register(call_agent_connected,
-						call_agent_disconnected);
+		trans_plugin_oximeter_register();
 	}
 
 	if (opmode != DBUS_SERVER)

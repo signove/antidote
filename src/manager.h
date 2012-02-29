@@ -64,11 +64,21 @@ typedef struct ManagerListener {
 	 * Called after timeout occurs
 	 */
 	void (*timeout)(Context *ctx);
+	/**
+ 	* Called when peer connects
+ 	*/
+	int (*device_connected)(Context *ctx, const char *addr);
+	/**
+ 	* Called when peer disconnects
+ 	*/
+	int (*device_disconnected)(Context *ctx, const char *addr);
 } ManagerListener;
 
 #define MANAGER_LISTENER_EMPTY {\
 			.measurement_data_updated = NULL,\
 			.segment_data_received = NULL, \
+			.device_connected = NULL,\
+			.device_disconnected = NULL,\
 			.device_available = NULL,\
 			.device_unavailable = NULL,\
 			.timeout = NULL\

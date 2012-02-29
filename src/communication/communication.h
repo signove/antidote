@@ -48,6 +48,9 @@
  */
 typedef void (*communication_state_transition_handler_function)(Context *ctx, fsm_states previous, fsm_states next);
 
+typedef int (*comm_conn_cb)(Context *ctx, const char *addr);
+typedef int (*comm_disconn_cb)(Context *ctx, const char *addr);
+
 void communication_add_plugin(CommunicationPlugin *plugin);
 
 unsigned int communication_plugin_id(CommunicationPlugin *plugin);
@@ -65,6 +68,10 @@ int communication_add_state_transition_listener(
 	fsm_states state,
 	communication_state_transition_handler_function listener_function);
 
+void communication_set_connection_listeners(comm_conn_cb cf, comm_disconn_cb df);
+
+void communication_remove_connection_listeners();
+
 void communication_remove_all_state_transition_listeners();
 
 void communication_network_start();
@@ -74,9 +81,9 @@ int communication_is_network_started();
 int communication_network_stop();
 
 
-Context *communication_transport_connect_indication(ContextId id);
+Context *communication_transport_connect_indication(ContextId id, const char *addr);
 
-void communication_transport_disconnect_indication(ContextId id);
+void communication_transport_disconnect_indication(ContextId id, const char *addr);
 
 void communication_lock(Context *ctx);
 

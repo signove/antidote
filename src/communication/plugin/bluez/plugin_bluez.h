@@ -29,23 +29,7 @@
  */
 
 
-/**
- * Bluez plugin listener definition
- */
-typedef struct PluginBluezListener {
-	/**
-	 * Called when agent connects
-	 */
-	gboolean (*peer_connected)(ContextId cid, const char *btaddr);
-
-	/**
-	 * Called when agent disconnects
-	 */
-	gboolean (*peer_disconnected)(ContextId cid, const char *btaddr);
-} PluginBluezListener;
-
 void plugin_bluez_setup(CommunicationPlugin *plugin);
-void plugin_bluez_set_listener(PluginBluezListener *plugin);
 gboolean plugin_bluez_update_data_types(gboolean is_sink, guint16 data_types[]);
 gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type,
 				int reliability);

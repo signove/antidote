@@ -212,7 +212,7 @@ static int init_socket(void *element)
 	}
 
 	ContextId cid = {plugin_id, sk->tcp_port};
-	communication_transport_connect_indication(cid);
+	communication_transport_connect_indication(cid, "tcp");
 
 	return 1;
 }
@@ -305,18 +305,18 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			free(sk->buffer);
 			sk->buffer = 0;
 			sk->buffer_size = 0;
-			communication_transport_disconnect_indication(cid);
+			communication_transport_disconnect_indication(cid, "tcp");
 			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication(cid);
+			communication_transport_connect_indication(cid, "tcp");
 			return NULL;
 		} else if (bytes_read == 0) {
 			sk->connected = 0;
 			free(sk->buffer);
 			sk->buffer = 0;
 			sk->buffer_size = 0;
-			communication_transport_disconnect_indication(cid);
+			communication_transport_disconnect_indication(cid, "tcp");
 			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication(cid);
+			communication_transport_connect_indication(cid, "tcp");
 			return NULL;
 		}
 

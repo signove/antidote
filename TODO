@@ -1,16 +1,15 @@
 Roadmap/TODO
 ------------
 
+v21: Update document regarding:
+	* connection/disconnection callbacks
+
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
 
 Move sample/testing programs to their own sources
 
 Fragment healthd in several modules
-
-Connection/disconnection callback: move from plugins to core,
-removing the need of having every plugin implementing a listener
-for the application (make every plugin implement those callbacks)
 
 Handle unit multiples (*_X_* names)
 

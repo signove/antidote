@@ -3,6 +3,6 @@
 
 #include <src/trans/trans.h>
 
-void trans_plugin_oximeter_register(agent_connected_cb, agent_disconnected_cb);
+void trans_plugin_oximeter_register();
 
 #endif

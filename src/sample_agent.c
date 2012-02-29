@@ -117,8 +117,9 @@ static void device_unavailable(Context *ctx)
  * has connected (but not associated)
  *
  * @param ctx current context.
+ * @param addr low-level address
  */
-static void device_connected(Context *ctx)
+static void device_connected(Context *ctx, const char *addr)
 {
 	fprintf(stderr, "main: Connected\n");
 

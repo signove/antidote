@@ -129,7 +129,6 @@ typedef void (*timer_reset_timeout_ptr)(PluginContext *ctx);
  */
 typedef int (*timer_count_timeout_ptr)(PluginContext *ctx);
 
-
 /**
  * CommunicationPlugin interface definition. Its determine the
  * behaviour of communication layer.

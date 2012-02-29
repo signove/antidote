@@ -102,11 +102,6 @@ static guint64 last_handle = 0;
  * \endcond
  */
 
-/**
- * Plugin listener for non-stack events e.g. connection
- */
-static PluginBluezListener *listener = NULL;
-
 static int send_data(uint64_t connid, unsigned char *data, int len);
 
 static int init(unsigned int plugin_label);
@@ -126,10 +121,7 @@ static int disconnect_channel(guint64 handle);
 static void device_connected(guint64 handle, const char *device)
 {
 	ContextId cid = {plugin_id, handle};
-	if (listener) {
-		listener->peer_connected(cid, device);
-	}
-	communication_transport_connect_indication(cid);
+	communication_transport_connect_indication(cid, device);
 }
 
 /**
@@ -141,10 +133,7 @@ static void device_connected(guint64 handle, const char *device)
 static void device_disconnected(guint64 handle, const char *device)
 {
 	ContextId cid = {plugin_id, handle};
-	communication_transport_disconnect_indication(cid);
-	if (listener) {
-		listener->peer_disconnected(cid, device);
-	}
+	communication_transport_disconnect_indication(cid, device);
 }
 
 /**
@@ -159,15 +148,6 @@ void plugin_bluez_setup(CommunicationPlugin *plugin)
 	plugin->network_send_apdu_stream = send_apdu_stream;
 	plugin->network_disconnect = force_disconnect_channel;
 	plugin->network_finalize = finalize;
-}
-
-/**
- * Sets a listener to event of this plugin
- * @param plugin
- */
-void plugin_bluez_set_listener(PluginBluezListener *plugin)
-{
-	listener = plugin;
 }
 
 /**

@@ -58,7 +58,6 @@ guint16 hdp_data_types[] = {0x1004, 0x00};
  */
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
 
-static PluginBluezListener bluez_listener;
 static GMainLoop *mainloop = NULL;
 
 static int alarms = 0;
@@ -203,9 +202,9 @@ void device_unavailable(Context *ctx)
  *
  * @param ctx current context.
  */
-void device_connected(Context *ctx)
+static void device_connected(Context *ctx, const char *addr)
 {
-	fprintf(stderr, "main: Connected\n");
+	fprintf(stderr, "connected %s\n", addr);
 
 	// ok, make it proceed with association
 	// (agent has the initiative)
@@ -213,28 +212,14 @@ void device_connected(Context *ctx)
 }
 
 /**
- * Callback when a Bluetooth device connects
- *
- * @param context Context ID
- * @param btaddr Bluetooth MAC address
- * @return TRUE
- */
-static gboolean bt_connected(ContextId context, const char *btaddr)
-{
-	fprintf(stderr, "bt_connected %s\n", btaddr);
-	return TRUE;
-}
-
-/**
  * Callback when a Bluetooth device disconnects
  * @param context Context Id
- * @param btaddr Bluetooth MAC address
+ * @param addr Bluetooth MAC address
  * @return TRUE
  */
-static gboolean bt_disconnected(ContextId context, const char *btaddr)
+static void device_disconnected(Context *ctx, const char *addr)
 {
-	fprintf(stderr, "bt_disconnected %s\n", btaddr);
-	return TRUE;
+	fprintf(stderr, "bt_disconnected %s\n", addr);
 }
 
 
@@ -303,15 +288,12 @@ int main(int argc, char **argv)
 
 	plugin_bluez_setup(&comm_plugin);
 
-	bluez_listener.peer_connected = bt_connected;
-	bluez_listener.peer_disconnected = bt_disconnected;
-	plugin_bluez_set_listener(&bluez_listener);
-
 	agent_init(plugins, oximeter_specialization,
 			event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;
+	listener.device_disconnected = &device_disconnected;
 	listener.device_associated = &device_associated;
 	listener.device_unavailable = &device_unavailable;
 

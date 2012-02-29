@@ -137,6 +137,16 @@ static StateTransitionListener *state_transition_listener_list = NULL;
  */
 static int state_transition_listener_size = 0;
 
+/**
+ * Connection listener
+ */
+static comm_conn_cb connection_listener = NULL;
+
+/**
+ * Disconnection listener
+ */
+static comm_disconn_cb disconnection_listener = NULL;
+
 static int communication_fire_transport_disconnect_evt(Context *ctx);
 
 /**
@@ -265,6 +275,7 @@ void communication_finalize()
 	}
 
 	communication_remove_all_state_transition_listeners();
+	communication_remove_connection_listeners();
 	context_remove_all();
 
 	for (i = 1; i <= plugin_count; ++i) {
@@ -337,6 +348,17 @@ void communication_remove_all_state_transition_listeners()
 	}
 }
 
+
+void communication_set_connection_listeners(comm_conn_cb cf, comm_disconn_cb df)
+{
+	connection_listener = cf;
+	disconnection_listener = df;
+}
+
+void communication_remove_connection_listeners()
+{
+	connection_listener = disconnection_listener = NULL;
+}
 
 /**
  * Start network layer. After this operation
@@ -423,9 +445,10 @@ int communication_network_stop()
  * see topic 8.1 of IEEE 11071-20601 documentation
  *
  * @param id context id
+ * @param addr transport address (informative)
  * @return created context to handle this connection
  */
-Context *communication_transport_connect_indication(ContextId id)
+Context *communication_transport_connect_indication(ContextId id, const char *addr)
 {
 	CommunicationPlugin *comm_plugin =
 		communication_get_plugin(id.plugin);
@@ -446,6 +469,10 @@ Context *communication_transport_connect_indication(ContextId id)
 
 	communication_unlock(ctx);
 	// thread-safe block - end
+
+	if (connection_listener)
+		connection_listener(ctx, addr);
+
 	return ctx;
 }
 
@@ -455,11 +482,16 @@ Context *communication_transport_connect_indication(ContextId id)
  * see topic 8.1 of IEEE 11071-20601 documentation
  *
  * @param id context id
+ * @param addr transport address (informative)
  */
-void communication_transport_disconnect_indication(ContextId id)
+void communication_transport_disconnect_indication(ContextId id, const char *addr)
 {
 	Context *ctx = context_get(id);
 	communication_fire_transport_disconnect_evt(ctx);
+
+	if (disconnection_listener)
+		disconnection_listener(ctx, addr);
+
 	context_remove(id);
 }
 

@@ -111,6 +111,9 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  * , see documentation on \ref SpecializationDescription "IEEE device specializations"
  */
 
+int agent_notify_evt_device_connected(Context *ctx, const char *addr);
+int agent_notify_evt_device_disconnected(Context *ctx, const char *addr);
+
 /**
  * Initializes the agent on application load. This function also
  * registers existing device specializations.
@@ -140,6 +143,8 @@ void agent_init(CommunicationPlugin **plugins, int config,
 
 	// Listen to all communication state transitions
 	communication_add_state_transition_listener(fsm_state_size, &agent_handle_transition_evt);
+	communication_set_connection_listeners(&agent_notify_evt_device_connected,
+						&agent_notify_evt_device_disconnected);
 
 	// Register standard configurations for each specialization.
 	std_configurations_register_conf(
@@ -251,9 +256,10 @@ int agent_notify_evt_device_associated(Context *ctx)
  * This function must be called in a thread safe communication context.
  *
  * @param ctx
+ * @param addr
  * @return 1 if any listener catches the notification, 0 if not
  */
-int agent_notify_evt_device_connected(Context *ctx)
+int agent_notify_evt_device_connected(Context *ctx, const char *addr)
 {
 	int ret_val = 0;
 	int i;
@@ -262,7 +268,33 @@ int agent_notify_evt_device_connected(Context *ctx)
 		AgentListener *l = &agent_listener_list[i];
 
 		if (l != NULL && l->device_connected != NULL) {
-			(l->device_connected)(ctx);
+			(l->device_connected)(ctx, addr);
+			ret_val = 1;
+		}
+	}
+
+	return ret_val;
+}
+
+/**
+ * Notifies 'device disconnected'  event.
+ * This function should be visible to source layer of events.
+ * This function must be called in a thread safe communication context.
+ *
+ * @param ctx
+ * @param addr
+ * @return 1 if any listener catches the notification, 0 if not
+ */
+int agent_notify_evt_device_disconnected(Context *ctx, const char *addr)
+{
+	int ret_val = 0;
+	int i;
+
+	for (i = 0; i < agent_listener_count; i++) {
+		AgentListener *l = &agent_listener_list[i];
+
+		if (l != NULL && l->device_disconnected != NULL) {
+			(l->device_disconnected)(ctx, addr);
 			ret_val = 1;
 		}
 	}
@@ -398,11 +430,6 @@ void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states n
 		DEBUG(" agent: Notify device unavailable.\n");
 		// Exiting operating state
 		agent_notify_evt_device_unavailable(ctx);
-	}
-
-	if (previous == fsm_state_disconnected &&
-					next == fsm_state_unassociated) {
-		agent_notify_evt_device_connected(ctx);
 	}
 
 	if (previous != next && next == fsm_state_operating) {
