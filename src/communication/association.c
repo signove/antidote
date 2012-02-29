@@ -530,7 +530,7 @@ void association_aarq_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 				DataProto *proto)
 {
-	struct mds_system_data *mds_data = agent_mds_data_cb();
+	struct mds_system_data *mds_data = agent_configuration()->mds_data_cb();
 
 	apdu->choice = AARQ_CHOSEN;
 	apdu->length = 50;
@@ -555,7 +555,7 @@ static void populate_aarq(APDU *apdu, PhdAssociationInformation *config_info,
 	memcpy(config_info->system_id.value, mds_data->system_id,
 					config_info->system_id.length);
 
-	config_info->dev_config_id = agent_specialization;
+	config_info->dev_config_id = agent_configuration()->config;
 
 	config_info->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
 	// max number of simultaneous sessions

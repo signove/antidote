@@ -58,4 +58,26 @@ void agent_request_association_release(ContextId id);
 
 void agent_request_association_abort(ContextId id);
 
+/**
+ * Agent configuration structure
+ */
+typedef struct AgentConfiguration {
+	/**
+ 	* Agent standard configuration id
+ 	*/
+	ConfigId config;
+
+	/**
+ 	* Function called to generate data when measurement event is being prepared
+ 	*/
+	void *(*event_report_cb)();
+
+	/**
+ 	* Function called when agent's system id is needed by stack
+ 	*/
+	struct mds_system_data *(*mds_data_cb)();
+} AgentConfiguration;
+
+AgentConfiguration *agent_configuration();
+
 #endif /* AGENT_P_H_ */

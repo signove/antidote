@@ -63,29 +63,23 @@
  * Agent listener list
  */
 static AgentListener *agent_listener_list = NULL;
+
 /**
  * Agent listener count
  */
 static int agent_listener_count = 0;
 
 /**
- * Agent specialization standard configuration id
- * and callbacks that supply data
+ * Agent configuration
  */
-ConfigId agent_specialization;
+static AgentConfiguration configuration;
 
-/**
- * Function called to generate data when measurement event is being prepared
- */
-void *(*agent_event_report_cb)();
-
-/**
- * Function called when agent's system id is needed by stack
- */
-struct mds_system_data *(*agent_mds_data_cb)();
+AgentConfiguration *agent_configuration()
+{
+	return &configuration;
+}
 
 static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states next);
-
 
 /*!
  *
@@ -124,19 +118,19 @@ static void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_s
  * This method should be invoked in a thread safe execution.
  *
  * @param plugins the configured plugins to define communication behavior
- * @param specialization Specialization of the agent
+ * @param config Configuration ID of the agent
  * @param event_report_cb The event report callback
  * @param mds_data_cb Data callback
  */
-void agent_init(CommunicationPlugin **plugins, int specialization,
+void agent_init(CommunicationPlugin **plugins, int config,
 		void *(*event_report_cb)(),
 		struct mds_system_data *(*mds_data_cb)())
 {
 	DEBUG("Agent Initialization");
 
-	agent_specialization = specialization;
-	agent_event_report_cb = event_report_cb;
-	agent_mds_data_cb = mds_data_cb;
+	configuration.config = config;
+	configuration.event_report_cb = event_report_cb;
+	configuration.mds_data_cb = mds_data_cb;
 	
 	while (*plugins) {
 		(*plugins)->type |= AGENT_CONTEXT;

@@ -34,23 +34,6 @@
 #include <communication/plugin/plugin.h>
 #include <communication/context_manager.h>
 
-struct mds_system_data;
-
-/**
- * Agent role specialization
- */
-extern ConfigId agent_specialization;
-
-/**
- * Agent role event report callback
- */
-extern void *(*agent_event_report_cb)();
-
-/**
- * Agent role MDS system data fetch callback
- */
-extern struct mds_system_data *(*agent_mds_data_cb)();
-
 /**
  * ZERO Timeout implementation
  */

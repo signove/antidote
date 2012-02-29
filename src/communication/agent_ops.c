@@ -162,15 +162,17 @@ void communication_agent_send_event_tx(FSMContext *ctx, fsm_events evt, FSMEvent
 	PRST_apdu prst;
 	DATA_apdu *data;
 
+	ConfigId spec = agent_configuration()->config;
 	struct StdConfiguration *cfg =
-		std_configurations_get_supported_standard(agent_specialization);
+		std_configurations_get_supported_standard(spec);
+	// TODO support extended configurations too for agent
 
 	if (!cfg) {
-		DEBUG("No std configuration for %d, bailing out", agent_specialization);
+		DEBUG("No std configuration for %d, bailing out", spec);
 		return;
 	}
 
-	void *evtreport = agent_event_report_cb();
+	void *evtreport = agent_configuration()->event_report_cb();
 	data = cfg->event_report(evtreport);
 	free(evtreport);
 
@@ -208,14 +210,15 @@ void association_agent_mds(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 		mds_destroy(ctx->mds);
 	}
 
-	ConfigObjectList *cfg = std_configurations_get_configuration_attributes(agent_specialization);
+	ConfigId spec = agent_configuration()->config;
+	ConfigObjectList *cfg = std_configurations_get_configuration_attributes(spec);
 
 	MDS *mds = mds_create();
 	ctx->mds = mds;
 
-	struct mds_system_data *mds_data = agent_mds_data_cb();
+	struct mds_system_data *mds_data = agent_configuration()->mds_data_cb();
 
-	mds->dev_configuration_id = agent_specialization;
+	mds->dev_configuration_id = agent_configuration()->config;
 	mds->data_req_mode_capab.data_req_mode_flags = DATA_REQ_SUPP_INIT_AGENT;
 	// max number of simultaneous sessions
 	mds->data_req_mode_capab.data_req_init_agent_count = 1;

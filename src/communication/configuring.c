@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "src/dim/mds.h"
+#include "src/agent_p.h"
 #include "src/dim/nomenclature.h"
 #include "src/communication/communication.h"
 #include "src/communication/configuring.h"
@@ -45,7 +46,6 @@
 #include "src/communication/stdconfigurations.h"
 #include "src/communication/extconfigurations.h"
 #include "src/communication/disassociating.h"
-#include "src/util/bytelib.h"
 #include "src/util/bytelib.h"
 #include "src/communication/parser/decoder_ASN1.h"
 #include "src/communication/parser/encoder_ASN1.h"
@@ -678,7 +678,7 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 
 	ConfigObjectList *cfg =
 		std_configurations_get_configuration_attributes(
-				      		agent_specialization);
+				      		agent_configuration()->config);
 
 	data->invoke_id = 0; // filled by service_* call
 	data->message.choice = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
@@ -688,7 +688,7 @@ void configuring_send_config_tx(Context *ctx, fsm_events evt,
 	evtrep.event_type = MDC_NOTI_CONFIG;
 
 	cfgrep.config_obj_list = *cfg;
-	cfgrep.config_report_id = agent_specialization;
+	cfgrep.config_report_id = agent_configuration()->config;
 
 	// compensate for config_report
 	evtrep.event_info.length = cfg->length + 6; // 80 + 6 = 86 for oximeter

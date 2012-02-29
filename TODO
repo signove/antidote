@@ -39,10 +39,6 @@ Add checksum to extended configuration cache file
 Migrate from dbus-glib to glib-included bindings for
 D-Bus (since glib 2.26).
 
-Elimination of static and extern variables where possible.
-Communication plugin struct and agent specialization code
-are two examples of this kind (that we want to eliminate).
-
 Simplification of confirmed request resending/timeout
 reporting.
 
