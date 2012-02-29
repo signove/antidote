@@ -6,6 +6,10 @@ Document --tcpp
 
 v21: Update document regarding:
 	* transcoding system_ids
+	- fill changelog
+
+Add support to additional specializations in sample_bt_agent
+	(already present in sample_agent)
 
 Move sample/testing programs to their own sources
 

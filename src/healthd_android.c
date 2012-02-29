@@ -66,8 +66,6 @@ jmethodID jni_up_segmentdataresponse = 0;
 jmethodID jni_up_segmentdata = 0;
 jmethodID jni_up_segmentcleared = 0;
 
-// FIXME create extented configuration file in proper Android path
-
 static void notif_java_measurementdata(ContextId, char *);
 static void notif_java_disassociated(ContextId);
 static void notif_java_associated(ContextId, char *);
