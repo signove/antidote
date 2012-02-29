@@ -36,6 +36,7 @@
 #include <communication/plugin/plugin.h>
 
 int plugin_network_tcp_setup(CommunicationPlugin *plugin, int numberOfPorts, ...);
+void plugin_network_tcp_connect(int port);
 
 
 #endif /* PLUGIN_TCP_H_ */

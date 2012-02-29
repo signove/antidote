@@ -32,11 +32,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <unistd.h>
 
 #include <ieee11073.h>
 #include "communication/plugin/plugin_tcp.h"
-#include "src/communication/service.h"
+#include "communication/service.h"
+#include "util/log.h"
 
 /**
  * /brief The main application is a command-line-based tool that simply receives
@@ -47,12 +47,17 @@
 /**
  * Port used by agent to send network data
  */
-static ContextId CONTEXT_ID = {0, 0};
+static ContextId CONTEXT_ID;
 
 /**
  * PLugin definition
  */
 static CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
+
+/**
+ * TCP port to use
+ */
+int port = 6024;
 
 /**
  * Callback function that is called whenever a new data
@@ -173,7 +178,6 @@ static int timer_count_timeout(Context *ctx)
  */
 static void tcp_mode()
 {
-	int port = 6024;
 	// NOTE we know that plugin id=1 here,
 	// but might not be the case if there were many plugins!
 	CONTEXT_ID.plugin = 1;
@@ -229,7 +233,9 @@ int main(int argc, char **argv)
 
 	int x = 0;
 	while (x++ < 3) {
+		plugin_network_tcp_connect(port);
 		manager_connection_loop(CONTEXT_ID);
+		DEBUG("----------------------");
 	}
 
 	manager_finalize();

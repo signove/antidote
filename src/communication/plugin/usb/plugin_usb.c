@@ -342,7 +342,7 @@ static void data_received(usb_phdc_device *dev, unsigned char *buf, int len)
 
 	ContextId cid = {plugin_id, c->handle};
 
-	communication_read_input_stream(context_get(cid));
+	communication_read_input_stream(cid);
 }
 
 static void data_error_received(usb_phdc_device *dev)

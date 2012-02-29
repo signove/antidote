@@ -278,11 +278,12 @@ static gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 		ioutil_print_buffer(stream->buffer_cur, apdu_size);
 
 		ContextId id = {plugin_id, conn_id};
-		Context *ctx = context_get(id);
+		Context *ctx = context_get_and_lock(id);
 
 		if (ctx) {
 			DEBUG(" glib socket: sending to stack...");
 			communication_process_input_data(ctx, stream);
+			context_unlock(ctx);
 		}
 	}
 

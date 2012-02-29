@@ -37,6 +37,10 @@
 #include <Basic.h>
 #include <stdio.h>
 
+#define CTX() { Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define CTX2() ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define UNCTX() context_unlock(ctx); }
+
 int test_operating_init_suite(void)
 {
 	return functional_test_init();
@@ -80,7 +84,8 @@ void functionaltest_operating_add_suite(void)
 
 void assert_tc_3_1()
 {
-	MDS *mds = func_mds();
+	CTX();
+	MDS *mds = ctx->mds;
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.count, 1);
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.length, 4);
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.value[0].type, MDC_DEV_SPEC_PROFILE_BP);
@@ -108,11 +113,13 @@ void assert_tc_3_1()
 
 	const char *s3 = "DE124567";
 	CU_ASSERT_NSTRING_EQUAL(s3, mds->production_specification.value[0].prod_spec.value, 8);
+	UNCTX();
 }
 
 void assert_tc_3_2()
 {
-	MDS *mds = func_mds();
+	CTX();
+	MDS *mds = ctx->mds;
 
 	func_simulate_incoming_apdu(apdu_scan_report_info_var_BP);
 
@@ -141,11 +148,13 @@ void assert_tc_3_2()
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.minute, 0x10);
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.second, 0x00);
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
+	UNCTX();
 }
 
 void assert_tc_3_3()
 {
-	MDS *mds = func_mds();
+	CTX();
+	MDS *mds = ctx->mds;
 
 	func_simulate_incoming_apdu(apdu_H241_ID_02BC);
 
@@ -174,11 +183,13 @@ void assert_tc_3_3()
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.minute, 0x10);
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.second, 0x00);
 	CU_ASSERT_EQUAL(mds->objects_list[1].u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
+	UNCTX();
 }
 
 void assert_tc_3_5()
 {
-	MDS *mds = func_mds();
+	CTX();
+	MDS *mds = ctx->mds;
 
 	func_simulate_incoming_apdu(apdu_data_report_ws);
 
@@ -222,22 +233,23 @@ void assert_tc_3_5()
 	object =  mds_get_object_by_handle(mds, 10);
 	CU_ASSERT_PTR_NOT_NULL(object);
 	printf("Skeletal: %.2f\n", object->u.metric.u.numeric.compound_basic_nu_observed_value.value[0]);
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_1()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	printf(" Blood pressure associated\n");
@@ -246,28 +258,29 @@ void functional_test_operating_tc_3_1()
 
 	func_simulate_service_response(apdu_H233_ID_02BC, request);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_2()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	printf(" Blood pressure associated\n");
@@ -276,28 +289,29 @@ void functional_test_operating_tc_3_2()
 
 	func_simulate_service_response(apdu_H233_ID_02BC, request);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_3()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	printf(" Blood pressure associated\n");
@@ -306,17 +320,19 @@ void functional_test_operating_tc_3_3()
 
 	func_simulate_service_response(apdu_H233_ID_02BC, request);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_4_callback()
 {
-	MDS *mds = func_mds();
+	CTX();
+	MDS *mds = ctx->mds;
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.count, 1);
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.value[0].version, 1);
 	CU_ASSERT_EQUAL(mds->system_type_spec_list.value[0].type, MDC_DEV_SPEC_PROFILE_SCALE);
@@ -381,66 +397,69 @@ void functional_test_operating_tc_3_4_callback()
 	CU_ASSERT_EQUAL(mds->date_and_time.minute, 0x05);
 	CU_ASSERT_EQUAL(mds->date_and_time.second, 0x00);
 	CU_ASSERT_EQUAL(mds->date_and_time.sec_fractions, 0x00);
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_4()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_05DC);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	Request *request = manager_request_get_all_mds_attributes(FUNC_TEST_SINGLE_CONTEXT, functional_test_operating_tc_3_4_callback);
 
 	func_simulate_service_response(apdu_H233_ID_05DC, request);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_5()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_assoc_req_ws);
 	func_simulate_incoming_apdu(apdu_roiv_mdc_noti_config_ws);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	Request *request = manager_request_get_all_mds_attributes(FUNC_TEST_SINGLE_CONTEXT, assert_tc_3_5);
 
 	func_simulate_service_response(apdu_H233_ID_05DC, request);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_6_callback()
@@ -452,50 +471,54 @@ void functional_test_operating_tc_3_6()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_05DC);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_get_all_mds_attributes(FUNC_TEST_SINGLE_CONTEXT, functional_test_operating_tc_3_6_callback);
 
-	communication_wait_for_timeout(func_ctx());
+	context_unlock(ctx);
+	communication_wait_for_timeout(ctx);
+	CTX2();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_operating_tc_3_7()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
+	UNCTX();
 }
 
 #endif

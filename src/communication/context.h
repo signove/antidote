@@ -128,6 +128,11 @@ typedef struct Context {
 	 */
 	timeout_callback timeout_action;
 
+	/**
+	 * Reference count
+	 */
+	int ref;
+
 } Context;
 
 #define MANAGER_CONTEXT 1

@@ -190,12 +190,13 @@ static int network_tcp_wait_for_data(Context *ctx)
  */
 static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 {
+	ContextId cid = {plugin_id, port};
+
 	if (sk < 0) {
 		ERROR("network tcp: network_get_apdu_stream cannot found a valid sokcet");
+		communication_transport_disconnect_indication(cid, "tcp");
 		return NULL;
 	}
-
-	ContextId cid = {plugin_id, port};
 
 	if (buffer_retry) {
 		// handling letover data in buffer
@@ -310,6 +311,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
  */
 static int network_disconnect(Context *ctx)
 {
+	DEBUG("taking the initiative of disconnection");
 	close(sk);
 	sk = -1;
 

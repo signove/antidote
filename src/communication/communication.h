@@ -85,13 +85,12 @@ Context *communication_transport_connect_indication(ContextId id, const char *ad
 
 void communication_transport_disconnect_indication(ContextId id, const char *addr);
 
-void communication_lock(Context *ctx);
-
-void communication_unlock(Context *ctx);
+void gil_lock();
+void gil_unlock();
 
 int communication_wait_for_data_input(Context *ctx);
 
-void communication_read_input_stream(Context *ctx);
+void communication_read_input_stream(ContextId id);
 
 void communication_process_input_data(Context *ctx, ByteStreamReader *stream);
 

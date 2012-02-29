@@ -44,6 +44,7 @@
 #include "src/communication/parser/decoder_ASN1.h"
 #include "src/util/bytelib.h"
 #include "src/communication/parser/struct_cleaner.h"
+#include "src/communication/communication.h"
 #include "src/util/ioutil.h"
 #include "src/util/log.h"
 
@@ -80,7 +81,6 @@ struct ExtConfig {
  */
 static struct ExtConfig *ext_configuration_list = NULL;
 
-// TODO multithreaded protection
 // TODO use a LinkedList
 
 /**
@@ -189,6 +189,7 @@ static char *ext_configurations_get_file_name(octet_string *system_id,
  */
 void ext_configurations_destroy()
 {
+	gil_lock();
 	if (ext_configuration_list != NULL) {
 		int index;
 
@@ -201,6 +202,7 @@ void ext_configurations_destroy()
 
 		ext_configuration_size = 0;
 	}
+	gil_unlock();
 }
 
 /**
@@ -210,6 +212,7 @@ void ext_configurations_remove_all_configs()
 {
 	int index;
 
+	gil_lock();
 	for (index = 0; index < ext_configuration_size; index++) {
 		octet_string system_id =
 			ext_configuration_list[index].system_id;
@@ -224,6 +227,7 @@ void ext_configurations_remove_all_configs()
 		free(file_path);
 		file_path = NULL;
 	}
+	gil_unlock();
 
 	char *concat = ext_concat_path_file();
 
@@ -276,6 +280,7 @@ void ext_configurations_load_configurations()
 		goto exit;
 	}
 
+	gil_lock();
 	if (ext_configuration_list != NULL) {
 		free(ext_configuration_list);
 		ext_configuration_list = NULL;
@@ -284,6 +289,7 @@ void ext_configurations_load_configurations()
 
 	ext_configuration_list = calloc(0, sizeof(struct ExtConfig));
 	ext_configuration_size = 0;
+	gil_unlock();
 
 	while (stream->unread_bytes > 0) {
 		int i = ext_configuration_size;
@@ -314,12 +320,14 @@ void ext_configurations_load_configurations()
 			break;
 		}
 
+		gil_lock();
 		ext_configuration_list = realloc(ext_configuration_list,
 			++ext_configuration_size * sizeof(struct ExtConfig));
 
 		ext_configuration_list[i].config_id = config_id;
 		ext_configuration_list[i].system_id = system_id;
 		ext_configuration_list[i].obj_size = obj_size;
+		gil_unlock();
 	}
 
 exit:
@@ -392,8 +400,13 @@ void ext_configurations_register_conf(octet_string *system_id,
 				      ConfigId config_id, ConfigObjectList *object_list)
 {
 	int new;
+	int empty;
 
-	if (ext_configuration_list == NULL) {
+	gil_lock();
+	empty = (ext_configuration_list == NULL);
+	gil_unlock();
+
+	if (empty) {
 		ext_configurations_load_configurations();
 	}
 
@@ -407,6 +420,7 @@ void ext_configurations_register_conf(octet_string *system_id,
 		int error = 0;
 		DEBUG("Adding new ext config %x to index", config_id);
 		new = 1;
+		gil_lock();
 		ext_configuration_size++;
 		ext_configuration_list = realloc(ext_configuration_list,
 					 ext_configuration_size * sizeof(struct ExtConfig));
@@ -424,6 +438,7 @@ void ext_configurations_register_conf(octet_string *system_id,
 
 		del_byte_stream_writer(w_stream, 1);
 		free(r_stream);
+		gil_unlock();
 	} else {
 		DEBUG("Updating ext config");
 		new = 0;
@@ -451,6 +466,8 @@ void ext_configurations_register_conf(octet_string *system_id,
 static struct ExtConfig *ext_configurations_get_config(octet_string *system_id,
 		ConfigId config_id) {
 	int index;
+	
+	gil_lock();
 
 	for (index = 0; index < ext_configuration_size; index++) {
 		ConfigId selected_conf_id =
@@ -470,10 +487,13 @@ static struct ExtConfig *ext_configurations_get_config(octet_string *system_id,
 			}
 
 			if (is_different == 0) {
+				gil_unlock();
 				return &ext_configuration_list[index];
 			}
 		}
 	}
+
+	gil_unlock();
 
 	return NULL;
 }

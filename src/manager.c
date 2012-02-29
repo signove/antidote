@@ -202,10 +202,9 @@ void manager_finalize()
 	DEBUG("Manager Finalization");
 
 	manager_remove_all_listeners();
-	communication_finalize();
-
 	ext_configurations_destroy();
 	std_configurations_destroy();
+	communication_finalize();
 }
 
 
@@ -491,7 +490,12 @@ void manager_stop()
  */
 void manager_connection_loop(ContextId context_id)
 {
-	communication_connection_loop(context_get(context_id));
+	Context *ctx;
+	while ((ctx = context_get_and_lock(context_id))) {
+		DEBUG("looping");
+		communication_connection_loop(ctx);
+		context_unlock(ctx);
+	}
 }
 
 /**
@@ -505,7 +509,11 @@ void manager_request_association_release(ContextId id)
 	evt.choice = FSM_EVT_DATA_RELEASE_REQUEST_REASON;
 	evt.u.release_request_reason = RELEASE_REQUEST_REASON_NORMAL;
 
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_rel, &evt);
+	Context *ctx = context_get_and_lock(id);
+	if (ctx) {
+		communication_fire_evt(ctx, fsm_evt_req_assoc_rel, &evt);
+		context_unlock(ctx);
+	}
 }
 
 /**
@@ -514,7 +522,12 @@ void manager_request_association_release(ContextId id)
  */
 void manager_request_association_abort(ContextId id)
 {
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_abort, NULL);
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		communication_fire_evt(ctx, fsm_evt_req_assoc_abort, NULL);
+		context_unlock(ctx);
+	}
 }
 
 
@@ -532,15 +545,14 @@ Request *manager_set_operational_state_of_the_scanner(ContextId id,
 		ASN1_HANDLE handle, OperationalState state,
 		service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_set_operational_state_of_the_scanner(ctx, handle, state, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -556,7 +568,7 @@ Request *manager_set_operational_state_of_the_scanner(ContextId id,
  */
 DataList *manager_get_configuration(ContextId id)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (!ctx)
 		return NULL;
@@ -565,10 +577,13 @@ DataList *manager_get_configuration(ContextId id)
 
 	if (!mds) {
 		ERROR("No MDS data is available");
+		context_unlock(ctx);
 		return NULL;
 	}
 
 	DataList *list = mds_populate_configuration(mds);
+
+	context_unlock(ctx);
 
 	return list;
 }
@@ -581,23 +596,27 @@ DataList *manager_get_configuration(ContextId id)
  */
 DataList *manager_get_mds_attributes(ContextId id)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		MDS *mds = ctx->mds;
 
 		if (mds == NULL) {
 			ERROR("No MDS data is available");
+			context_unlock(ctx);
 			return NULL;
 		}
 
 		DataList *list = data_list_new(1);
 
 		if (list == NULL) {
+			context_unlock(ctx);
 			return NULL;
 		}
 
 		mds_populate_attributes(mds, &list->values[0]);
+
+		context_unlock(ctx);
 
 		return list;
 	}
@@ -616,11 +635,10 @@ DataList *manager_get_mds_attributes(ContextId id)
 Request *manager_request_measurement_data_transmission(ContextId id, service_request_callback callback)
 {
 
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		DataReqMode mode = DATA_REQ_START_STOP
 				   | DATA_REQ_SUPP_SCOPE_CLASS
@@ -629,7 +647,7 @@ Request *manager_request_measurement_data_transmission(ContextId id, service_req
 		Request *req = mds_service_action_data_request(ctx, mode, &class_id,
 				NULL, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 
 		return req;
@@ -648,15 +666,14 @@ Request *manager_request_measurement_data_transmission(ContextId id, service_req
 Request *manager_request_get_all_mds_attributes(ContextId id, service_request_callback callback)
 {
 
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_service_get(ctx, NULL, 0, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -675,15 +692,14 @@ Request *manager_request_get_all_mds_attributes(ContextId id, service_request_ca
 Request *manager_request_get_pmstore(ContextId id, int handle,
 					service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_get_pmstore(ctx, handle, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -702,16 +718,15 @@ Request *manager_request_get_pmstore(ContextId id, int handle,
 Request *manager_request_get_segment_info(ContextId id, int handle,
 				service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req;
 		req = mds_service_get_segment_info(ctx, handle, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -733,15 +748,14 @@ Request *manager_request_get_segment_data(ContextId id,
 					int instnumber,
 					service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_service_get_segment_data(ctx, handle, instnumber, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -761,16 +775,15 @@ Request *manager_request_clear_segments(ContextId id,
 					int handle,
 					service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_service_clear_segment(ctx, handle, -1, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -793,16 +806,15 @@ Request *manager_request_clear_segment(ContextId id,
 					int instnumber,
 					service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 
 		// thread-safe block - start
-		communication_lock(ctx);
 
 		Request *req = mds_service_clear_segment(ctx, handle, instnumber, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 		// thread-safe block - end
 		return req;
 	}
@@ -820,7 +832,7 @@ Request *manager_request_clear_segment(ContextId id,
  */
 Request *manager_set_time(ContextId id, time_t time, service_request_callback callback)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (ctx != NULL) {
 		// thread-safe block - start
@@ -828,11 +840,9 @@ Request *manager_set_time(ContextId id, time_t time, service_request_callback ca
 		sttime.date_time = date_util_create_absolute_time_t(time);
 		sttime.accuracy = 0;
 
-		communication_lock(ctx);
-
 		Request *req = mds_service_action_set_time(ctx, &sttime, callback);
 
-		communication_unlock(ctx);
+		context_unlock(ctx);
 
 		// thread-safe block - end
 		return req;
@@ -897,12 +907,13 @@ intu8 *manager_system_id()
  */
 DataList *manager_get_pmstore_data(ContextId id, int handle)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (!ctx)
 		return NULL;
 
 	DataList *list = pmstore_get_data_as_datalist(ctx, handle);
+	context_unlock(ctx);
 
 	return list;
 }
@@ -917,12 +928,13 @@ DataList *manager_get_pmstore_data(ContextId id, int handle)
  */
 DataList *manager_get_segment_info_data(ContextId id, int handle)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 
 	if (!ctx)
 		return NULL;
 
 	DataList *list = pmstore_get_segment_info_data_as_datalist(ctx, handle);
+	context_unlock(ctx);
 
 	return list;
 }

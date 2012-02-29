@@ -3,6 +3,7 @@ Roadmap/TODO
 
 v21: Update document regarding:
 	* connection/disconnection callbacks
+	* thread lock plugin: 0 = all, API changes / additions
 
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
@@ -27,8 +28,6 @@ Add System-Type-Spec-List (and others) for Agent
 PMStore get wrong value x timeout
 
 PMStore ROER
-
-Multithreaded protection around static lists (see TODOs)
 
 USB: SIGINT does not exit main loop when a USB device
      has been disconnected while reading

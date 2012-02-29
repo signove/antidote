@@ -37,6 +37,10 @@
 #include <Basic.h>
 #include <stdio.h>
 
+#define CTX() { Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define CTX2() ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define UNCTX() context_unlock(ctx); }
+
 int test_association_init_suite(void)
 {
 	return functional_test_init();
@@ -89,32 +93,38 @@ void functional_test_association_tc_1_1()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, state);
 
-	communication_wait_for_timeout(func_ctx());
+	context_unlock(ctx);
+	communication_wait_for_timeout(ctx);
+	CTX2();
 
-	state = communication_get_state(func_ctx());
-	name = communication_get_state_name(func_ctx());
+	state = communication_get_state(ctx);
+	name = communication_get_state_name(ctx);
 	printf(" ==Current machine state %s\n", name);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
+
+	UNCTX();
 }
 
 void functional_test_association_tc_1_2()
@@ -124,22 +134,25 @@ void functional_test_association_tc_1_2()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
+	UNCTX();
 }
 
 void functional_test_association_tc_1_3()
@@ -149,23 +162,26 @@ void functional_test_association_tc_1_3()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_4()
@@ -175,23 +191,26 @@ void functional_test_association_tc_1_4()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_05DC);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_5()
@@ -201,29 +220,32 @@ void functional_test_association_tc_1_5()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_rlrq_normal);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_6()
@@ -233,28 +255,31 @@ void functional_test_association_tc_1_6()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_rlrq_normal);
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_7()
@@ -264,29 +289,32 @@ void functional_test_association_tc_1_7()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_05DC);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_rlrq_normal);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 
@@ -297,30 +325,33 @@ void functional_test_association_tc_1_8()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	name = communication_get_state_name(func_ctx());
+	name = communication_get_state_name(ctx);
 	printf(" Current machine state %s\n", name);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_9()
@@ -329,23 +360,26 @@ void functional_test_association_tc_1_9()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_abrt_undefined);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_10()
@@ -354,25 +388,28 @@ void functional_test_association_tc_1_10()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 
 	func_simulate_incoming_apdu(apdu_rx_aare_example_one);
 	// if receive aare - abort association
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_association_tc_1_11()
@@ -381,24 +418,27 @@ void functional_test_association_tc_1_11()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
 
+	UNCTX();
 }
 
 void functional_test_association_tc_1_12()
@@ -407,23 +447,26 @@ void functional_test_association_tc_1_12()
 
 	manager_start();
 
-	state = communication_get_state(func_ctx());
+	CTX();
+
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_abort(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 #endif

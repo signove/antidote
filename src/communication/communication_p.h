@@ -1,8 +1,8 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /**
- * \file context_manager.h
- * \brief Connection Context Manager header.
- * Copyright (C) 2010 Signove Tecnologia Corporation.
+ * \file communication_p.h
+ * \brief Communication module header.
+ * Copyright (C) 2012 Signove Tecnologia Corporation.
  * All rights reserved.
  * Contact: Signove Tecnologia Corporation (contact@signove.com)
  *
@@ -24,26 +24,18 @@
  * $LICENSE_TEXT:END$
  *
  * \author Fabricio Silva
- * \date Aug 26, 2010
+ * \author Elvis Pfutzenreuter
+ * \date Feb 29, 2012
  */
 
-#ifndef CONTEXT_MANAGER_H_
-#define CONTEXT_MANAGER_H_
+#ifndef COMMUNICATION_P_H_
+#define COMMUNICATION_P_H_
 
-#include <communication/context.h>
+void communication_lock(Context *ctx);
+void communication_unlock(Context *ctx);
 
 /**
- * Function to handle context during an iteration
- * @return If function return 0, the iteration stops,
- * if not it continues to next element.
+ * @}
  */
-typedef int (*context_handle)(Context *ctx);
 
-Context *context_create(ContextId id, int type);
-void context_remove(ContextId id);
-void context_remove_all();
-Context *context_get_and_lock(ContextId id);
-void context_unlock(Context *ctx);
-void context_iterate(context_handle function);
-
-#endif /* CONTEXT_MANAGER_H_ */
+#endif /* COMMUNICATION_P_H_ */

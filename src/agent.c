@@ -45,6 +45,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "src/agent_p.h"
 #include "src/api/data_encoder.h"
 #include "src/communication/plugin/plugin.h"
@@ -170,8 +171,8 @@ void agent_finalize()
 	DEBUG("Agent Finalization");
 
 	agent_remove_all_listeners();
-	communication_finalize();
 	std_configurations_destroy();
+	communication_finalize();
 }
 
 
@@ -392,7 +393,12 @@ void agent_stop()
  */
 void agent_connection_loop(ContextId context_id)
 {
-	communication_connection_loop(context_get(context_id));
+	Context *ctx;
+	while ((ctx = context_get_and_lock(context_id))) {
+		communication_connection_loop(ctx);
+		context_unlock(ctx);
+		sleep(1);
+	}
 }
 
 /**
@@ -401,7 +407,12 @@ void agent_connection_loop(ContextId context_id)
  */
 void agent_request_association_release(ContextId id)
 {
-	req_association_release(context_get(id));
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		req_association_release(ctx);
+		context_unlock(ctx);
+	}
 }
 
 /**
@@ -410,7 +421,12 @@ void agent_request_association_release(ContextId id)
  */
 void agent_request_association_abort(ContextId id)
 {
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc_abort, NULL);
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		communication_fire_evt(ctx, fsm_evt_req_assoc_abort, NULL);
+		context_unlock(ctx);
+	}
 }
 
 
@@ -450,7 +466,12 @@ void agent_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states n
 void agent_associate(ContextId id)
 {
 	DEBUG(" agent: Move state machine to init assoc");
-	communication_fire_evt(context_get(id), fsm_evt_req_assoc, NULL);
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		communication_fire_evt(ctx, fsm_evt_req_assoc, NULL);
+		context_unlock(ctx);
+	}
 }
 
 /**
@@ -461,7 +482,12 @@ void agent_associate(ContextId id)
 void agent_disconnect(ContextId id)
 {
 	DEBUG(" agent: terminate conn");
-	communication_force_disconnect(context_get(id));
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		communication_force_disconnect(ctx);
+		context_unlock(ctx);
+	}
 }
 
 /**
@@ -471,7 +497,12 @@ void agent_disconnect(ContextId id)
  */
 void agent_send_data(ContextId id)
 {
-	communication_fire_evt(context_get(id), fsm_evt_req_send_event, NULL);
+	Context *ctx = context_get_and_lock(id);
+
+	if (ctx) {
+		communication_fire_evt(ctx, fsm_evt_req_send_event, NULL);
+		context_unlock(ctx);
+	}
 }
 
 /** @} */

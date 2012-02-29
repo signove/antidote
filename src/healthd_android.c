@@ -104,12 +104,13 @@ void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject 
 {
 	DEBUG("timer_alarm");
 	ContextId cid = {plugin_id, id};
-	Context *ctx = context_get(cid);
+	Context *ctx = context_get_and_lock(cid);
 	if (ctx) {
 		void (*f)() = ctx->timeout_action.func;
 		if (f) {
 			f(ctx);
 		}
+		context_unlock(ctx);
 	}
 }
 

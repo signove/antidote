@@ -81,7 +81,7 @@ void test_service()
 	manager_start();
 
 
-	Context *ctx = context_get(FUNC_TEST_SINGLE_CONTEXT);
+	Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 	int size = 21;
 	APDU **apdu_list = calloc(size, sizeof(APDU));
 	int i = 0;
@@ -162,6 +162,8 @@ void test_service()
 
 	free(apdu_list);
 	apdu_list = NULL;
+
+	context_unlock(ctx);
 
 	manager_stop();
 }

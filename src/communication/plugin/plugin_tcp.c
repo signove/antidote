@@ -218,6 +218,15 @@ static int init_socket(void *element)
 }
 
 /**
+ * Notify stack that there is a connection (and it should create a context)
+ */
+void plugin_network_tcp_connect(int port)
+{
+	ContextId cid = {plugin_id, port};
+	communication_transport_connect_indication(cid, "tcp");
+}
+
+/**
  * Initialize network layer, in this case opens and initializes
  *  the file descriptors
  *
@@ -306,8 +315,6 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			sk->buffer = 0;
 			sk->buffer_size = 0;
 			communication_transport_disconnect_indication(cid, "tcp");
-			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication(cid, "tcp");
 			return NULL;
 		} else if (bytes_read == 0) {
 			sk->connected = 0;
@@ -315,8 +322,6 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			sk->buffer = 0;
 			sk->buffer_size = 0;
 			communication_transport_disconnect_indication(cid, "tcp");
-			// kludge to reinstante fixed context id used in samples
-			communication_transport_connect_indication(cid, "tcp");
 			return NULL;
 		}
 

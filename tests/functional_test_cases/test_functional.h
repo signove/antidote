@@ -112,10 +112,6 @@ void func_simulate_incoming_apdu(const char *apdu_file_path);
 
 void func_simulate_service_response(const char *response_apdu_file, Request *request);
 
-Context *func_ctx();
-
-MDS *func_mds();
-
 
 #endif /* TEST_FUNCTIONAL_H_ */
 #endif

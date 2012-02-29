@@ -321,12 +321,10 @@ void service_trans_set_time_response(ContextId id, int invoke_id, int ok)
 		return;
 	}
 
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
 	if (!ctx) {
 		return;
 	}
-
-	communication_lock(ctx);
 
 	Request *req = &ctx->service->requests_list[invoke_id];
 	req->request_callback(ctx, req, 0);
@@ -334,7 +332,7 @@ void service_trans_set_time_response(ContextId id, int invoke_id, int ok)
 	service_del_request(req);
 	ctx->service->requests_count--;
 
-	communication_unlock(ctx);
+	context_unlock(ctx);
 }
 
 

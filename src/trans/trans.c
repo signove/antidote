@@ -68,8 +68,6 @@ static unsigned long long int new_context = INITIAL_TRANS_CONTEXT;
  */
 static LinkedList *_devices = NULL;
 
-// TODO multithreading protection
-
 /**
  * Returns the list of loaded transcodings plugins
  * @return list of transcoding plugins
@@ -113,8 +111,10 @@ static int search_by_addr(void *parg, void *pelement)
  */
 static TransDevice *get_device_by_addr(char *lladdr)
 {
+	gil_lock();
 	TransDevice *dev = llist_search_first(devices(), lladdr,
 						search_by_addr);
+	gil_unlock();
 	return dev;
 }
 
@@ -145,8 +145,10 @@ static int search_by_context(void *parg, void *pelement)
  */
 static TransDevice *get_device_by_context(ContextId id)
 {
+	gil_lock();
 	TransDevice *dev = llist_search_first(devices(), &id,
 						search_by_context);
+	gil_unlock();
 	return dev;
 }
 
@@ -184,7 +186,9 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 		dev->context = c;
 		dev->lladdr = strdup(lladdr);
 		dev->plugin = plugin;
+		gil_lock();
 		llist_add(devices(), dev);
+		gil_unlock();
 		return dev->context;
 	} else {
 		ERROR("Trans context w/ unknown plugin");
@@ -273,7 +277,7 @@ int trans_connected(TransPlugin *plugin,
 
 	communication_transport_connect_indication(context, lladdr);
 
-	Context *ctx = context_get(context);
+	Context *ctx = context_get_and_lock(context);
 	if (!ctx) {
 		DEBUG("Transcoding: context struct not found");
 		return 0;
@@ -290,6 +294,8 @@ int trans_connected(TransPlugin *plugin,
 		AVA_Type *attribute = &spec.value[i];
 		mds_set_attribute(ctx->mds, attribute);
 	}
+
+	context_unlock(ctx);
 
 	del_attributelist(&spec);
 
@@ -315,13 +321,14 @@ int trans_event_report_fixed(TransPlugin *plugin,
 		DEBUG("Transcoded %s no context for evt report", lladdr);
 		return 0;
 	}
-	Context *ctx = context_get(context);
+	Context *ctx = context_get_and_lock(context);
 	if (!ctx) {
 		DEBUG("Transcoding: context struct not found");
 		return 0;
 	}
 
 	mds_event_report_dynamic_data_update_fixed(ctx, &report);
+	context_unlock(ctx);
 	del_scanreportinfofixed(&report);
 	return 1;
 }
@@ -345,13 +352,14 @@ int trans_event_report_var(TransPlugin *plugin,
 		DEBUG("Transcoded %s no context for evt report (var)", lladdr);
 		return 0;
 	}
-	Context *ctx = context_get(context);
+	Context *ctx = context_get_and_lock(context);
 	if (!ctx) {
 		DEBUG("Transcoding: context struct not found");
 		return 0;
 	}
 
 	mds_event_report_dynamic_data_update_var(ctx, &report);
+	context_unlock(ctx);
 	del_scanreportinfovar(&report);
 	return 1;
 }

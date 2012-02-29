@@ -71,21 +71,29 @@ void test_timer(void)
 
 	thread_modifiable_value = 0;
 
-	Context *ctx = func_ctx();
+	Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 	communication_count_timeout(ctx, &testtimer_execute, 20);
+	context_unlock(ctx);
 
+	ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 	communication_reset_timeout(ctx);
+	context_unlock(ctx);
 
 	CU_ASSERT_EQUAL(thread_modifiable_value, 0);
 
+	ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 	communication_count_timeout(ctx, &testtimer_execute, 2);
+	context_unlock(ctx);
 
+	// must not be unlocked when calling this
 	communication_wait_for_timeout(ctx);
 	CU_ASSERT_EQUAL(thread_modifiable_value, 1);
 
+	ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 	communication_count_timeout(ctx, &testtimer_execute, 10);
 	communication_count_timeout(ctx, &testtimer_execute, 9);
 	communication_count_timeout(ctx, &testtimer_execute, 1);
+	context_unlock(ctx);
 
 	manager_stop();
 }

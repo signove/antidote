@@ -43,6 +43,18 @@
 #include <unistd.h>
 
 /**
+ * Global stack lock, named "GIL" after Python :)
+ * GIL is used when the stack needs a global protection
+ * like when doing some global list manipulation
+ */
+static pthread_mutex_t gil;
+
+/**
+ * GIL pattributes
+ */
+static pthread_mutexattr_t gil_attr;
+
+/*
  * Get multithreading control structure of a context
  * @param ctx context
  * @return ThreadContext structure
@@ -62,6 +74,9 @@ static ThreadContext *get_thread_ctx(Context *ctx)
  */
 static void plugin_pthread_ctx_init(Context *ctx)
 {
+	if (!ctx)
+		return;
+
 	ctx->multithread = calloc(1, sizeof(ThreadContext));
 	ThreadContext *thread_ctx = (ThreadContext *) ctx->multithread;
 
@@ -78,6 +93,9 @@ static void plugin_pthread_ctx_init(Context *ctx)
  */
 static void plugin_pthread_ctx_finalize(Context *ctx)
 {
+	if (!ctx)
+		return;
+
 	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 
 	pthread_mutexattr_destroy(&thread_ctx->mutex_attr);
@@ -93,23 +111,31 @@ static void plugin_pthread_ctx_finalize(Context *ctx)
 /**
  * Lock the context received.
  *
- * @param ctx the context that will be locked
+ * @param ctx the context that will be locked. NULL = lock GIL
  */
 static void plugin_pthread_ctx_lock(Context *ctx)
 {
-	ThreadContext *thread_ctx = get_thread_ctx(ctx);
-	pthread_mutex_lock(&thread_ctx->mutex);
+	if (ctx) {
+		ThreadContext *thread_ctx = get_thread_ctx(ctx);
+		pthread_mutex_lock(&thread_ctx->mutex);
+	} else {
+		pthread_mutex_lock(&gil);
+	}
 }
 
 /**
  * Unlock the context received.
  *
- * @param ctx the context that will be unlocked
+ * @param ctx the context that will be unlocked. NULL = GIL
  */
 static void plugin_pthread_ctx_unlock(Context *ctx)
 {
-	ThreadContext *thread_ctx = (ThreadContext *) ctx->multithread;
-	pthread_mutex_unlock(&thread_ctx->mutex);
+	if (ctx) {
+		ThreadContext *thread_ctx = (ThreadContext *) ctx->multithread;
+		pthread_mutex_unlock(&thread_ctx->mutex);
+	} else {
+		pthread_mutex_unlock(&gil);
+	}
 }
 
 /**
@@ -181,7 +207,7 @@ static void timer_reset_timeout(Context *ctx)
 		if (result == 0) {
 			pthread_join(*thread_ctx->timeout_thread, NULL);
 		}
-
+	
 		free(thread_ctx->timeout_thread);
 		thread_ctx->timeout_thread = NULL;
 	}
@@ -238,7 +264,6 @@ static int timer_count_timeout(Context *ctx)
  */
 void plugin_pthread_setup(CommunicationPlugin *plugin)
 {
-
 	plugin->thread_init = plugin_pthread_ctx_init;
 	plugin->thread_finalize = plugin_pthread_ctx_finalize;
 	plugin->thread_lock = plugin_pthread_ctx_lock;
@@ -247,6 +272,10 @@ void plugin_pthread_setup(CommunicationPlugin *plugin)
 	plugin->timer_reset_timeout = timer_reset_timeout;
 	plugin->timer_wait_for_timeout = timer_wait_for_timeout;
 
+	// Initialize GIL
+	pthread_mutexattr_init(&gil_attr);
+	pthread_mutexattr_settype(&gil_attr, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutex_init(&gil, &gil_attr);
 }
 
 /** @} */

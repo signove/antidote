@@ -41,6 +41,7 @@
  */
 
 #include "src/communication/communication.h"
+#include "src/communication/communication_p.h"
 #include "src/dim/mds.h"
 #include "context_manager.h"
 #include "src/util/log.h"
@@ -52,22 +53,19 @@
  */
 static LinkedList *context_list = NULL;
 
-// TODO multithreading protection
 
 /**
  * @brief Destroys the given context.
  *
  * Deletes context element and remove if from list.
  *
- * @param element context to be cleaned up.
+ * @param context context to be cleaned up.
  * @return 1 if the context was successfully destroyed.
  */
-static int destroy_context(void *element)
+static int destroy_context(Context *context)
 {
-	Context *context = (Context *) element;
-
 	if (context != NULL) {
-		DEBUG(" communication: destroying context %u:%llx",
+		DEBUG("destroying context %u:%llx",
 				context->id.plugin, context->id.connid);
 
 		if (context->fsm != NULL) {
@@ -94,6 +92,7 @@ static int destroy_context(void *element)
 
 	return 1;
 }
+
 
 /**
  * @brief Verify if the context element have the given id.
@@ -130,12 +129,12 @@ Context *context_create(ContextId id, int type)
 		context_list = llist_new();
 	}
 
-	// Remove if exists any previous
+	// Remove from list if exists any previous
 	context_remove(id);
 
 	Context *context = calloc(1, sizeof(struct Context));
 
-	if (context == NULL || !llist_add(context_list, context)) {
+	if (context == NULL) {
 		ERROR("Cannot create context %u:%llx", context->id.plugin, context->id.connid);
 		return NULL;
 	}
@@ -150,6 +149,11 @@ Context *context_create(ContextId id, int type)
 	}
 
 	context->id = id;
+	context->ref = 1; // reference from list
+
+	gil_lock();
+	llist_add(context_list, context);
+	gil_unlock();
 
 	DEBUG("Created context id %u:%llx", context->id.plugin, context->id.connid);
 
@@ -157,19 +161,30 @@ Context *context_create(ContextId id, int type)
 }
 
 /**
- * @brief Destroys execution context.
+ * @brief Removes execution context from list.
  *
  * @param id ID of the context to be cleaned up.
  */
 void context_remove(ContextId id)
 {
-	Context *context = context_get(id);
+	DEBUG("Removing context %u:%llx", id.plugin, id.connid);
 
-	if (context != NULL) {
-		llist_remove(context_list, context);
+	// grab context and remove from list atomically
+	gil_lock();
+
+	Context *context = context_get_and_lock(id);
+	if (!context) {
+		gil_unlock();
+		return;
 	}
 
-	destroy_context(context);
+	llist_remove(context_list, context);
+
+	gil_unlock();
+
+	--context->ref; // remove reference from list
+
+	context_unlock(context);
 }
 
 /**
@@ -177,26 +192,80 @@ void context_remove(ContextId id)
  */
 void context_remove_all()
 {
-	llist_destroy(context_list, &destroy_context);
+	while (1) {
+		// make sure no one will mess the table while we
+		// get one context id to be destroyed
+		gil_lock();
+
+		if (context_list->size <= 0) {
+			gil_unlock();
+			break;
+		}
+		Context *c = llist_get(context_list, 0);
+		ContextId id = c->id;
+
+		gil_unlock();
+
+		// safely remove
+		context_remove(id);
+	}
+
+	gil_lock();
+	free(context_list);
 	context_list = NULL;
+	gil_unlock();
 }
 
 /**
- * @brief Get execution context.
+ * @brief Get execution context and lock it in a single move
  *
  * @param id Context ID
  * @return pointer to context struct or NULL if cannot find.
  */
-Context *context_get(ContextId id)
+Context *context_get_and_lock(ContextId id)
 {
+	gil_lock();
+
 	Context *ctx = (Context *) llist_search_first(context_list, &id,
 			&context_search_by_id);
 
 	if (ctx == NULL) {
 		WARNING("Cannot find context id %u:%llx", id.plugin, id.connid);
+		gil_unlock();
+		return ctx;
 	}
 
+	if (ctx) {
+		communication_lock(ctx);
+		++ctx->ref;
+		DEBUG("Context @%p %u:%llx addref to %d", ctx,
+			ctx->id.plugin, ctx->id.connid, ctx->ref);
+	}
+
+	gil_unlock();
+
 	return ctx;
+}
+
+/**
+ * @brief Shorthand to unlock execution context
+ *
+ * @param ctx Context pointer
+ */
+void context_unlock(Context *ctx)
+{
+	if (ctx) {
+		--ctx->ref;
+		communication_unlock(ctx);
+		DEBUG("Context @%p %u:%llx unref to %d", ctx,
+			ctx->id.plugin, ctx->id.connid, ctx->ref);
+		// if ref=0, it is not on the list, so
+		// nobody has ownership and nobody will find it
+		// between unlocking and destruction
+		if (ctx->ref <= 0) {
+			destroy_context(ctx);
+		}
+	}
 }
 
 /**

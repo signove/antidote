@@ -1333,7 +1333,7 @@ static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy
 			current_data[len] = '\0';
 
 			ContextId cid = {plugin_id, c->handle};
-			communication_read_input_stream(context_get(cid));
+			communication_read_input_stream(cid);
 		}
 	}
 

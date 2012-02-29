@@ -40,6 +40,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define CTX() { Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define CTX2() ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define UNCTX() context_unlock(ctx); }
+
 int test_epicfgscanner_init_suite(void)
 {
 	return functional_test_init();
@@ -81,13 +85,14 @@ void functionaltest_epicfgscanner_add_suite()
 
 void functional_test_epicfgscanner_tc_5_1_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_grouped);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 97.503983, 0.09);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x10);
@@ -99,7 +104,7 @@ void functional_test_epicfgscanner_tc_5_1_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 80.071663, 0.09);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x10);
@@ -112,11 +117,12 @@ void functional_test_epicfgscanner_tc_5_1_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
+	UNCTX();
 
 }
 
@@ -124,32 +130,35 @@ void functional_test_epicfgscanner_tc_5_1()
 {
 	// Connect and Association
 	manager_start();
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CTX();
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_1_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 
 void functional_test_epicfgscanner_tc_5_2_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_fixed);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 98, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -161,7 +170,7 @@ void functional_test_epicfgscanner_tc_5_2_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 72, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -174,12 +183,12 @@ void functional_test_epicfgscanner_tc_5_2_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
-
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_2()
@@ -187,32 +196,35 @@ void functional_test_epicfgscanner_tc_5_2()
 	// Connect and Association
 	manager_start();
 
+	CTX();
 
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_2_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_3_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_var);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 98, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -224,7 +236,7 @@ void functional_test_epicfgscanner_tc_5_3_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 72, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -237,12 +249,13 @@ void functional_test_epicfgscanner_tc_5_3_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 
@@ -250,31 +263,34 @@ void functional_test_epicfgscanner_tc_5_3()
 {
 	// Connect and Association
 	manager_start();
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CTX();
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_3_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_4_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_mp_grouped);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 97.503983, 0.09);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x10);
@@ -286,7 +302,7 @@ void functional_test_epicfgscanner_tc_5_4_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 80.071663, 0.09);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x10);
@@ -299,43 +315,47 @@ void functional_test_epicfgscanner_tc_5_4_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_4()
 {
 	// Connect and Association
 	manager_start();
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CTX();
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_4_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_5_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_mp_fixed);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 98, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -347,7 +367,7 @@ void functional_test_epicfgscanner_tc_5_5_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 72, 0.1);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -360,44 +380,48 @@ void functional_test_epicfgscanner_tc_5_5_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_5()
 {
 	// Connect and Association
 	manager_start();
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CTX();
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_5_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 
 void functional_test_epicfgscanner_tc_5_6_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	CTX();
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_enabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_unbuf_scan_report_mp_var);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	obj = mds_get_object_by_handle(func_mds(), 1);
+	obj = mds_get_object_by_handle(ctx->mds, 1);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 98, 0);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -409,7 +433,7 @@ void functional_test_epicfgscanner_tc_5_6_callback(Context *ctx, Request *r, DAT
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.sec_fractions, 0x00);
 
 
-	obj = mds_get_object_by_handle(func_mds(), 10);
+	obj = mds_get_object_by_handle(ctx->mds, 10);
 	CU_ASSERT_DOUBLE_EQUAL(obj->u.metric.u.numeric.basic_nu_observed_value, 72, 0);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.century, 0x20);
 	CU_ASSERT_EQUAL(obj->u.metric.u.numeric.metric.absolute_time_stamp.year, 0x07);
@@ -422,32 +446,35 @@ void functional_test_epicfgscanner_tc_5_6_callback(Context *ctx, Request *r, DAT
 
 	// Disconnect and Disassociation
 	func_simulate_incoming_apdu(apdu_blood_pressure_rlrq);
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	manager_stop();
-	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_disconnected, communication_get_state(ctx));
 
-	printf(" Current machine state %s\n", communication_get_state_name(func_ctx()));
+	printf(" Current machine state %s\n", communication_get_state_name(ctx));
 
+	UNCTX();
 }
 
 void functional_test_epicfgscanner_tc_5_6()
 {
 	// Connect and Association
 	manager_start();
-	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(func_ctx()));
+	CTX();
+	CU_ASSERT_EQUAL(fsm_state_unassociated, communication_get_state(ctx));
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_association_request);
-	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_waiting_for_config, communication_get_state(ctx));
 
 	func_simulate_incoming_apdu(apdu_pulse_oximeter_noti_config_with_scanner);
-	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(func_ctx()));
+	CU_ASSERT_EQUAL(fsm_state_operating, communication_get_state(ctx));
 
-	struct MDS_object *obj = mds_get_object_by_handle(func_mds(), 55);
+	struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, 55);
 	CU_ASSERT_EQUAL(os_disabled, obj->u.scanner.u.epi_cfg_scanner.scanner.scanner.operational_state);
 
 	Request *request = manager_set_operational_state_of_the_scanner(FUNC_TEST_SINGLE_CONTEXT, 0X0037, os_enabled,
 			   functional_test_epicfgscanner_tc_5_6_callback);
 
 	func_simulate_service_response(apdu_pulse_oximeter_episodic_set_response, request);
+	UNCTX();
 }
 
 #endif /* TEST_ENABLED */

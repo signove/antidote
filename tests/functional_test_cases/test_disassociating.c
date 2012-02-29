@@ -35,6 +35,10 @@
 
 #include <Basic.h>
 
+#define CTX() { Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define CTX2() ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+#define UNCTX() context_unlock(ctx); }
+
 int test_disassociating_init_suite(void)
 {
 	return functional_test_init();
@@ -78,272 +82,281 @@ void functional_test_disassociating_tc_4_1()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_2()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_request_association_abort(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_3()
 {
 	fsm_states state;
 
-	manager_start();
-	state = communication_get_state(func_ctx());
+	manager_start(); CTX();
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_4()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_aare_example_one);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_5()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_rlrq_normal);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_6()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_rlre_normal);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_7()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_0190);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_rx_abrt_undefined);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_8()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	func_simulate_incoming_apdu(apdu_blood_pressure_roiv_mdc_noti_config);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void functional_test_disassociating_tc_4_9()
 {
 	fsm_states state;
 
-	manager_start();
+	manager_start(); CTX();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	func_simulate_incoming_apdu(apdu_H211_ID_02BC);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_operating, state);
 
 	manager_request_association_release(FUNC_TEST_SINGLE_CONTEXT);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disassociating, state);
 
 	Request *request = manager_request_measurement_data_transmission(FUNC_TEST_SINGLE_CONTEXT, assert_tc_4_9);
 
 	func_simulate_service_response(apdu_H244, request);
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_unassociated, state);
 
 	service_del_request(request);
 	manager_stop();
 
-	state = communication_get_state(func_ctx());
+	state = communication_get_state(ctx);
 	CU_ASSERT_EQUAL(fsm_state_disconnected, state);
+	UNCTX();
 }
 
 void assert_tc_4_9()

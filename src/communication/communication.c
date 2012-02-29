@@ -41,6 +41,7 @@
 #include "src/trans/trans.h"
 #include "src/communication/context_manager.h"
 #include "src/communication/communication.h"
+#include "src/communication/communication_p.h"
 #include "src/communication/association.h"
 #include "src/communication/operating.h"
 #include "src/communication/configuring.h"
@@ -289,8 +290,6 @@ void communication_finalize()
 	plugin_count = 0;
 
 	trans_finalize();
-
-	// thread-safe block - end
 }
 
 
@@ -467,11 +466,11 @@ Context *communication_transport_connect_indication(ContextId id, const char *ad
 				       NULL);
 	}
 
-	communication_unlock(ctx);
-	// thread-safe block - end
-
 	if (connection_listener)
 		connection_listener(ctx, addr);
+
+	communication_unlock(ctx);
+	// thread-safe block - end
 
 	return ctx;
 }
@@ -486,11 +485,17 @@ Context *communication_transport_connect_indication(ContextId id, const char *ad
  */
 void communication_transport_disconnect_indication(ContextId id, const char *addr)
 {
-	Context *ctx = context_get(id);
+	Context *ctx = context_get_and_lock(id);
+
+	if (!ctx)
+		return;
+
 	communication_fire_transport_disconnect_evt(ctx);
 
 	if (disconnection_listener)
 		disconnection_listener(ctx, addr);
+
+	context_unlock(ctx);
 
 	context_remove(id);
 }
@@ -530,6 +535,33 @@ void communication_unlock(Context *ctx)
 	comm_plugin->thread_unlock(ctx);
 }
 
+/**
+ * Locks global mutex
+ */
+void gil_lock()
+{
+	if (plugin_count > 0) {
+		// gets the first plug-in (in a multithreaded
+		// environment, all plugins must implement 
+		// thread locking)
+		CommunicationPlugin *comm_plugin = comm_plugins[1];
+		comm_plugin->thread_lock(0);
+	}
+}
+
+/**
+ * Unlocks global mutex
+ */
+void gil_unlock()
+{
+	if (plugin_count > 0) {
+		// gets the first plug-in (in a multithreaded
+		// environment, all plugins must implement 
+		// thread locking)
+		CommunicationPlugin *comm_plugin = comm_plugins[1];
+		comm_plugin->thread_unlock(0);
+	}
+}
 
 /**
  * Wait for data input from network.
@@ -550,10 +582,12 @@ int communication_wait_for_data_input(Context *ctx)
  *
  * @param ctx connection context
  */
-void communication_read_input_stream(Context *ctx)
+void communication_read_input_stream(ContextId id)
 {
+	Context *ctx = context_get_and_lock(id);
 	if (ctx != NULL) {
 		communication_process_input_data(ctx, communication_get_apdu_stream(ctx));
+		context_unlock(ctx);
 	}
 }
 
@@ -1094,6 +1128,8 @@ static void set_connection_loop_active(Context *ctx, int val)
  */
 void communication_connection_loop(Context *ctx)
 {
+	ContextId id = ctx->id;
+
 	if (get_connection_loop_active(ctx))
 		return; // connection loop already running
 
@@ -1108,21 +1144,16 @@ void communication_connection_loop(Context *ctx)
 
 	// context may become invalid right after wait_for_data_input,
 	// so we need so check it every loop, based on ID.
-	ContextId id = ctx->id;
 
-	while ((ctx = context_get(id))) {
+	while ((ctx = context_get_and_lock(id))) {
 		if (!get_connection_loop_active(ctx)) {
+			context_unlock(ctx);
 			break;
 		}
 
-		int ret = communication_wait_for_data_input(ctx);
-
-		if (ret == NETWORK_ERROR_NONE) {
-			communication_read_input_stream(ctx);
-		} else {
-			// higher layer must see the error
-			break;
-		}
+		communication_wait_for_data_input(ctx);
+		communication_read_input_stream(id);
+		context_unlock(ctx);
 	}
 }
 

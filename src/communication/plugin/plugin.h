@@ -214,7 +214,9 @@ typedef struct CommunicationPlugin {
 
 	/**
 	 * Blocks current execution until timeout function executes.
-	 * (Currently used only by unit testing)
+	 * (Currently used only by unit testing; if the timer is
+         * thread-based, the context must not be locked when this
+	 * is called, otherwise there will be a deadlock.)
 	 */
 	timer_wait_for_timeout_ptr timer_wait_for_timeout;
 

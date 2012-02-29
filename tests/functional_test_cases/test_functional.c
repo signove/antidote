@@ -66,8 +66,8 @@ int functional_test_init()
 
 int functional_test_finish()
 {
-	manager_finalize();
 	ext_configurations_remove_all_configs();
+	manager_finalize();
 	return 0;
 }
 
@@ -84,7 +84,9 @@ void func_simulate_incoming_apdu(const char *apdu_file_path)
 
 	if (stream != NULL && apdu != NULL) {
 		decode_apdu(stream, apdu, &error);
-		communication_process_apdu(context_get(FUNC_TEST_SINGLE_CONTEXT), apdu);
+		Context* ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
+		communication_process_apdu(ctx, apdu);
+		context_unlock(ctx);
 		del_apdu(apdu);
 	}
 
@@ -113,7 +115,7 @@ void func_simulate_service_response(const char *response_apdu_file,
 
 	APDU *apdu = (APDU *) calloc(1, sizeof(APDU));
 
-	Context *ctx = func_ctx();
+	Context *ctx = context_get_and_lock(FUNC_TEST_SINGLE_CONTEXT);
 
 	if (stream != NULL && apdu != NULL) {
 		decode_apdu(stream, apdu, &error);
@@ -127,26 +129,12 @@ void func_simulate_service_response(const char *response_apdu_file,
 		del_apdu(apdu);
 	}
 
+	context_unlock(ctx);
+
 	free(apdu);
 	free(stream);
 	free(buffer);
 	buffer = NULL;
-}
-
-/**
- * Return connection context of functional tests
- */
-Context *func_ctx()
-{
-	return context_get(FUNC_TEST_SINGLE_CONTEXT);
-}
-
-/**
- * Return current mds in functional test connection context
- */
-MDS *func_mds()
-{
-	return func_ctx()->mds;
 }
 
 #endif

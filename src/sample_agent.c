@@ -57,7 +57,7 @@ static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 /**
  * Port used by agent to send network data
  */
-static ContextId CONTEXT_ID = {0, 0};
+static ContextId CONTEXT_ID = {1, 1};
 
 /**
  * PLugin definition

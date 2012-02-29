@@ -227,7 +227,7 @@ void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobjec
 	current_data = data;
 	current_data[len] = '\0';
 	ContextId cid = {plugin_id, handle};
-	communication_read_input_stream(context_get(cid));
+	communication_read_input_stream(cid);
 }
 
 
