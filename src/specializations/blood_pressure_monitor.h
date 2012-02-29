@@ -42,4 +42,21 @@
 
 struct StdConfiguration *blood_pressure_monitor_create_std_config_ID02BC();
 
+/**
+ * Event report data, used in Agent role
+ */
+struct blood_pressure_event_report_data {
+	BasicNuObsValue systolic;
+	BasicNuObsValue diastolic;
+	BasicNuObsValue mean;
+	BasicNuObsValue pulse_rate;
+	int century;
+	int year;
+	int month;
+	int day;
+	int hour;
+	int minute;
+	int second;
+	int sec_fractions;
+};
 #endif /* BLOOD_PRESSURE_MONITOR_H_ */

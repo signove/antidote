@@ -41,6 +41,8 @@
 #include "communication/plugin/plugin_fifo.h"
 #include "communication/plugin/plugin_tcp_agent.h"
 #include "specializations/pulse_oximeter.h"
+#include "specializations/blood_pressure_monitor.h"
+#include "specializations/weighing_scale.h"
 #include "agent.h"
 
 static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
@@ -131,12 +133,13 @@ void device_connected(Context *ctx)
 static void print_help()
 {
 	printf(
-		"Utility tool to simulate IEEE 11073 agent\n\n"
-		"Usage: ieee_agent [OPTION]\n"
-		"Options:\n"
-		"        --help                Print this help\n"
-		"        --fifo                Run FIFO mode with default file descriptors\n"
-		"        --tcp                 Run TCP mode on default port\n");
+			"Utility tool to simulate IEEE 11073 agent\n\n"
+			"Usage: ieee_agent [OPTION]\n"
+			"Options:\n"
+			"        --help                	Print this help\n"
+			"        --fifo [--sensor=type] Run FIFO mode with default file descriptors\n"
+			"        --tcp  [--sensor=type] Run TCP mode on default port\n"
+			" where type can assume the values pulseoximeter, bloodpressure and weightscale");
 }
 
 /**
@@ -182,7 +185,7 @@ static void tcp_mode()
 /**
  * Generate data for oximeter event report
  */
-static void *event_report_cb()
+static void *oximeter_event_report_cb()
 {
 	time_t now;
 	struct tm nowtm;
@@ -194,6 +197,64 @@ static void *event_report_cb()
 
 	data->beats = 60.5 + random() % 20;
 	data->oximetry = 90.5 + random() % 10;
+	data->century = nowtm.tm_year / 100 + 19;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
+ * Generate data for blood pressure event report
+ */
+static void *blood_pressure_event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct blood_pressure_event_report_data* data =
+		malloc(sizeof(struct blood_pressure_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+
+	data->systolic = 110 + random() % 30;
+	data->diastolic = 70 + random() % 20;
+	data->mean = 90 + random() % 10;
+	data->pulse_rate = 60 + random() % 30;
+
+	data->century = nowtm.tm_year / 100 + 19;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
+ * Generate data for weight scale event report
+ */
+static void *weightscale_event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct weightscale_event_report_data* data =
+		malloc(sizeof(struct weightscale_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+
+	data->weight = 70.2 + random() % 20;
+	data->bmi = 20.3 + random() % 10;
+
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;
@@ -221,9 +282,20 @@ static struct mds_system_data *mds_data_cb()
  */
 int main(int argc, char **argv)
 {
+	int opt = 0;
 	comm_plugin = communication_plugin();
 
-	if (argc == 2) {
+	if (argc == 3) {
+		if (strstr(argv[2], "pulseoximeter") != 0) {
+			opt = 1;
+		} else if (strstr(argv[2], "bloodpressure") != 0) {
+			opt = 2;
+		} else if (strstr(argv[2], "weightscale") != 0) {
+			opt = 3;
+		}
+	}
+
+	if (argc == 2 || opt != 0) {
 
 		if (strcmp(argv[1], "--help") == 0) {
 			print_help();
@@ -255,9 +327,20 @@ int main(int argc, char **argv)
 	comm_plugin.timer_reset_timeout = timer_reset_timeout;
 
 	CommunicationPlugin *plugins[] = {&comm_plugin, 0};
+	void *event_report_cb;
+	int specialization;
+	if (opt == 2) { /* Blood Pressure */
+		event_report_cb = blood_pressure_event_report_cb;
+		specialization = 0x02BC;
+	} else if (opt == 3) { /* Weight Scale */
+		event_report_cb = weightscale_event_report_cb;
+		specialization = 0x05DC;
+	} else { /* Default Pulse Oximeter */
+		event_report_cb = oximeter_event_report_cb;
+		specialization = 0x0190;
+	}
 
-	agent_init(plugins, 0x0190 /* oximeter */,
-			event_report_cb, mds_data_cb);
+	agent_init(plugins, specialization, event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;

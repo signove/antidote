@@ -40,4 +40,20 @@
 
 struct StdConfiguration *weighting_scale_create_std_config_ID05DC();
 
+/**
+ * Event report data, used in Agent role
+ */
+struct weightscale_event_report_data {
+	FLOAT_Type weight;
+	FLOAT_Type bmi;
+	int century;
+	int year;
+	int month;
+	int day;
+	int hour;
+	int minute;
+	int second;
+	int sec_fractions;
+};
+
 #endif /* BODY_COMPOSITION_MONITOR_H_ */
