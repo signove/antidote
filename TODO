@@ -1,9 +1,14 @@
 Roadmap/TODO
 ------------
 
+ROER and RORJ
+	- pmstore
+	- get mds attributes
+
 v21: Update document regarding:
 	* connection/disconnection callbacks
 	* thread lock plugin: 0 = all, API changes / additions
+	* transcoding set-time, pmstore support
 
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
@@ -18,33 +23,21 @@ Add unit testing cases for Agent and PM-Store.
 
 Add unit testing cases for GetConfiguration and PMStore ops
 
-Timer alarm review
-
 Transcoding:
 	Blocking/rerouting of requests like PM-Store
 
 Add System-Type-Spec-List (and others) for Agent
-
-PMStore get wrong value x timeout
-
-PMStore ROER
-
-USB: SIGINT does not exit main loop when a USB device
-     has been disconnected while reading
 
 Add checksum to extended configuration cache file
 
 Migrate from dbus-glib to glib-included bindings for
 D-Bus (since glib 2.26).
 
-Simplification of confirmed request resending/timeout
-reporting.
-
-State machine: evaluate the possibility of removing
-FSMEventData.
+TODOs/FIXMEs
 
 
-3) Low priority
+Low priority
+------------
 
 ASN.1: use "open" stream writers, no need to specify count.
 
