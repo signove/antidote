@@ -501,7 +501,6 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 			}
 		}
 
-		// FIXME check whether this treatment is ok for unknown IDs etc.
 		if (! ok) {
 			ERROR("stopping segment info decoding");
 			break;

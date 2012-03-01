@@ -189,8 +189,10 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_set,					fsm_state_operating,		&operating_set_scanner_response}, // 8.26 - remark on page 149
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_action,				fsm_state_operating,		&operating_rors_confirmed_action_tx}, // 8.26 - remark on page 149
 	{fsm_state_operating,		fsm_evt_rx_roer,						fsm_state_operating,		NULL}, // 8.26 - remark on page 149
+// FIXME we need to handle ROER packets and go back to Requests
 	{fsm_state_operating,		fsm_evt_rx_rorj,						fsm_state_operating,		NULL}, // 8.26 - remark on page 149
 
+// FIXME we need to handle RORJ packets and go back to Requests
 
 	{fsm_state_disassociating,	fsm_evt_ind_transport_disconnect,				fsm_state_disconnected,		NULL}, // 9.2
 	{fsm_state_disassociating,	fsm_evt_ind_timeout,						fsm_state_unassociated,		&communication_abort_undefined_reason_tx}, // 9.4
