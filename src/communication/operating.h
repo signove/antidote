@@ -85,12 +85,15 @@ void operating_assoc_release_req_tx(Context *ctx, fsm_events evt, FSMEventData *
 
 void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
 
-void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r);
+void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r,
+					int errtype, int err);
 
 void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event);
 
 void operating_rors_confirmed_action_tx(Context *ctx, fsm_events evt, FSMEventData *data);
+void operating_roer_confirmed_action_tx(Context *ctx, fsm_events evt, FSMEventData *data);
+void operating_rorj_confirmed_action_tx(Context *ctx, fsm_events evt, FSMEventData *data);
 
 Request *operating_set_scanner(Context *ctx, ASN1_HANDLE handle, OperationalState state, intu32 timeout,
 			       service_request_callback callback);

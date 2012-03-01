@@ -306,12 +306,19 @@ Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct
  *
  * \param pmstore the PMStore to have PMSegments removed from.
  * \param ret_data the return data associated with Request
+ * \param errtype Error type (1=roer, 2=rorj)
+ * \param err 11073 error
  *
  */
-void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data)
+void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data,
+					int errtype, int err)
 {
 	PMStoreClearSegmRet *rs = (PMStoreClearSegmRet*) ret_data;
-	pmstore_service_action_clear_segments(pmstore, rs->segm_selection);
+	if (errtype) {
+		rs->response = (err ? err : errtype);
+	} else {
+		pmstore_service_action_clear_segments(pmstore, rs->segm_selection);
+	}
 }
 
 /**
@@ -439,16 +446,21 @@ Request *pmstore_service_action_get_segment_info(Context *ctx, struct PMStore *p
  *
  * \param pm_store the PMStore.
  * \param ret_data Response data related to Request
+ * \param errtype Error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
 void pmstore_get_data_result(struct PMStore *pm_store,
-				struct RequestRet **ret_data)
+				struct RequestRet **ret_data,
+				int errtype, int err)
 {
 	PMStoreGetRet *rd;
+
+	DEBUG("writing response %d %d", errtype, err);
 
 	rd = calloc(1, sizeof(PMStoreGetRet));
 	*ret_data = (struct RequestRet *) rd;
 	rd->handle = pm_store->handle;
-	rd->response = 0;
+	rd->response = (err ? err : errtype);
 }
 
 /**
@@ -457,23 +469,31 @@ void pmstore_get_data_result(struct PMStore *pm_store,
  * \param pm_store the PMStore.
  * \param info_list the list of PMSegment info.
  * \param ret_data Response data related to Request
+ * \param errtype Error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
 void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 					SegmentInfoList info_list,
-					struct RequestRet **ret_data)
+					struct RequestRet **ret_data,
+					int errtype,
+					int err)
 {
 	struct PMSegment *pmsegment = NULL;
 	PMStoreGetSegmInfoRet *rd;
 	int i;
 	int j;
-	int info_list_size = info_list.count;
 
 	rd = calloc(1, sizeof(PMStoreGetSegmInfoRet));
 	*ret_data = (struct RequestRet *) rd;
 	rd->handle = pm_store->handle;
 	rd->response = 0;
 
-	// FIXME EPX2 where errors come from? roer
+	if (errtype) {
+		rd->response = (err ? err : errtype);
+		return;
+	}
+
+	int info_list_size = info_list.count;
 
 	for (i = 0; i < info_list_size; ++i) {
 		int ok = 1;
@@ -567,17 +587,26 @@ Request *pmstore_service_action_trig_segment_data_xfer(Context *ctx, struct PMSt
  * \param pm_store the PMStore.
  * \param trig_rsp the data transfer response attribute.
  * \param ret_data the related Request->RequestRet pointer to be filled
+ * \param errtype Error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
 void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
 						TrigSegmDataXferRsp trig_rsp,
-						struct RequestRet **ret_data)
+						struct RequestRet **ret_data,
+						int errtype, int err)
 {
 	PMStoreGetSegmDataRet *ret = calloc(1, sizeof(PMStoreGetSegmDataRet));
 	*ret_data = (struct RequestRet *) ret;
 
 	ret->handle = pm_store->handle;
 	ret->inst = trig_rsp.seg_inst_no;
-	ret->response = trig_rsp.trig_segm_xfer_rsp;
+	// TODO error a bit ambiguous. This structure probably needs
+	// two error fields.
+	if (errtype) {
+		ret->response = (err ? err : errtype);
+	} else {
+		ret->response = trig_rsp.trig_segm_xfer_rsp;
+	}
 }
 
 /**

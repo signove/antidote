@@ -60,7 +60,9 @@ static void communication_process_roiv(Context *ctx, APDU *apdu);
 
 static void communication_agent_process_roiv(Context *ctx, APDU *apdu);
 
+static void communication_process_roer(Context *ctx, APDU *apdu);
 static void communication_process_rors(Context *ctx, APDU *apdu);
+static void communication_process_rorj(Context *ctx, APDU *apdu);
 
 static void communication_agent_process_rors(Context *ctx, APDU *apdu);
 
@@ -69,9 +71,111 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
 void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scanner, OID_Type event_type, Any *event);
 
 void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle,
-							Request *r);
+							Request *r, int err, int errcode);
 
-void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r);
+void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r,
+					int err, int errcode);
+
+/**
+ * Get original ROIV request type, if Request was a ROIV
+ * @param r Request
+ * @return request code or -1 if not found
+ */
+static int get_roiv_choice(Request* r)
+{
+	int choice = -1;
+
+	if (! r->apdu) {
+		DEBUG("Request has no APDU");
+		goto epilogue;
+	}
+
+	if (r->apdu->choice != PRST_CHOSEN) {
+		DEBUG("Request is not PRST");
+		goto epilogue;
+	}
+
+	DATA_apdu *data_apdu = encode_get_data_apdu(&r->apdu->u.prst);
+	Data_apdu_message *msg = &data_apdu->message;
+	choice = msg->choice;
+
+epilogue:
+	return choice;
+}
+
+/**
+ * Get original ROIV request code, if Request was a ROIV
+ * @param r Request
+ * @return request code or -1 if not found
+ */
+static int get_roiv_action_type(Request* r)
+{
+	int action = -1;
+
+	int c = get_roiv_choice(r);
+	if (c < 0) {
+		goto epilogue;
+	}
+
+	DATA_apdu *data_apdu = encode_get_data_apdu(&r->apdu->u.prst);
+	Data_apdu_message *msg = &data_apdu->message;
+
+	if (c == ROIV_CMIP_EVENT_REPORT_CHOSEN) {
+		// action = msg->u.roiv_cmipEventReport.event_type;
+	} else if (c == ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN) {
+		// action = msg->u.roiv_cmipConfirmedEventReport.event_type;
+	} else if (c == ROIV_CMIP_GET_CHOSEN) {
+		// no type
+	} else if (c == ROIV_CMIP_SET_CHOSEN) {
+		// no type
+	} else if (c == ROIV_CMIP_CONFIRMED_SET_CHOSEN) {
+		// no type
+	} else if (c == ROIV_CMIP_ACTION_CHOSEN) {
+		action = msg->u.roiv_cmipAction.action_type;
+	} else if (c == ROIV_CMIP_CONFIRMED_ACTION_CHOSEN) {
+		action = msg->u.roiv_cmipConfirmedAction.action_type;
+	}
+
+epilogue:
+	return action;
+}
+
+/**
+ * Get original ROIV object handle, if Request was a ROIV
+ * @param r Request
+ * @return request code or -1 if not found
+ */
+static int get_roiv_object_handle(Request* r)
+{
+	int handle = -1;
+
+	int c = get_roiv_choice(r);
+	if (c < 0) {
+		goto epilogue;
+	}
+
+	DATA_apdu *data_apdu = encode_get_data_apdu(&r->apdu->u.prst);
+	Data_apdu_message *msg = &data_apdu->message;
+
+	if (c == ROIV_CMIP_EVENT_REPORT_CHOSEN) {
+		handle = msg->u.roiv_cmipEventReport.obj_handle;
+	} else if (c == ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN) {
+		handle = msg->u.roiv_cmipConfirmedEventReport.obj_handle;
+	} else if (c == ROIV_CMIP_GET_CHOSEN) {
+		handle = msg->u.roiv_cmipGet.obj_handle;
+	} else if (c == ROIV_CMIP_SET_CHOSEN) {
+		handle = msg->u.roiv_cmipSet.obj_handle;
+	} else if (c == ROIV_CMIP_CONFIRMED_SET_CHOSEN) {
+		handle = msg->u.roiv_cmipConfirmedSet.obj_handle;
+	} else if (c == ROIV_CMIP_ACTION_CHOSEN) {
+		handle = msg->u.roiv_cmipAction.obj_handle;
+	} else if (c == ROIV_CMIP_CONFIRMED_ACTION_CHOSEN) {
+		handle = msg->u.roiv_cmipConfirmedAction.obj_handle;
+	}
+
+epilogue:
+	return handle;
+}
 
 /**
  * Process incoming APDU
@@ -90,6 +194,10 @@ void operating_process_apdu(Context *ctx, APDU *apdu)
 			communication_process_roiv(ctx, apdu);
 		} else if (communication_is_rors_type(data_apdu)) {
 			communication_process_rors(ctx, apdu);
+		} else if (communication_is_roer_type(data_apdu)) {
+			communication_process_roer(ctx, apdu);
+		} else if (communication_is_rorj_type(data_apdu)) {
+			communication_process_rorj(ctx, apdu);
 		}
 
 		break;
@@ -224,6 +332,43 @@ void communication_process_roiv(Context *ctx, APDU *apdu)
 		//reject_result.problem = UNRECOGNIZED_OPERATION;
 		// TODO: communication_send_rorj(rejectResult)
 		break;
+	}
+}
+
+/**
+ * Process rorj in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void communication_process_rorj(Context *ctx, APDU *apdu)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+	FSMEventData data;
+
+	if (service_check_known_invoke_id(ctx, data_apdu)) {
+		data.received_apdu = apdu;
+		communication_fire_evt(ctx, fsm_evt_rx_rorj, &data);
+		service_request_retired(ctx, data_apdu);
+	}
+}
+
+
+/**
+ * Process roer in APDU
+ *
+ * @param ctx
+ * @param *apdu
+ */
+static void communication_process_roer(Context *ctx, APDU *apdu)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
+	FSMEventData data;
+
+	if (service_check_known_invoke_id(ctx, data_apdu)) {
+		data.received_apdu = apdu;
+		communication_fire_evt(ctx, fsm_evt_rx_roer, &data);
+		service_request_retired(ctx, data_apdu);
 	}
 }
 
@@ -616,7 +761,7 @@ void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data)
 	}
 
 	if (is_msd_pmstore_obj) {
-		pmstore_get_data_result(&mds_obj->u.pmstore, &(r->return_data));
+		pmstore_get_data_result(&mds_obj->u.pmstore, &(r->return_data), 0, 0);
 	}
 }
 
@@ -781,7 +926,7 @@ void operating_assoc_release_req_tx(Context *ctx,
 }
 
 /**
- * Send remote operation response to agent
+ * Receive remote operation response from agent
  *
  * @param ctx
  * @param evt
@@ -835,17 +980,126 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_CLR) {
 		operating_decode_clear_segment(ctx->mds,
 				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
-				r);
+				r, 0, 0);
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_GET_INFO) {
 		operating_decode_segment_info(ctx->mds,
 				&(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args),
 				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
-				r);
+				r, 0, 0);
 	} else if (data_apdu->message.u.rors_cmipConfirmedAction.action_type == MDC_ACT_SEG_TRIG_XFER) {
 		operating_decode_trig_segment_data_xfer_response(ctx->mds,
 				&(data_apdu->message.u.rors_cmipConfirmedAction.action_info_args),
 				data_apdu->message.u.rors_cmipConfirmedAction.obj_handle,
-				r);
+				r, 0, 0);
+	}
+}
+
+/*
+ * Receive remote operation response from agent
+ *
+ * @param ctx
+ * @param evt
+ * @param data
+ */
+void operating_roer_confirmed_action_tx(Context *ctx,
+					fsm_events evt, FSMEventData *data)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(
+				       &data->received_apdu->u.prst);
+
+	if (data_apdu->message.choice != ROER_CHOSEN) {
+		DEBUG("roer: error!");
+		return;
+	}
+
+	int error = data_apdu->message.u.roer.error_value;
+
+	Request *r = service_check_known_invoke_id(ctx, data_apdu);
+	if (!r) {
+		DEBUG("roer: no related Request");
+		return;
+	}
+
+	// original request
+	int choice = get_roiv_choice(r);
+	int action = get_roiv_action_type(r);
+	int handle = get_roiv_object_handle(r);
+
+	DEBUG("handling ROER orig %d %d %d", choice, action, handle);
+
+	if (handle < 0) {
+		DEBUG("roer: no object handle");
+		return;
+	}
+
+	if (choice == ROIV_CMIP_GET_CHOSEN) {
+		struct MDS_object *mds_obj = mds_get_object_by_handle(ctx->mds, handle);
+		int is_msd_pmstore_obj = mds_obj != NULL && mds_obj->choice == MDS_OBJ_PMSTORE;
+		if (is_msd_pmstore_obj) {
+			pmstore_get_data_result(&mds_obj->u.pmstore, &(r->return_data), 1, error);
+		}
+	} else if (action == MDC_ACT_SET_TIME) {
+		// not needed
+	} else if (action == MDC_ACT_SEG_CLR) {
+		operating_decode_clear_segment(ctx->mds, handle, r, 1, error);
+	} else if (action == MDC_ACT_SEG_GET_INFO) {
+		operating_decode_segment_info(ctx->mds, 0, handle, r, 1, error);
+	} else if (action == MDC_ACT_SEG_TRIG_XFER) {
+		operating_decode_trig_segment_data_xfer_response(ctx->mds, 0, handle, r, 1, error);
+	}
+}
+
+/*
+ * Receive remote operation response from agent
+ *
+ * @param ctx
+ * @param evt
+ * @param data
+ */
+void operating_rorj_confirmed_action_tx(Context *ctx,
+					fsm_events evt, FSMEventData *data)
+{
+	DATA_apdu *data_apdu = encode_get_data_apdu(
+				       &data->received_apdu->u.prst);
+
+	if (data_apdu->message.choice != RORJ_CHOSEN) {
+		DEBUG("rorj: error!");
+		return;
+	}
+	int error = data_apdu->message.u.rorj.problem;
+
+	Request *r = service_check_known_invoke_id(ctx, data_apdu);
+	if (!r) {
+		DEBUG("rorj: no related Request");
+		return;
+	}
+
+	// original request
+	int choice = get_roiv_choice(r);
+	int action = get_roiv_action_type(r);
+	int handle = get_roiv_object_handle(r);
+
+	if (handle < 0) {
+		DEBUG("rorj: no object handle");
+		return;
+	}
+
+	DEBUG("handling RORJ orig %d %d %d", choice, action, handle);
+
+	if (choice == ROIV_CMIP_GET_CHOSEN) {
+		struct MDS_object *mds_obj = mds_get_object_by_handle(ctx->mds, handle);
+		int is_msd_pmstore_obj = mds_obj != NULL && mds_obj->choice == MDS_OBJ_PMSTORE;
+		if (is_msd_pmstore_obj) {
+			pmstore_get_data_result(&mds_obj->u.pmstore, &(r->return_data), 1, error);
+		}
+	} else if (action == MDC_ACT_SET_TIME) {
+		// not needed
+	} else if (action == MDC_ACT_SEG_CLR) {
+		operating_decode_clear_segment(ctx->mds, handle, r, 2, error);
+	} else if (action == MDC_ACT_SEG_GET_INFO) {
+		operating_decode_segment_info(ctx->mds, 0, handle, r, 2, error);
+	} else if (action == MDC_ACT_SEG_TRIG_XFER) {
+		operating_decode_trig_segment_data_xfer_response(ctx->mds, 0, handle, r, 2, error);
 	}
 }
 
@@ -1055,15 +1309,18 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
  * \param mds the current mds
  * \param obj_handle
  * \param r the related Request
+ * \param errtype error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
-void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r)
+void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r,
+					int errtype, int err)
 {
-	// FIXME EPX2 errors come via ROER response packets
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
 
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
-		pmstore_clear_segment_result(&(mds_obj->u.pmstore), r->return_data);
+		pmstore_clear_segment_result(&(mds_obj->u.pmstore), r->return_data,
+						errtype, err);
 	}
 }
 
@@ -1074,13 +1331,19 @@ void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Req
  * \param *event
  * \param *obj_handle
  * \param *r the related Request
+ * \param errtype error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
-void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r)
+void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r,
+					int errtype, int err)
 {
 	int error = 0;
 	SegmentInfoList info_list;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
+
+	if (err)
+		goto finally;
 
 	ByteStreamReader *event_info_stream = byte_stream_reader_instance(event->value, event->length);
 	decode_segmentinfolist(event_info_stream, &info_list, &error);
@@ -1092,8 +1355,10 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_
 		return;
 	}
 
+finally:
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
-		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list, &(r->return_data));
+		pmstore_get_segmentinfo_result(&(mds_obj->u.pmstore), info_list, &(r->return_data),
+						errtype, err);
 	}
 
 	del_segmentinfolist(&info_list);
@@ -1106,14 +1371,19 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_
  * \param *event
  * \param *obj_handle
  * \param *r the related Request
+ * \param errtype error type (1=roer, 2=rorj)
+ * \param err 11073 error
  */
 void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle,
-							Request *r)
+							Request *r, int errtype, int err)
 {
 	int error = 0;
 	TrigSegmDataXferRsp trig_rsp;
 	struct MDS_object *mds_obj;
 	mds_obj = mds_get_object_by_handle(mds, obj_handle);
+
+	if (err)
+		goto finally;
 
 	ByteStreamReader *event_data_stream = byte_stream_reader_instance(event->value, event->length);
 	decode_trigsegmdataxferrsp(event_data_stream, &trig_rsp, &error);
@@ -1125,9 +1395,11 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
 		return;
 	}
 
+finally:
 	if (mds_obj->choice == MDS_OBJ_PMSTORE) {
 		pmstore_trig_segment_data_xfer_response(&(mds_obj->u.pmstore),
-							trig_rsp, &(r->return_data));
+							trig_rsp, &(r->return_data),
+							errtype, err);
 	}
 }
 

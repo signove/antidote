@@ -170,10 +170,12 @@ Request *pmstore_service_action_get_segment_info(Context *ctx, struct PMStore *p
 
 void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 					SegmentInfoList info_list,
-					struct RequestRet **ret_data);
+					struct RequestRet **ret_data,
+					int err, int errtype);
 
 void pmstore_get_data_result(struct PMStore *pm_store,
-				struct RequestRet **ret_data);
+				struct RequestRet **ret_data,
+				int err, int errtype);
 
 void pmstore_destroy(struct PMStore *pm_store);
 
@@ -185,9 +187,11 @@ Request *pmstore_service_action_trig_segment_data_xfer(Context *ctx, struct PMSt
 
 void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
 						TrigSegmDataXferRsp trig_rsp,
-						struct RequestRet **ret_data);
+						struct RequestRet **ret_data,
+						int err, int errtype);
 
-void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data);
+void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *ret_data,
+					int err, int errtype);
 
 void pmstore_add_segment(struct PMStore *pm_store, struct PMSegment *segment);
 

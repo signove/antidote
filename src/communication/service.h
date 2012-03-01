@@ -162,6 +162,7 @@ Request *service_trans_set_time_request(Context *ctx, SetTimeInvoke *time,
 				intu32 timeout, service_request_callback request_callback);
 
 void service_trans_set_time_response(ContextId id, int invoke_id, int ok);
+
 /** @} */
 
 #endif /* SERVICE_H_ */

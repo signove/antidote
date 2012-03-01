@@ -580,7 +580,7 @@ int communication_wait_for_data_input(Context *ctx)
 /**
  * Reads APDU from transport layer stream
  *
- * @param ctx connection context
+ * @param id connection context
  */
 void communication_read_input_stream(ContextId id)
 {
