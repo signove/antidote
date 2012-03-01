@@ -118,7 +118,7 @@ static TransDevice *get_device_by_addr(char *lladdr)
  */
 static int search_by_context(void *parg, void *pelement)
 {
-	TransDevice *element = element;
+	TransDevice *element = pelement;
 	ContextId context = *((ContextId*) parg);
 
 	if ((element->context.plugin == context.plugin) &&
