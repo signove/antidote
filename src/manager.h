@@ -32,6 +32,7 @@
 #ifndef MANAGER_H_
 #define MANAGER_H_
 
+#include <time.h>
 #include <api/api_definitions.h>
 #include <communication/context.h>
 #include <communication/plugin/plugin.h>
@@ -108,6 +109,8 @@ Request *manager_request_clear_segment(ContextId id, int handle, int instnumber,
 					 service_request_callback callback);
 
 Request *manager_request_clear_segments(ContextId id, int handle, service_request_callback callback);
+
+Request *manager_set_time(ContextId id, time_t time, service_request_callback callback);
 
 DataList *manager_get_configuration(ContextId id);
 

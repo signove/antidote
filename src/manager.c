@@ -100,6 +100,7 @@
 #include "src/specializations/weighing_scale.h"
 #include "src/specializations/glucometer.h"
 #include "src/util/log.h"
+#include "src/util/dateutil.h"
 
 
 /**
@@ -746,6 +747,38 @@ Request *manager_request_clear_segment(ContextId id,
 		Request *req = mds_service_clear_segment(ctx, handle, instnumber, callback);
 
 		communication_unlock(ctx);
+		// thread-safe block - end
+		return req;
+	}
+
+	return NULL;
+}
+
+/**
+ * Invokes Set-time on agent
+ *
+ * @param id context id
+ * @param time time
+ * @param instnumber PM-Instance number
+ * @param callback
+ * @return pointer to request sent
+ */
+Request *manager_set_time(ContextId id, time_t time, service_request_callback callback)
+{
+	Context *ctx = context_get(id);
+
+	if (ctx != NULL) {
+		// thread-safe block - start
+		SetTimeInvoke sttime;
+		sttime.date_time = date_util_create_absolute_time_t(time);
+		sttime.accuracy = 0;
+
+		communication_lock(ctx);
+
+		Request *req = mds_service_action_set_time(ctx, &sttime, callback);
+
+		communication_unlock(ctx);
+
 		// thread-safe block - end
 		return req;
 	}
