@@ -448,23 +448,25 @@ Request *mds_service_get(Context *ctx, OID_Type *attributeids_list, int attribut
  */
 Request *mds_get_pmstore(Context *ctx, int handle, service_request_callback request_callback)
 {
-	// FIXME transcoded device handling (not necessarily here)
-	if (handle < 0) {
-		int i;
+	int i;
+	int actual_handle = -1;
 
-		for (i = 0; i < ctx->mds->objects_list_count; ++i) {
-			if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
-				handle = ctx->mds->objects_list[i].obj_handle;
+	for (i = 0; i < ctx->mds->objects_list_count; ++i) {
+		if (ctx->mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
+			int obj_handle = ctx->mds->objects_list[i].obj_handle;
+			if ((handle < 0) || (handle == obj_handle)) {
+				actual_handle = obj_handle;
 				break;
 			}
 		}
-		if (handle < 0) {
-			// no pm-store at all
-			return 0;
-		}
 	}
 
-	return operating_service_get(ctx, handle, NULL, 0, MDS_TO_GET, request_callback);
+	if (actual_handle < 0) {
+		// no pm-store at all
+		return 0;
+	}
+
+	return operating_service_get(ctx, actual_handle, NULL, 0, MDS_TO_GET, request_callback);
 }
 
 /**
