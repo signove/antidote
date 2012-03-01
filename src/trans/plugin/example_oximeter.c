@@ -315,6 +315,45 @@ static void force_disconnect(const char *lladdr)
 	disconnected_cb();
 }
 
+struct set_time_req {
+	char *lladdr;
+	int invoke_id;
+};
+
+static gboolean set_time_fake_cb(gpointer user_data)
+{
+	DEBUG("Trans ox: Set-Time callback");
+
+	struct set_time_req *req = user_data;
+	trans_set_time_response(req->lladdr, req->invoke_id, 1);
+	free(req->lladdr);
+	free(req);
+
+	return FALSE;
+}
+
+static int set_time_fake(const char *lladdr, int invoke_id, SetTimeInvoke time)
+{
+	DEBUG("Trans ox: Set-Time %02x%02x/%02x/%02x-%02x:%02x:%02x:%02x",
+		time.date_time.century,
+		time.date_time.year,
+		time.date_time.month,
+		time.date_time.day,
+		time.date_time.hour,
+		time.date_time.minute,
+		time.date_time.second,
+		time.date_time.sec_fractions);
+
+	struct set_time_req *req = malloc(sizeof(struct set_time_req));
+
+	req->lladdr = strdup(lladdr);
+	req->invoke_id = invoke_id;
+
+	g_timeout_add(1000, set_time_fake_cb, req);
+
+	return 1;
+}
+
 static gboolean data_received_cb(GIOChannel *src, GIOCondition cond, gpointer data)
 {
 	char buf[256];
@@ -421,6 +460,7 @@ void trans_plugin_oximeter_register(agent_connected_cb conn_cb, agent_disconnect
 	this_plugin->force_disconnect = &force_disconnect;
 	this_plugin->conn_cb = conn_cb;
 	this_plugin->disconn_cb = disconn_cb;
+	this_plugin->set_time = &set_time_fake;
 	trans_register_plugin(this_plugin);
 }
 

@@ -158,6 +158,10 @@ Request *service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu);
 
 void service_configure_attribute(Context *ctx, OID_Type obj_class, ASN1_HANDLE obj_handle, OID_Type attribute_id, Any attribute_value);
 
+Request *service_trans_set_time_request(Context *ctx, SetTimeInvoke *time,
+				intu32 timeout, service_request_callback request_callback);
+
+void service_trans_set_time_response(ContextId id, int invoke_id, int ok);
 /** @} */
 
 #endif /* SERVICE_H_ */

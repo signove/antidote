@@ -41,6 +41,7 @@
 #include "src/communication/parser/decoder_ASN1.h"
 #include "src/communication/parser/encoder_ASN1.h"
 #include "src/communication/parser/struct_cleaner.h"
+#include "src/trans/trans.h"
 #include "src/util/log.h"
 
 static void service_change_state(Context *ctx, ServiceState new_state);
@@ -239,7 +240,6 @@ void service_trans_request_cb(Context *ctx)
 /**
  * Returns Request* faking Remote Operation Invoke and schedules the callback
  *
- * All structures inside APDU must have been created on heap.
  * @param ctx Current context.
  * @param request_callback Request callback function.
  *
@@ -268,6 +268,75 @@ Request *service_trans_request(Context *ctx, service_request_callback request_ca
 
 	return req;
 }
+
+/**
+ * Returns Request* representing Set-Time and forwards to transcoding
+ *
+ * @param ctx Current context.
+ * @param time time
+ * @param timeout timeout
+ * @param request_callback Request callback function.
+ *
+ * @return the request created
+ */
+Request *service_trans_set_time_request(Context *ctx, SetTimeInvoke *time,
+				intu32 timeout, service_request_callback request_callback)
+{
+	if (ctx->service->requests_count >= 16) {
+		return 0;
+	}
+
+	int invoke_id = service_get_new_invoke_id(ctx);
+
+	// asynchronous request to set time
+	if (! trans_set_time(ctx->id, invoke_id, *time)) {
+		return 0;
+	}
+
+	// fabricate a request
+	Request *req = &ctx->service->requests_list[invoke_id];
+	req->apdu = 0;
+	req->timeout.func = NULL;
+	req->timeout.timeout = 0;
+	req->is_valid = REQUEST_VALID;
+	req->request_callback = request_callback;
+
+	ctx->service->requests_count++;
+
+	return req;
+}
+
+/**
+ * Set-Time response from transcoding layer
+ *
+ * @param id Current context.
+ * @param invoke_id origina invoke ID
+ * @param ok status
+ *
+ */
+void service_trans_set_time_response(ContextId id, int invoke_id, int ok)
+{
+	if (invoke_id < 0 || invoke_id > 15) {
+		DEBUG("bad invoke_id from trans %d", invoke_id);
+		return;
+	}
+
+	Context *ctx = context_get(id);
+	if (!ctx) {
+		return;
+	}
+
+	communication_lock(ctx);
+
+	Request *req = &ctx->service->requests_list[invoke_id];
+	req->request_callback(ctx, req, 0);
+	req->is_valid = REQUEST_INVALID;
+	service_del_request(req);
+	ctx->service->requests_count--;
+
+	communication_unlock(ctx);
+}
+
 
 /**
  * Tries to send unconfirmed Remote Operation Invoke apdu through communication layer.

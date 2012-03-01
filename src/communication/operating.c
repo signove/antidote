@@ -636,6 +636,7 @@ Request *operating_service_get(Context *ctx, ASN1_HANDLE handle, OID_Type *attri
 				service_request_callback request_callback)
 {
 	if (communication_is_trans(ctx)) {
+		// FIXME pmstore case
 		return service_trans_request(ctx, request_callback);
 	}
 
@@ -698,6 +699,10 @@ Request *operating_service_get(Context *ctx, ASN1_HANDLE handle, OID_Type *attri
  */
 Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 timeout,  service_request_callback request_callback)
 {
+	if (communication_is_trans(ctx)) {
+		return service_trans_set_time_request(ctx, time, timeout, request_callback);
+	}
+
 	APDU *apdu = (APDU *)calloc(1, sizeof(APDU));
 
 	if (apdu != NULL) {

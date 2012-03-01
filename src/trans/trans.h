@@ -48,6 +48,12 @@ typedef struct TransPlugin
 	 * Agent disconnected callback
 	 */
 	agent_disconnected_cb disconn_cb;
+
+	/**
+	 * Set-Time action ported to transcoding
+	 */
+	int (*set_time)(const char *, int, SetTimeInvoke);
+
 } TransPlugin;
 
 /* Methods called by plugins */
@@ -70,6 +76,11 @@ int trans_event_report_var(TransPlugin *plugin,
 			ScanReportInfoVar report);
 
 int trans_disconnected(TransPlugin *plugin, char *lladdr);
+
+void trans_set_time_response(char *lladdr, int invoke_id, int ok);
+
+/* Methods called by stack */
+int trans_set_time(ContextId id, int invoke_id, SetTimeInvoke time);
 
 /* Called by dummy trans communication plug-in */
 void trans_force_disconnect(ContextId id);

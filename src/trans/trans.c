@@ -399,4 +399,32 @@ void trans_force_disconnect(ContextId id)
 	communication_transport_disconnect_indication(id);
 }
 
+/**
+ * Asynchronous Set-Time operation request
+ */
+int trans_set_time(ContextId id, int invoke_id, SetTimeInvoke time)
+{
+	TransDevice *dev = get_device_by_context(id);
+	if (!dev->plugin->set_time) {
+		// not supported
+		return 0;
+	}
+	return dev->plugin->set_time(dev->lladdr, invoke_id, time);
+}
+
+/**
+ * Asynchronous Set-Time operation response by plug-in
+ */
+void trans_set_time_response(char *lladdr, int invoke_id, int ok)
+{
+	// passing plugin = NULL indirectly blocks creation
+	ContextId context = trans_context_get(lladdr, NULL);
+
+	if (!context.plugin) {
+		DEBUG("Transcoded %s no context for set-time cb", lladdr);
+	}
+
+	service_trans_set_time_response(context, invoke_id, ok);
+}
+
 /** @} */

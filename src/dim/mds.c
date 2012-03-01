@@ -411,7 +411,6 @@ Request *mds_service_action_data_request(Context *ctx, DataReqMode data_req_mode
  */
 Request *mds_service_action_set_time(Context *ctx, SetTimeInvoke *time, service_request_callback request_callback)
 {
-	// FIXME transcoded device handling (not necessarily here)
 	return operating_action_set_time(ctx, time, MDS_TO_CONFIRM_ACTION, request_callback);
 }
 
