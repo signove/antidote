@@ -44,8 +44,8 @@ def getsegmentdata_response_interpret(i):
 		s = "Unknown fail code"
 	return s
 
-pmstore_handle = 11
-pmsegment_instance = 0
+pmstore_handle = -1
+pmsegment_instance = -1
 clear_segment = 0
 get_segment = 0
 get_pmstore = 0

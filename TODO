@@ -29,8 +29,6 @@ PMStore get wrong value x timeout
 
 PMStore ROER
 
-Implement "-1 = first PM-Store" idiom for ClearSegment and others
-
 USB: SIGINT does not exit main loop when a USB device
      has been disconnected while reading
 
