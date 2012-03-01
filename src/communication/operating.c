@@ -745,7 +745,7 @@ Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 tim
 			Request *req = service_send_remote_operation_request(ctx, apdu,
 					timeout_callback, request_callback);
 
-			del_byte_stream_writer(writer, 1);
+			del_byte_stream_writer(writer, 0);
 
 			return req;
 		}
