@@ -43,6 +43,7 @@
 #include "specializations/pulse_oximeter.h"
 #include "specializations/blood_pressure_monitor.h"
 #include "specializations/weighing_scale.h"
+#include "specializations/glucometer.h"
 #include "agent.h"
 
 static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
@@ -268,6 +269,33 @@ static void *weightscale_event_report_cb()
 }
 
 /**
+ * Generate data for Glucometer event report
+ */
+static void *glucometer_event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct glucometer_event_report_data* data =
+		malloc(sizeof(struct glucometer_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+
+	data->capillary_whole_blood = 10.2 + random() % 20;
+
+	data->century = nowtm.tm_year / 100 + 19;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
  * Generate data for MDS
  */
 static struct mds_system_data *mds_data_cb()
@@ -292,6 +320,8 @@ int main(int argc, char **argv)
 			opt = 2;
 		} else if (strstr(argv[2], "weightscale") != 0) {
 			opt = 3;
+		} else if (strstr(argv[2], "glucometer") != 0) {
+			opt = 4;
 		}
 	}
 
@@ -330,12 +360,19 @@ int main(int argc, char **argv)
 	void *event_report_cb;
 	int specialization;
 	if (opt == 2) { /* Blood Pressure */
+		fprintf(stderr, "Starting Blood Pressure Agent\n");
 		event_report_cb = blood_pressure_event_report_cb;
 		specialization = 0x02BC;
 	} else if (opt == 3) { /* Weight Scale */
+		fprintf(stderr, "Starting Weight Scale Agent\n");
 		event_report_cb = weightscale_event_report_cb;
 		specialization = 0x05DC;
+	} else if (opt == 4) { /* Glucometer */
+		fprintf(stderr, "Starting Glucometer Agent\n");
+		event_report_cb = glucometer_event_report_cb;
+		specialization = 0x06A4;
 	} else { /* Default Pulse Oximeter */
+		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
 		specialization = 0x0190;
 	}

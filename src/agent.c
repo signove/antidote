@@ -54,6 +54,7 @@
 #include "src/specializations/blood_pressure_monitor.h"
 #include "src/specializations/pulse_oximeter.h"
 #include "src/specializations/weighing_scale.h"
+#include "src/specializations/glucometer.h"
 #include "src/dim/mds.h"
 #include "src/util/log.h"
 
@@ -155,6 +156,8 @@ void agent_init(CommunicationPlugin **plugins, int specialization,
 		pulse_oximeter_create_std_config_ID0191());
 	std_configurations_register_conf(
 		weighting_scale_create_std_config_ID05DC());
+	std_configurations_register_conf(
+		glucometer_create_std_config_ID06A4());
 }
 
 /**

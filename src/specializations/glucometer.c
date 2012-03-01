@@ -25,7 +25,7 @@
  * $LICENSE_TEXT:END$
  *
  * \date Feb 29, 2012
- * \author José Luís do Nascimento
+ * \author Jose Luis do Nascimento
  */
 
 #include <stdio.h>
@@ -158,10 +158,10 @@ static DATA_apdu *glucometer_populate_event_report(void *edata)
 	scan_fixed.value = measure;
 
 	measure[0].obj_handle = 1;
-	measure[0].obs_val_data.length = 12;
+	measure[0].obs_val_data.length = 10;
 	ByteStreamWriter *writer0 = byte_stream_writer_instance(measure[0].obs_val_data.length);
 
-	write_float(writer0, nu_capillary_whole_blood);
+	encode_basicnuobsvalue(writer0, &nu_capillary_whole_blood);
 	encode_absolutetime(writer0, &nu_time);
 	
 	measure[0].obs_val_data.value = writer0->buffer;

@@ -25,7 +25,7 @@
  * $LICENSE_TEXT:END$
  *
  * \date Feb 29, 2012
- * \author José Luís do Nascimento
+ * \author Jose Luis do Nascimento
  */
 
 #ifndef GLUCOMETER_H_
