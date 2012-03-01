@@ -120,6 +120,27 @@ void test_dateutil_absolute_time_creation(void)
 	CU_ASSERT_EQUAL(result_time.minute, 0x00);
 	CU_ASSERT_EQUAL(result_time.second, 0x00);
 	CU_ASSERT_EQUAL(result_time.sec_fractions, 0x00);
+
+	result_time = date_util_create_absolute_time_t(1000000000);
+
+	printf("%x %x %x %x %x %x %x %x\n",
+		result_time.century,
+		result_time.year,
+		result_time.month,
+		result_time.day,
+		result_time.hour,
+		result_time.minute,
+		result_time.second,
+		result_time.sec_fractions);
+
+	CU_ASSERT_EQUAL(result_time.century, 0x20);
+	CU_ASSERT_EQUAL(result_time.year, 0x01);
+	CU_ASSERT_EQUAL(result_time.month, 0x09);
+	CU_ASSERT_EQUAL(result_time.day, 0x09);
+	CU_ASSERT_EQUAL(result_time.hour, 0x01);
+	CU_ASSERT_EQUAL(result_time.minute, 0x46);
+	CU_ASSERT_EQUAL(result_time.second, 0x40);
+	CU_ASSERT_EQUAL(result_time.sec_fractions, 0x00);
 }
 void test_dateutil_absolute_time_comparation(void)
 {

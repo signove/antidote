@@ -30,6 +30,7 @@
 
 #include "dateutil.h"
 #include <stdio.h>
+#include <time.h>
 
 /**
  * \addtogroup Utility
@@ -106,6 +107,18 @@ AbsoluteTime date_util_create_absolute_time(int year, int month, int day,
 	result.second = date_util_convert_number_to_bcd(second);
 	result.sec_fractions = date_util_convert_number_to_bcd(sec_fractions);
 	return result;
+}
+
+AbsoluteTime date_util_create_absolute_time_t(time_t time)
+{
+	struct tm *tmq = gmtime(&time);
+	return date_util_create_absolute_time(tmq->tm_year + 1900,
+						tmq->tm_mon + 1,
+						tmq->tm_mday,
+						tmq->tm_hour,
+						tmq->tm_min,
+						tmq->tm_sec,
+						0);
 }
 
 /**

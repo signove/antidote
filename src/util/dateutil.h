@@ -31,12 +31,15 @@
 #ifndef DATAUTIL_H_
 #define DATAUTIL_H_
 
+#include <time.h>
 #include "src/asn1/phd_types.h"
 
 int date_util_compare_absolute_time(AbsoluteTime time1, AbsoluteTime time2);
 
 AbsoluteTime date_util_create_absolute_time(int year, int month, int day,
 		int hour, int minute, int second, int sec_fractions);
+
+AbsoluteTime date_util_create_absolute_time_t(time_t time);
 
 intu8 date_util_convert_number_to_bcd(int value);
 int date_util_convert_bcd_to_number(intu8 field);
