@@ -1610,8 +1610,16 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 	DataList *list;
 	char *data;
 
+	DEBUG("device_get_pmstore_cb");
+
 	if (!ret)
 		return;
+
+	if (ret->response) {
+		// some error
+		call_agent_pmstoredata(ctx->id, ret->handle, "");
+		return;
+	}
 
 	if ((list = manager_get_pmstore_data(ctx->id, ret->handle))) {
 		if ((data = xml_encode_data_list(list))) {
@@ -1634,8 +1642,12 @@ gboolean device_get_pmstore(Device *obj, gint handle,
 				gint* ret, GError **err)
 {
 	DEBUG("device_get_pmstore");
-	manager_request_get_pmstore(obj->handle, handle, device_get_pmstore_cb);
+	Request *r = manager_request_get_pmstore(obj->handle, handle, device_get_pmstore_cb);
 	*ret = 0;
+	if (!r) {
+		DEBUG("no pmstore with handle %d", handle);
+		*ret = 1;
+	}
 	return TRUE;
 }
 
