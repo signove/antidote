@@ -759,7 +759,6 @@ Request *manager_request_clear_segment(ContextId id,
  *
  * @param id context id
  * @param time time
- * @param instnumber PM-Instance number
  * @param callback
  * @return pointer to request sent
  */

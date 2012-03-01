@@ -1518,6 +1518,32 @@ gboolean device_reqmeasurement(Device *obj, GError **err)
 }
 
 /**
+ * Callback for Set-Time operation
+ *
+ * \param ctx Context
+ * \param r Related request struct (the same returned to request caller)
+ * \param response_apdu Data APDU
+ */
+static void device_set_time_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+	DEBUG("device_set_time_cb");
+}
+
+/**
+ * DBUS facade to request set-time
+ *
+ * \param obj
+ * \param time in time_t format
+ * \param err
+ */
+gboolean device_set_time(Device *obj, guint64 time, GError **err)
+{
+	DEBUG("device_set_time");
+	manager_set_time(obj->handle, time, device_set_time_cb);
+	return TRUE;
+}
+
+/**
  * DBUS facade to activate scanner
  *
  * \param obj

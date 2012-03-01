@@ -103,6 +103,53 @@ dbus_glib_marshal_device_BOOLEAN__POINTER (GClosure     *closure,
   g_value_set_boolean (return_value, v_return);
 }
 
+/* BOOLEAN:UINT64,POINTER */
+extern void dbus_glib_marshal_device_BOOLEAN__UINT64_POINTER (GClosure     *closure,
+                                                              GValue       *return_value,
+                                                              guint         n_param_values,
+                                                              const GValue *param_values,
+                                                              gpointer      invocation_hint,
+                                                              gpointer      marshal_data);
+void
+dbus_glib_marshal_device_BOOLEAN__UINT64_POINTER (GClosure     *closure,
+                                                  GValue       *return_value G_GNUC_UNUSED,
+                                                  guint         n_param_values,
+                                                  const GValue *param_values,
+                                                  gpointer      invocation_hint G_GNUC_UNUSED,
+                                                  gpointer      marshal_data)
+{
+  typedef gboolean (*GMarshalFunc_BOOLEAN__UINT64_POINTER) (gpointer     data1,
+                                                            guint64      arg_1,
+                                                            gpointer     arg_2,
+                                                            gpointer     data2);
+  register GMarshalFunc_BOOLEAN__UINT64_POINTER callback;
+  register GCClosure *cc = (GCClosure*) closure;
+  register gpointer data1, data2;
+  gboolean v_return;
+
+  g_return_if_fail (return_value != NULL);
+  g_return_if_fail (n_param_values == 3);
+
+  if (G_CCLOSURE_SWAP_DATA (closure))
+    {
+      data1 = closure->data;
+      data2 = g_value_peek_pointer (param_values + 0);
+    }
+  else
+    {
+      data1 = g_value_peek_pointer (param_values + 0);
+      data2 = closure->data;
+    }
+  callback = (GMarshalFunc_BOOLEAN__UINT64_POINTER) (marshal_data ? marshal_data : cc->callback);
+
+  v_return = callback (data1,
+                       g_marshal_value_peek_uint64 (param_values + 1),
+                       g_marshal_value_peek_pointer (param_values + 2),
+                       data2);
+
+  g_value_set_boolean (return_value, v_return);
+}
+
 /* BOOLEAN:INT,POINTER,POINTER */
 extern void dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER (GClosure     *closure,
                                                                    GValue       *return_value,
@@ -317,16 +364,17 @@ static const DBusGMethodInfo dbus_glib_device_methods[] = {
   { (GCallback) device_get_segmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 630 },
   { (GCallback) device_clearsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_INT_POINTER_POINTER, 733 },
   { (GCallback) device_clearallsegmdata, dbus_glib_marshal_device_BOOLEAN__INT_POINTER_POINTER, 834 },
+  { (GCallback) device_set_time, dbus_glib_marshal_device_BOOLEAN__UINT64_POINTER, 914 },
 };
 
 const DBusGObjectInfo dbus_glib_device_object_info = {  1,
   dbus_glib_device_methods,
-  14,
-"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetPMStore\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentInfo\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegment\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearAllSegments\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0\0",
+  15,
+"com.signove.health.device\0Connect\0S\0\0com.signove.health.device\0Disconnect\0S\0\0com.signove.health.device\0RequestDeviceAttributes\0S\0\0com.signove.health.device\0GetConfiguration\0S\0xml\0O\0F\0N\0s\0\0com.signove.health.device\0RequestActivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestDeactivationScanner\0S\0handle\0I\0i\0\0com.signove.health.device\0RequestMeasurementDataTransmission\0S\0\0com.signove.health.device\0ReleaseAssociation\0S\0\0com.signove.health.device\0AbortAssociation\0S\0\0com.signove.health.device\0GetPMStore\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentInfo\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0GetSegmentData\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearSegment\0S\0pmstore_handle\0I\0i\0pmsegment_instnumber\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0ClearAllSegments\0S\0pmstore_handle\0I\0i\0result\0O\0F\0N\0i\0\0com.signove.health.device\0SetTime\0S\0time_t\0I\0t\0\0\0",
 "\0",
 "\0"
 };
 
-/**
- * \endcond
- */
+/**              
+ * \endcond     
+ */              

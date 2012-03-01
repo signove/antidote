@@ -60,5 +60,9 @@
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
+    <method name="SetTime">
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_set_time"/>
+      <arg type="t" name="time_t" direction="in"/>
+    </method>
   </interface>
 </node>

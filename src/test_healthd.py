@@ -7,6 +7,7 @@ import dbus.service
 import dbus.mainloop.glib
 import os
 import glib
+import time
 from test_healthd_parser import *
 
 dump_prefix = "XML"
@@ -49,6 +50,7 @@ clear_segment = 0
 get_segment = 0
 get_pmstore = 0
 get_mds = 0
+set_time = 0
 interpret_data = 0
 
 class Agent(dbus.service.Object):
@@ -87,6 +89,8 @@ class Agent(dbus.service.Object):
 
 		if get_mds:
 			glib.timeout_add(1000, requestMdsAttributes, dev)
+		if set_time:
+			glib.timeout_add(800, setTime, dev)
 		if get_pmstore:
 			glib.timeout_add(2000, getPMStore, dev, pmstore_handle)
 			glib.timeout_add(3000, getSegmentInfo, dev, pmstore_handle)
@@ -176,6 +180,11 @@ def requestMdsAttributes (dev):
 	dev.RequestDeviceAttributes()
 	return False
 
+def setTime(dev):
+	print "Setting time to now"
+	dev.SetTime(time.time())
+	return False
+
 def getConfiguration(dev, devpath):
 	config = dev.GetConfiguration()
 	print
@@ -239,6 +248,8 @@ while i < len(args):
 
 	if arg == '--mds':
 		get_mds = 1
+	elif arg == '--set-time':
+		set_time = 1
 	elif arg == "--interpret" or arg == "--interpret-xml":
 		interpret_data = 1
 	elif arg == '--prefix':
