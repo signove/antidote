@@ -267,7 +267,11 @@ void communication_finalize()
 	for (i = 1; i <= plugin_count; ++i) {
 		CommunicationPlugin *comm_plugin = comm_plugins[i];
 		communication_plugin_clear(comm_plugin);
+		comm_plugins[i] = NULL;
 	}
+
+	free(comm_plugins);
+	comm_plugins = NULL;
 
 	// thread-safe block - end
 }

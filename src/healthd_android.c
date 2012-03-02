@@ -788,6 +788,9 @@ void Java_com_signove_health_service_JniBridge_Chealthdfinalize(JNIEnv *env, job
 
 	(*env)->DeleteGlobalRef(env, bridge_obj);
 	bridge_obj = 0;
+
+	free(android_tmp_location);
+	android_tmp_location = 0;
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
