@@ -557,3 +557,44 @@
    fun:dbus_g_connection_register_g_object
    fun:main
 }
+
+{
+   g_type_2
+   Memcheck:Leak
+   ...
+   fun:g_type_init_with_debug_flags
+   fun:g_type_init
+   fun:(below main)
+}
+
+{
+   g_type_3
+   Memcheck:Leak
+   ...
+   fun:set_type_metadata
+   fun:(below main)
+}
+
+{
+   g_type_4
+   Memcheck:Leak
+   ...
+   fun:dbus_g_proxy_class_init
+   fun:g_type_class_ref
+   fun:g_object_new_valist
+   fun:(below main)
+}
+
+{
+   glib_things
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/i386-linux-gnu/libglib-2.0.so.0.3000.0
+}
+
+{
+   g_type_5
+   Memcheck:Leak
+   ...
+   fun:g_type_register_fundamental
+}
