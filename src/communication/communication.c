@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include "src/manager_p.h"
 #include "src/agent_p.h"
+#include "src/trans/trans.h"
 #include "src/communication/context_manager.h"
 #include "src/communication/communication.h"
 #include "src/communication/association.h"
@@ -273,6 +274,8 @@ void communication_finalize()
 	free(comm_plugins);
 	comm_plugins = NULL;
 	plugin_count = 0;
+
+	trans_finalize();
 
 	// thread-safe block - end
 }

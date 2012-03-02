@@ -53,6 +53,8 @@ typedef struct TransPlugin
 /* Methods called by plugins */
 void trans_register_plugin(TransPlugin *plugin);
 
+void trans_finalize();
+
 int trans_connected(TransPlugin *plugin,
 			char *lladdr,
 			AttributeList spec,

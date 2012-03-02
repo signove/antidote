@@ -54,9 +54,14 @@ typedef struct TransDevice
 } TransDevice;
 
 /**
+ * Initial Context Id for a transcoded device
+ */
+#define INITIAL_TRANS_CONTEXT 0x324
+
+/**
  * Context ID generator for all transcoded devices
  */
-static unsigned long long int new_context = 991;
+static unsigned long long int new_context = INITIAL_TRANS_CONTEXT;
 
 /**
  * List of known transcoded devices
@@ -189,6 +194,20 @@ ContextId trans_context_get(char *lladdr, TransPlugin *plugin)
 }
 
 /**
+ * Destroy a transcoded device structure (TransDevice)
+ * Used in stack finalization phase
+ *
+ * @param device TransDevice structure
+ */
+static void destroy_device(TransDevice *dev)
+{
+	free(dev->lladdr);
+	dev->lladdr = 0;
+	dev->plugin = 0;
+	free(dev);
+}
+
+/**
  * Register a transcoding plug-in at this engine
  *
  * @param plugin the plug-in descriptor
@@ -197,6 +216,35 @@ void trans_register_plugin(TransPlugin *plugin)
 {
 	llist_add(plugins(), plugin);
 	plugin->init();
+}
+
+/**
+ * Unregister a transcoding plug-in 
+ * Used in stack finalization phase
+ * @param plugin the plug-in descriptor
+ */
+static void unregister_plugin(TransPlugin *plugin)
+{
+	plugin->finalize();
+	free(plugin);
+}
+
+/**
+ * Finalization clean-up: clear all plugins and devices
+ */ 
+void trans_finalize()
+{
+	if (_plugins) {
+		llist_destroy(_plugins, (llist_handle_element) unregister_plugin);
+		_plugins = NULL;
+	}
+
+	if (_devices) {
+		llist_destroy(_devices, (llist_handle_element) destroy_device);
+		_devices = NULL;
+	}
+	
+	new_context = INITIAL_TRANS_CONTEXT;
 }
 
 /**
@@ -332,6 +380,7 @@ int trans_disconnected(TransPlugin *plugin, char *lladdr)
 
 	if (plugin->disconn_cb)
 		plugin->disconn_cb(context, lladdr);
+
 	return 1;
 }
 
