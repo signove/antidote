@@ -272,6 +272,7 @@ void communication_finalize()
 
 	free(comm_plugins);
 	comm_plugins = NULL;
+	plugin_count = 0;
 
 	// thread-safe block - end
 }
