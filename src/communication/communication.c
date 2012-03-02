@@ -81,6 +81,8 @@ static communication_network_status network_status;
 static unsigned int plugin_count = 0;
 static CommunicationPlugin **comm_plugins = NULL;
 
+// TODO use LinkedList
+
 /**
  * Mask to remote operation (ro*) type checking
  */
@@ -129,6 +131,8 @@ typedef struct StateTransitionListener {
  * List of State machine transition listeners
  */
 static StateTransitionListener *state_transition_listener_list = NULL;
+
+// TODO use LinkedList
 
 /**
  * Number of state machine transition listeners

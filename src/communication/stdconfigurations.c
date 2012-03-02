@@ -48,6 +48,8 @@ static int std_configurations_count = 0;
  */
 static struct StdConfiguration **std_configuration_list = NULL;
 
+// TODO use a LinkedList
+
 /**
  * This method adds a new configuration.
  *

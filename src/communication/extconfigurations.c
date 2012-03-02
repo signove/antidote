@@ -81,6 +81,7 @@ struct ExtConfig {
 static struct ExtConfig *ext_configuration_list = NULL;
 
 // TODO multithreaded protection
+// TODO use a LinkedList
 
 /**
  * Size of extended configuration list in memory
