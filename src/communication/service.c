@@ -379,6 +379,7 @@ void service_request_retired(Context *ctx, DATA_apdu *response_apdu)
 			InvokeIDType next_id_to_process = (retiredInvokeID + 1) & 0xF;
 			service->current_invoke_id = next_id_to_process;
 
+			// FIXME conflict with transcoding?
 			if (service->requests_count > 0) {
 				if (service->requests_list[next_id_to_process].is_valid == REQUEST_VALID) {
 					service_send_apdu_now(ctx, service->requests_list[next_id_to_process].apdu,

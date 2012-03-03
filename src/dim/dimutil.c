@@ -123,6 +123,7 @@ static char *dimutil_get_unit(struct Metric *metric)
  */
 static int dimutil_get_enumeration_partition(struct Enumeration *enumeration)
 {
+	// FIXME bug?
 	if (&(enumeration->metric) != NULL) {
 		if (enumeration->use_nom_partition) {
 			return enumeration->enum_observed_value_partition;
@@ -417,6 +418,7 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 			result = 0;
 			break;
 		}
+		// FIXME test if data_entry
 		data_set_basic_nu_obs_val(data_entry,
 					  "Basic-Nu-Observed-Value",
 					  &(numeric->basic_nu_observed_value));
@@ -499,6 +501,7 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 			break;
 		}
 
+		// FIXME teste data_entry?
 		data_set_nu_obs_val_cmp(data_entry,
 					"Compound-Nu-Observed-Value",
 					&numeric->compound_nu_observed_value,
