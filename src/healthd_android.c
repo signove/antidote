@@ -784,6 +784,9 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 
 void Java_com_signove_health_service_JniBridge_Chealthdfinalize(JNIEnv *env, jobject obj)
 {
+	if (! bridge_obj)
+		return;
+
 	manager_finalize();
 
 	(*env)->DeleteGlobalRef(env, bridge_obj);
