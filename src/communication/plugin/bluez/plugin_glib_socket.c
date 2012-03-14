@@ -35,6 +35,7 @@
 
 #include <glib.h>
 #include <gio/gio.h>
+#include <sys/socket.h>
 
 #include "src/util/strbuff.h"
 #include "src/communication/communication.h"
@@ -69,6 +70,7 @@ static const int BACKLOG = 1;
 typedef struct NetworkSocket {
 	GSocketService *service;
 	GSocket *socket;
+	GSocketConnection *connection;
 	int tcp_port;
 
 } NetworkSocket;
@@ -110,6 +112,20 @@ static NetworkSocket *get_socket(int port)
 }
 
 /**
+ * Services disconnection request from stack
+ *
+ * @param ctx Context
+ * @return status
+ */
+static int network_force_disconnect(Context *ctx)
+{
+	NetworkSocket *sk = get_socket(ctx->id.connid);
+	gint fd = g_socket_get_fd(sk->socket);
+	close(fd);
+	return TCP_ERROR_NONE;
+}
+
+/**
  * Data or condition received callback
  *
  * @param source GLib struct representing connection
@@ -124,61 +140,76 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 
 	Context *ctx = (Context *) data;
 	NetworkSocket *sk = get_socket(ctx->id.connid);
+	int fd = g_io_channel_unix_get_fd(source);
 
-	if (g_socket_is_connected(sk->socket)) {
-		GError *error;
-		gsize bytes_read;
+	if (condition & (G_IO_ERR | G_IO_HUP)) {
+		DEBUG(" glib socket: conn closed with error");
+		ContextId cid = {plugin_id, sk->tcp_port};
+		communication_transport_disconnect_indication(cid);
+		g_io_channel_unref(source);
+		close(fd);
+		g_object_unref(sk->connection);
+		return FALSE;
+	}
 
-		gsize buffer_size = 64512; // Max packet length for protocol
-		gchar *buffer = (gchar *) malloc(buffer_size);
+	gsize bytes_read;
+	gsize max_size = 64512; // Max packet length for protocol
+	gchar *buffer = (gchar *) malloc(max_size);
 
+	bytes_read = recv(fd, buffer, max_size, 0);
 
-		GIOStatus status = g_io_channel_read_chars(source, buffer,
-				   buffer_size, &bytes_read, &error);
+	if (bytes_read <= 0) {
+		DEBUG(" glib socket: connection closed read %d", bytes_read);
+		ContextId cid = {plugin_id, sk->tcp_port};
+		communication_transport_disconnect_indication(cid);
+		close(fd);
+		g_io_channel_unref(source);
+		g_object_unref(sk->connection);
+		free(buffer);
+		buffer = NULL;
+		return FALSE;
+	}
 
-		// Check Header size
-		if (bytes_read != 4) {
-			DEBUG(" glib socket: APDU header should have at least 4 bytes: %ld.",
-			      (long) bytes_read);
-			return TRUE;
-		}
-
-		int apdu_size = (buffer[2] << 8 | buffer[3]);
-
-		// Check APDU size
-		if (bytes_read != (apdu_size + 4) || status
-		    == G_IO_STATUS_ERROR) {
-			ERROR("Error reading apdu bytes: %s\n", error->message);
-			free(buffer);
-			buffer = NULL;
-			return TRUE;
-		}
-
-
-		// Create bytestream
-		ByteStreamReader *stream = byte_stream_reader_instance((unsigned char *) buffer,
-					   buffer_size);
-
-		if (stream == NULL) {
-			ERROR(" glib socket: Error creating bytelib");
-			free(buffer);
-			buffer = NULL;
-		}
-
-		DEBUG(" glib socket: APDU received ");
-		ioutil_print_buffer(stream->buffer_cur, buffer_size);
-
-		communication_process_input_data(ctx, stream);
-
-		if (!bytes_read || error == G_IO_STATUS_ERROR) {
-			ERROR("glib socket: Cannot read enough bytes to create APDU");
-		}
-
+	// Check Header size
+	if (bytes_read < 4) {
+		DEBUG(" glib socket: APDU header should have at least 4 bytes: %ld.",
+		      (long) bytes_read);
+		free(buffer);
+		buffer = NULL;
 		return TRUE;
 	}
 
-	DEBUG(" glib socket: cannot read APDU, socket is not connected");
-	return FALSE;
+	int apdu_size = (buffer[2] << 8 | buffer[3]);
+
+	// Check APDU size
+	// FIXME this only works if TCP delivers atomically,
+	// which is not true in real network conditions
+	if (bytes_read != (apdu_size + 4)) {
+		ERROR("Error reading apdu bytes");
+		free(buffer);
+		buffer = NULL;
+		return TRUE;
+	}
+
+
+	// Create bytestream
+	ByteStreamReader *stream = byte_stream_reader_instance((unsigned char *) buffer,
+				   bytes_read);
+
+	if (stream == NULL) {
+		ERROR(" glib socket: Error creating bytelib");
+		free(buffer);
+		buffer = NULL;
+		return TRUE;
+	}
+
+	DEBUG(" glib socket: APDU received ");
+	ioutil_print_buffer(stream->buffer_cur, bytes_read);
+
+	DEBUG(" glib socket: sending to stack...");
+	communication_process_input_data(ctx, stream);
+
+	return TRUE;
 }
 
 /**
@@ -188,11 +219,12 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
  * @param connection New connection
  * @param source_object unused
  * @param user_data related NetworkSocket
- * @return FALSE
+ * @return TRUE
  */
 gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 			GObject *source_object, gpointer user_data)
 {
+	g_object_ref(connection);
 
 	NetworkSocket *sk = (NetworkSocket *) user_data;
 
@@ -201,8 +233,9 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 	GInetAddress *addr = g_inet_socket_address_get_address(
 				     G_INET_SOCKET_ADDRESS(sockaddr));
 
-	g_print("New Connection from %s:%d\n", g_inet_address_to_string(addr),
-		sk->tcp_port);
+	char *saddr = g_inet_address_to_string(addr);
+	DEBUG("New Connection from %s:%d\n", saddr, sk->tcp_port);
+	free(saddr);
 
 	GSocket *socket = g_socket_connection_get_socket(connection);
 
@@ -215,11 +248,17 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 
 	if (ctx != NULL && channel != NULL) {
 		sk->socket = socket;
-		g_io_add_watch(channel, G_IO_IN, (GIOFunc) network_read_apdu, ctx);
+		sk->connection = connection;
+		g_io_add_watch(channel, G_IO_IN | G_IO_HUP | G_IO_ERR,
+					(GIOFunc) network_read_apdu, ctx);
+	} else {
+		DEBUG("Could not add watch");
+		g_object_unref(connection);
 	}
 
-	return FALSE;
+	g_object_unref(sockaddr);
 
+	return TRUE;
 }
 
 /**
@@ -441,6 +480,7 @@ int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts,
 	plugin->network_wait_for_data = network_wait_for_data;
 	plugin->network_get_apdu_stream = network_get_apdu_stream;
 	plugin->network_send_apdu_stream = network_send_apdu_stream;
+	plugin->network_disconnect = network_force_disconnect;
 	plugin->network_finalize = network_finalize;
 
 	return TCP_ERROR_NONE;
