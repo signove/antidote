@@ -52,6 +52,7 @@
 #include "src/trans/plugin/example_oximeter.h"
 #ifndef ANDROID_HEALTHD
 #include "src/communication/plugin/usb/plugin_usb.h"
+#include "src/communication/plugin/bluez/plugin_glib_socket.h"
 #endif
 #include "src/util/log.h"
 #include "src/communication/service.h"
@@ -1826,12 +1827,15 @@ int main(int argc, char *argv[])
 	CommunicationPlugin bt_plugin;
 	CommunicationPlugin usb_plugin;
 	CommunicationPlugin trans_plugin;
+	CommunicationPlugin tcp_plugin;
 
 	CommunicationPlugin *plugins[] = {0, 0, 0, 0};
 	int plugin_count = 0;
 
 	int trans_support = 0;
 	int usb_support = 0;
+	int tcpp_support = 0;
+
 	int i;
 
 	opmode = DBUS_SERVER;
@@ -1853,6 +1857,8 @@ int main(int argc, char *argv[])
 #ifndef ANDROID_HEALTHD
 		} else if (strcmp(argv[i], "--usb") == 0) {
 			usb_support = 1;
+		} else if (strcmp(argv[i], "--tcpp") == 0) {
+			tcpp_support = 1;
 #endif
 		}
 	}
@@ -1915,6 +1921,7 @@ init_plugin:
 	bt_plugin = communication_plugin();
 	trans_plugin = communication_plugin();
 	usb_plugin = communication_plugin();
+	tcp_plugin = communication_plugin();
 
 	plugin_bluez_setup(&bt_plugin);
 	bluez_listener.peer_connected = call_agent_connected;
@@ -1944,6 +1951,15 @@ init_plugin:
 		trans_plugin.timer_reset_timeout = timer_reset_timeout;
 		plugins[plugin_count++] = &trans_plugin;
 	}
+
+#ifndef ANDROID_HEALTHD
+	if (tcpp_support) {
+		plugin_glib_socket_setup(&tcp_plugin, 1, 6024);
+		tcp_plugin.timer_count_timeout = timer_count_timeout;
+		tcp_plugin.timer_reset_timeout = timer_reset_timeout;
+		plugins[plugin_count++] = &tcp_plugin;
+	}
+#endif
 
 	manager_init(plugins);
 
