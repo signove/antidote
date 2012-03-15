@@ -104,3 +104,11 @@ that, if needed.
 
 Improve timeout cases that could be handled by plug-in
 (e.g. HDP reconnections)
+
+Serialize transcoding Requests
+Unify Requests for native and transcoded devices
+
+Implement proper request/count timeout in agent AARQ
+
+USB: SIGINT does not exit main loop when a USB device
+     has been disconnected while reading
