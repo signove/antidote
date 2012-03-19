@@ -159,7 +159,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	bytes_read = recv(fd, buffer, max_size, 0);
 
 	if (bytes_read <= 0) {
-		DEBUG(" glib socket: connection closed read %d", bytes_read);
+		DEBUG(" glib socket: connection closed read %" G_GSIZE_FORMAT "", bytes_read);
 		ContextId cid = {plugin_id, sk->tcp_port};
 		communication_transport_disconnect_indication(cid);
 		close(fd);
