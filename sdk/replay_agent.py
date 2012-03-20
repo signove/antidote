@@ -126,23 +126,24 @@ def parse(s):
 data = file(sys.argv[1]).read()
 tape = parse(data)
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("127.0.0.1", 6024))
+if __name__ == "__main__":
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect(("127.0.0.1", 6024))
 
-print "------------------------"
-print "Playing tape..."
+	print "------------------------"
+	print "Playing tape..."
 
-for apdu in tape:
-	if apdu["direction"] == "M":
-		print "Expecting %04x, %d bytes" % (apdu["choice"], apdu["length"] + 4)
-		recv_apdu = s.recv(65412)
-		if not recv_apdu:
-			print "Connection closed"
-			break
-		print "Received %d octets" % len(recv_apdu)
-	else:
-		print "Sent %04x" % apdu["choice"]
-		print s.send(apdu["data"])
-	time.sleep(1)
+	for apdu in tape:
+		if apdu["direction"] == "M":
+			print "Expecting %04x, %d bytes" % (apdu["choice"], apdu["length"] + 4)
+			recv_apdu = s.recv(65412)
+			if not recv_apdu:
+				print "Connection closed"
+				break
+			print "Received %d octets" % len(recv_apdu)
+		else:
+			print "Sent %04x" % apdu["choice"]
+			print s.send(apdu["data"])
+		time.sleep(1)
 
-s.close()
+	s.close()
