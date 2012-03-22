@@ -1,6 +1,8 @@
 Roadmap/TODO
 ------------
 
+Document --tcpp
+
 Move sample/testing programs to their own sources
 
 Remove wait_for_timeout obsolete item in comm plugin
