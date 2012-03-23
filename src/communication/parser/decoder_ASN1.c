@@ -29,7 +29,9 @@
  */
 
 /**
- * \addtogroup ASN1Codec
+ * \addtogroup ASN1Decoder
+ *
+ * \ingroup Parser
  *
  * @{
  */
@@ -42,9 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/**
- * \cond Undocumented
- */
 #define QUOTE(x) #x
 
 #define CHK(f)			\
@@ -94,9 +93,6 @@ fail:					\
 	del_##name(pointer);		\
 	*error = 1;			\
 	return;
-/**
- * \endcond
- */
 
 /**
  * Decodes SegmentDataResult.

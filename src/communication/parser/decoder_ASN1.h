@@ -31,7 +31,10 @@
  */
 
 /**
- * \addtogroup ASN1Codec
+ * \defgroup ASN1Decoder ASN1Decoder
+ * \brief ASN1 decoder module.
+ *
+ * \ingroup Parser
  *
  * @{
  */

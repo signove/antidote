@@ -34,7 +34,7 @@
 #include <stdint.h>
 
 /**
- * @addtogroup ASN1 ASN1 and PHD Types
+ * @addtogroup ASN1 ASN1 Type Definition
  * @{
  */
 

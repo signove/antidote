@@ -28,7 +28,9 @@
  */
 
 /**
- * \addtogroup ASN1
+ * \addtogroup ByteLib
+ *
+ * \ingroup Parser
  *
  * @{
  */
@@ -46,9 +48,6 @@
 #include "src/util/log.h"
 #include "bytelib.h"
 
-/**
- * \cond Undocumented
- */
 
 typedef enum {
 	MDER_POSITIVE_INFINITY = 0x007FFFFE,
@@ -113,9 +112,6 @@ int round(double number)
 
 const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
 
-/**
- * \endcond
- */
 
 /**
  * Bytelib constructor.

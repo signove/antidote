@@ -30,7 +30,8 @@
 
 
 /**
- * \addtogroup ASN1Codec
+ * \addtogroup ASN1Encoder
+ * \ingroup Parser
  *
  * @{
  */
@@ -44,13 +45,7 @@
 #define __func__ __FUNCTION__
 #endif
 
-/**
- * \cond Undocumented
- */
 #define CHK(fff) if (! (fff)) { ERROR("%s encoding", __func__); ok = 0; }
-/**
- * \endcond
- */
 
 
 /**

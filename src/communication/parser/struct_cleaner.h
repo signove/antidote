@@ -29,7 +29,9 @@
  */
 
 /**
- * \addtogroup ASN1Codec
+ * \defgroup StructCleaner StructCleaner
+ * \brief Struct cleaner module.
+ * \ingroup Parser
  *
  * @{
  */
