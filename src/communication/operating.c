@@ -189,10 +189,6 @@ void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 		communication_fire_evt(ctx, fsm_evt_rx_aare, NULL);
 		break;
 	}
-	case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN: {
-		communication_fire_evt(ctx, fsm_evt_rx_rors_confirmed_event_report, NULL);
-		break;
-	}
 	default:
 		//reject_result.problem = UNRECOGNIZED_APDU;
 		// TODO: communication_send_rorj(rejectResult)
