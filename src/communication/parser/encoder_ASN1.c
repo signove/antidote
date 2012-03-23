@@ -891,7 +891,7 @@ int encode_observationscanlist(ByteStreamWriter *stream,
 int encode_set_data_apdu(PRST_apdu *prst, DATA_apdu *data_apdu)
 {
 	int ok = 1;
-	prst->value = (void *) data_apdu;
+	prst->value = (intu8 *) data_apdu;
 	return ok;
 }
 

@@ -48,7 +48,6 @@
 #include "src/util/log.h"
 #include "bytelib.h"
 
-
 typedef enum {
 	MDER_POSITIVE_INFINITY = 0x007FFFFE,
 	MDER_NaN = 0x007FFFFF,
@@ -111,7 +110,6 @@ int round(double number)
 #endif
 
 const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
-
 
 /**
  * Bytelib constructor.
@@ -262,21 +260,16 @@ FLOAT_Type read_float(ByteStreamReader *stream, int *error)
 		if (mantissa >= 0x800000) {
 			mantissa = -((0xFFFFFF + 1) - mantissa);
 		}
-		output = (mantissa * pow(10, expoent));
+		output = (mantissa * pow(10.0f, expoent));
 	}
 
 	return output;
 }
 
-/**
- * Round number to "d" decimal places
- * @param n number
- * @param d decimal places
- * @return rounded number
- */
-inline double fround(double n, unsigned d)
+/* round number n to d decimal points */
+inline double fround(double n, int d)
 {
-	return floor(n * pow(10., d) + .5) / pow(10., d);
+	return floor(n * pow(10.0f, d) + 0.5f) / pow(10.0f, d);
 }
 
 /**
@@ -309,7 +302,7 @@ SFLOAT_Type read_sfloat(ByteStreamReader *stream, int *error)
 		if (mantissa >= 0x0800) {
 			mantissa = -((0x0FFF + 1) - mantissa);
 		}
-		double magnitude = pow(10, expoent);
+		double magnitude = pow(10.0f, expoent);
 		output = (mantissa * magnitude);
 	}
 

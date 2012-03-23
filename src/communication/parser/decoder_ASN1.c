@@ -64,7 +64,7 @@
 
 #define CHILDREN_GENERIC(typeU, decodefunction)									\
 	if (pointer->count > 0) {								\
-		pointer->value = calloc(pointer->count, sizeof(typeU));				\
+		pointer->value = (typeU *) calloc(pointer->count, sizeof(typeU));				\
 												\
 		if (pointer->value == NULL) {							\
 			ERROR("memory full");							\
@@ -389,7 +389,7 @@ void decode_octet_string(ByteStreamReader *stream, octet_string *pointer, int *e
 	// intu16 length
 
 	if (pointer->length > 0) {
-		pointer->value = calloc(pointer->length, sizeof(intu8));
+		pointer->value = (intu8 *) calloc(pointer->length, sizeof(intu8));
 
 		if (pointer->value == NULL) {
 			ERROR("memory full");
@@ -928,7 +928,7 @@ void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error)
 	// intu16 length
 
 	if (pointer->length > 0) {
-		DATA_apdu *data = calloc(1, sizeof(DATA_apdu));
+		DATA_apdu *data = (DATA_apdu *) calloc(1, sizeof(DATA_apdu));
 
 		if (data == NULL) {
 			ERROR("memory full");
@@ -977,7 +977,7 @@ void decode_any(ByteStreamReader *stream, Any *pointer, int *error)
 	}
 
 	if (pointer->length > 0) {
-		pointer->value = calloc(pointer->length, sizeof(intu8));
+		pointer->value = (intu8 *) calloc(pointer->length, sizeof(intu8));
 
 		if (pointer->value == NULL) {
 			ERROR("memory full");
