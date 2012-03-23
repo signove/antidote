@@ -62,7 +62,7 @@ typedef struct MDS {
 	 *
 	 * Qualifier: Mandatory
 	 */
-	HANDLE handle;
+	ASN1_HANDLE handle;
 
 	/**
 	 * This attribute defines the type of the agent, as defined in
@@ -341,7 +341,7 @@ typedef enum {
  * MDS child object definition
  */
 struct MDS_object {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	MDS_object_choice choice;
 	union {
 		struct Scanner_object scanner;
@@ -359,7 +359,7 @@ struct mds_system_data {
 
 void mds_add_object(MDS *mds, struct MDS_object object);
 
-struct MDS_object *mds_get_object_by_handle(MDS *mds, HANDLE obj_handle);
+struct MDS_object *mds_get_object_by_handle(MDS *mds, ASN1_HANDLE obj_handle);
 
 MDS *mds_create();
 
@@ -371,7 +371,7 @@ void mds_set_attribute(MDS *mds, AVA_Type *attribute);
 
 AVA_Type* mds_get_attributes(MDS *mds, intu16* count, intu16 *length);
 
-Request *mds_set_operational_state_of_the_scanner(Context *ctx, HANDLE handle, OperationalState state,
+Request *mds_set_operational_state_of_the_scanner(Context *ctx, ASN1_HANDLE handle, OperationalState state,
 		service_request_callback callback);
 
 

@@ -62,7 +62,7 @@ void operating_process_apdu(Context *ctx, APDU *apdu);
 
 void operating_process_apdu_agent(Context *ctx, APDU *apdu);
 
-Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributeids_list,
+Request *operating_service_get(Context *ctx, ASN1_HANDLE handle, OID_Type *attributeids_list,
 				int attributeids_list_count, intu32 timeout,
 				service_request_callback request_callback);
 
@@ -74,25 +74,25 @@ Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 tim
 
 void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data);
 
-void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 					RelativeTime currentTime, OID_Type event_type,
 					Any event_reply_info);
 
-void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, SegmentDataResult result);
 
 void operating_assoc_release_req_tx(Context *ctx, fsm_events evt, FSMEventData *data);
 
 void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
 
-void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r);
+void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r);
 
-void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event);
 
 void operating_rors_confirmed_action_tx(Context *ctx, fsm_events evt, FSMEventData *data);
 
-Request *operating_set_scanner(Context *ctx, HANDLE handle, OperationalState state, intu32 timeout,
+Request *operating_set_scanner(Context *ctx, ASN1_HANDLE handle, OperationalState state, intu32 timeout,
 			       service_request_callback callback);
 
 /** @} */

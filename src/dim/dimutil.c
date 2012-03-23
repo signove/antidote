@@ -1170,7 +1170,7 @@ void dimutil_update_mds_from_obs_scan(struct MDS *mds, ObservationScan *var_obs,
 				      DataEntry *data_entry)
 {
 
-	HANDLE obj_handle = 0;
+	ASN1_HANDLE obj_handle = 0;
 	struct MDS_object *object = NULL;
 	struct Metric_object *metric_obj = NULL;
 	struct PMStore *pmstore = NULL;
@@ -1230,7 +1230,7 @@ void dimutil_update_mds_from_obs_scan_fixed(struct MDS *mds, ObservationScanFixe
 	int result;
 	struct Metric_object *metric_obj = NULL;
 	struct MDS_object *object = NULL;
-	HANDLE handle = fixed_obs->obj_handle;
+	ASN1_HANDLE handle = fixed_obs->obj_handle;
 	object = mds_get_object_by_handle(mds, handle);
 
 	if (object != NULL) {

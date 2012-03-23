@@ -76,7 +76,7 @@ static const intu32 SCANNER_TO_SET = 3;
  *
  * \return a pointer to a Scanner structure.
  */
-struct Scanner *scanner_instance(HANDLE handle,
+struct Scanner *scanner_instance(ASN1_HANDLE handle,
 				 OperationalState operational_state) {
 	struct Scanner *result = calloc(1, sizeof(struct Scanner));
 	result->dim.id = scanner_get_nomenclature_code();

@@ -267,7 +267,7 @@ Request *pmstore_service_action_clear_segments_send_command(Context *ctx, struct
 	data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length = writer->size;
 
 	data_apdu->message.length = data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length
-				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(HANDLE);
+				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(ASN1_HANDLE);
 
 	apdu->u.prst.length = data_apdu->message.length + sizeof(intu16) + sizeof(DATA_apdu_choice)
 			      + sizeof(InvokeIDType);
@@ -416,7 +416,7 @@ Request *pmstore_service_action_get_segment_info(Context *ctx, struct PMStore *p
 	data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length = writer->size;
 
 	data_apdu->message.length = data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length
-				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(HANDLE);
+				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(ASN1_HANDLE);
 
 	apdu->u.prst.length = data_apdu->message.length + sizeof(intu16) + sizeof(DATA_apdu_choice)
 			      + sizeof(InvokeIDType);
@@ -545,7 +545,7 @@ Request *pmstore_service_action_trig_segment_data_xfer(Context *ctx, struct PMSt
 	data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length = writer->size;
 
 	data_apdu->message.length = data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length
-				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(HANDLE);
+				    + sizeof(intu16) + sizeof(OID_Type) + sizeof(ASN1_HANDLE);
 
 	apdu->u.prst.length = data_apdu->message.length + sizeof(intu16) + sizeof(DATA_apdu_choice)
 			      + sizeof(InvokeIDType);
@@ -1158,7 +1158,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 		int ok = 1;
 
 		for (j = 0; j < info_size; ++j) {
-			HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
+			ASN1_HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
 			AttrValMap val_map = entry_map.segm_entry_elem_list.value[j].attr_val_map;
 			int attr_count = val_map.count;
 
@@ -1322,7 +1322,7 @@ void pmstore_destroy(struct PMStore *pm_store)
  *  \param handle the PM-Store handle
  *  \return data list representation of PM-Store attributes
  */
-DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle)
+DataList *pmstore_get_data_as_datalist(Context *ctx, ASN1_HANDLE handle)
 {
 	if (ctx->mds == NULL) {
 		return NULL;
@@ -1484,7 +1484,7 @@ static void data_set_segment_stat_entry(struct MDS *mds,
 	int ok = 1;
 
 	for (j = 0; j < info_size; ++j) {
-		HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
+		ASN1_HANDLE handle = entry_map.segm_entry_elem_list.value[j].handle;
 		AttrValMap val_map = entry_map.segm_entry_elem_list.value[j].attr_val_map;
 		int attr_count = val_map.count;
 
@@ -1710,7 +1710,7 @@ static void pmstore_get_segment_data_as_datalist(struct MDS *mds,
  *  \param handle the PM-Store handle
  *  \return data list representation of PM-Store attributes
  */
-DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle)
+DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, ASN1_HANDLE handle)
 {
 	if (ctx->mds == NULL) {
 		return NULL;

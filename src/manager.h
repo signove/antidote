@@ -100,7 +100,7 @@ Request *manager_request_get_segment_info(ContextId id, int handle, service_requ
 
 DataList *manager_get_segment_info_data(ContextId id, int handle);
 
-Request *manager_set_operational_state_of_the_scanner(ContextId id, HANDLE handle, OperationalState state,
+Request *manager_set_operational_state_of_the_scanner(ContextId id, ASN1_HANDLE handle, OperationalState state,
 		service_request_callback callback);
 
 Request *manager_request_get_segment_data(ContextId id, int handle, int instnumber, service_request_callback callback);

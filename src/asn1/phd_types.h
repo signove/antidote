@@ -61,7 +61,7 @@ typedef struct Any {
 
 typedef intu16 OID_Type;
 typedef intu16 PrivateOid;
-typedef intu16 HANDLE;
+typedef intu16 ASN1_HANDLE;
 typedef intu16 InstNumber;
 
 typedef enum {
@@ -282,7 +282,7 @@ typedef struct AttrValMap {
 } AttrValMap;
 
 typedef struct HandleAttrValMapEntry {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttrValMap attr_val_map;
 } HandleAttrValMapEntry;
 
@@ -379,7 +379,7 @@ typedef BITS_16 SegmEntryHeader;
 typedef struct SegmEntryElem {
 	OID_Type class_id;
 	TYPE metric_type;
-	HANDLE handle;
+	ASN1_HANDLE handle;
 	AttrValMap attr_val_map;
 } SegmEntryElem;
 
@@ -475,7 +475,7 @@ typedef struct RegCertData {
 } RegCertData;
 
 typedef struct ObservationScan {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttributeList attributes;
 } ObservationScan;
 
@@ -553,14 +553,14 @@ typedef struct ABRT_apdu {
 typedef octet_string PRST_apdu;
 typedef intu16 InvokeIDType;
 typedef struct EventReportArgumentSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	RelativeTime event_time;
 	OID_Type event_type;
 	Any event_info;
 } EventReportArgumentSimple;
 
 typedef struct GetArgumentSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttributeIdList attribute_id_list;
 } GetArgumentSimple;
 
@@ -581,25 +581,25 @@ typedef struct ModificationList {
 } ModificationList;
 
 typedef struct SetArgumentSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	ModificationList modification_list;
 } SetArgumentSimple;
 
 typedef struct ActionArgumentSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	OID_Type action_type;
 	Any action_info_args;
 } ActionArgumentSimple;
 
 typedef struct EventReportResultSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	RelativeTime currentTime;
 	OID_Type event_type;
 	Any event_reply_info;
 } EventReportResultSimple;
 
 typedef struct GetResultSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttributeList attribute_list;
 } GetResultSimple;
 
@@ -615,12 +615,12 @@ typedef struct TypeVerList {
 } TypeVerList;
 
 typedef struct SetResultSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttributeList attribute_list;
 } SetResultSimple;
 
 typedef struct ActionResultSimple {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	OID_Type action_type;
 	Any action_info_args;
 } ActionResultSimple;
@@ -864,7 +864,7 @@ typedef struct ScanReportInfoMPVar {
 } ScanReportInfoMPVar;
 
 typedef struct ObservationScanFixed {
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	octet_string obs_val_data;
 } ObservationScanFixed;
 
@@ -936,7 +936,7 @@ typedef struct ScanReportInfoMPGrouped {
 
 typedef struct ConfigObject {
 	OID_Type obj_class;
-	HANDLE obj_handle;
+	ASN1_HANDLE obj_handle;
 	AttributeList attributes;
 } ConfigObject;
 
@@ -974,7 +974,7 @@ typedef BITS_16 DataReqMode;
 typedef struct HANDLEList {
 	intu16 count;
 	intu16 length;
-	HANDLE *value; /* first element of the array */
+	ASN1_HANDLE *value; /* first element of the array */
 } HANDLEList;
 
 typedef struct DataRequest {

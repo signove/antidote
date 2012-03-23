@@ -178,7 +178,7 @@ static void fill_cmp_child(DataEntry *cmp, int index, char *name, char *type,
  * @param data the entry to have \b HANDLE attribute set.
  * @param value the new value of entry's \b HANDLE attribute.
  */
-void data_meta_set_handle(DataEntry *data, HANDLE value)
+void data_meta_set_handle(DataEntry *data, ASN1_HANDLE value)
 {
 	if (data == NULL)
 		return;
@@ -890,7 +890,7 @@ void data_set_label_string(DataEntry *data, char *att_name, octet_string *str)
  * @param att_name the name of DIM attribute
  * @param handle the handle value
  */
-void data_set_handle(DataEntry *data, char *att_name, HANDLE *handle)
+void data_set_handle(DataEntry *data, char *att_name, ASN1_HANDLE *handle)
 {
 	if (data == NULL)
 		return;

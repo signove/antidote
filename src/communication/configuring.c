@@ -593,7 +593,7 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 
 	confirmed_result->event_reply_info.length = 4; // ConfigReportRsp
 
-	data.message.length = sizeof(HANDLE) + sizeof(RelativeTime)
+	data.message.length = sizeof(ASN1_HANDLE) + sizeof(RelativeTime)
 			      + sizeof(OID_Type) // EventReportResultSimple fields
 			      + sizeof(intu16); // Any's length field
 	data.message.length += confirmed_result->event_reply_info.length;

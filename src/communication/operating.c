@@ -68,10 +68,10 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
 
 void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scanner, OID_Type event_type, Any *event);
 
-void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
+void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle,
 							Request *r);
 
-void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request *r);
+void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r);
 
 /**
  * Process incoming APDU
@@ -327,7 +327,7 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 
 	Any event;
 	OID_Type type;
-	HANDLE handle;
+	ASN1_HANDLE handle;
 
 	if (data_apdu->message.choice == ROIV_CMIP_EVENT_REPORT_CHOSEN) {
 		DEBUG(" operating_event_report ");
@@ -388,7 +388,7 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
  * @param event_type Event type.
  * @param event_reply_info Event reply data.
  */
-void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 					RelativeTime currentTime, OID_Type event_type,
 					Any event_reply_info)
 {
@@ -435,7 +435,7 @@ void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, HA
  * @param event_type Event type.
  * @param result result data.
  */
-void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, SegmentDataResult result)
 {
 	ByteStreamWriter *writer;
@@ -452,7 +452,7 @@ void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_
 	data_apdu.invoke_id = invoke_id;
 	data_apdu.message.choice = RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 
-	data_apdu.message.length = sizeof(HANDLE) + sizeof(RelativeTime)
+	data_apdu.message.length = sizeof(ASN1_HANDLE) + sizeof(RelativeTime)
 				   + sizeof(OID_Type) + 2 + writer->size;
 
 	data_apdu.message.u.rors_cmipConfirmedEventReport.obj_handle
@@ -490,7 +490,7 @@ void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_
  * \param callback callback function of the request
  * \return a pointer to a request just done.
  */
-Request *operating_set_scanner(Context *ctx, HANDLE handle, OperationalState state, intu32 timeout,
+Request *operating_set_scanner(Context *ctx, ASN1_HANDLE handle, OperationalState state, intu32 timeout,
 			       service_request_callback callback)
 {
 	APDU *apdu = calloc(1, sizeof(APDU));
@@ -515,7 +515,7 @@ Request *operating_set_scanner(Context *ctx, HANDLE handle, OperationalState sta
 	= sizeof(ModifyOperator) + sizeof(OID_Type) + sizeof(intu16)
 	  + entry[0].attribute.attribute_value.length;
 
-	data_apdu->message.length = sizeof(HANDLE) + 2 * sizeof(intu16);
+	data_apdu->message.length = sizeof(ASN1_HANDLE) + 2 * sizeof(intu16);
 	data_apdu->message.length += data_apdu->message.u.roiv_cmipConfirmedSet.modification_list.length;
 
 	apdu->u.prst.length = sizeof(InvokeIDType)
@@ -631,7 +631,7 @@ void operating_get_response(Context *ctx, fsm_events evt, FSMEventData *data)
  * @param request_callback
  * @return Request descriptor struct, or NULL if request could not be sent
  */
-Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributeids_list,
+Request *operating_service_get(Context *ctx, ASN1_HANDLE handle, OID_Type *attributeids_list,
 				int attributeids_list_count, intu32 timeout,
 				service_request_callback request_callback)
 {
@@ -667,7 +667,7 @@ Request *operating_service_get(Context *ctx, HANDLE handle, OID_Type *attributei
 		data_apdu->message.u.roiv_cmipGet = arg_simple;
 
 		data_apdu->message.length = arg_simple.attribute_id_list.length;
-		data_apdu->message.length += sizeof(HANDLE) + sizeof(intu16)
+		data_apdu->message.length += sizeof(ASN1_HANDLE) + sizeof(intu16)
 					     + sizeof(intu16);
 
 		apdu->u.prst.length = sizeof(InvokeIDType)
@@ -726,7 +726,7 @@ Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 tim
 			= data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length
 			  + sizeof(intu16)
 			  + sizeof(OID_Type)
-			  + sizeof(HANDLE);
+			  + sizeof(ASN1_HANDLE);
 
 			apdu->u.prst.length = data_apdu->message.length
 					      + sizeof(intu16) + sizeof(DATA_apdu_choice)
@@ -1051,7 +1051,7 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
  * \param obj_handle
  * \param r the related Request
  */
-void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request *r)
+void operating_decode_clear_segment(struct MDS *mds, ASN1_HANDLE obj_handle, Request *r)
 {
 	// FIXME EPX2 errors come via ROER response packets
 	struct MDS_object *mds_obj;
@@ -1070,7 +1070,7 @@ void operating_decode_clear_segment(struct MDS *mds, HANDLE obj_handle, Request 
  * \param *obj_handle
  * \param *r the related Request
  */
-void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handle, Request *r)
+void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r)
 {
 	int error = 0;
 	SegmentInfoList info_list;
@@ -1102,7 +1102,7 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, HANDLE obj_handl
  * \param *obj_handle
  * \param *r the related Request
  */
-void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, HANDLE obj_handle,
+void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle,
 							Request *r)
 {
 	int error = 0;
@@ -1136,7 +1136,7 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
  * \param event_type
  * \param event
  */
-void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, HANDLE obj_handle,
+void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event)
 {
 	int error = 0;

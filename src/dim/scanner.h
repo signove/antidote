@@ -60,7 +60,7 @@ struct Scanner {
 	 * Qualifier: Mandatory
 	 *
 	 */
-	HANDLE handle;
+	ASN1_HANDLE handle;
 
 	/**
 	 * This attribute defines if scanner is active and can be set by the
@@ -95,7 +95,7 @@ struct Scanner {
 	HandleAttrValMap scan_handle_attr_val_map;
 };
 
-struct Scanner *scanner_instance(HANDLE handle,
+struct Scanner *scanner_instance(ASN1_HANDLE handle,
 				 OperationalState operational_state);
 
 void scanner_destroy(struct Scanner *self);

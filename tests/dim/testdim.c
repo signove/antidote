@@ -96,7 +96,7 @@ void test_dim_mds_initialization(void)
 
 void test_dim_scanner_initialization(void)
 {
-	HANDLE handle = 0;
+	ASN1_HANDLE handle = 0;
 	OperationalState state = 0;
 	struct Scanner *sc = scanner_instance(handle, state);
 
@@ -107,7 +107,7 @@ void test_dim_scanner_initialization(void)
 
 void test_dim_cfg_scanner_initialization(void)
 {
-	HANDLE handle = 0;
+	ASN1_HANDLE handle = 0;
 	OperationalState state = 0;
 	struct Scanner *sc = scanner_instance(handle, state);
 
@@ -123,7 +123,7 @@ void test_dim_cfg_scanner_initialization(void)
 void test_dim_peri_cfg_scanner_initialization(void)
 {
 
-	HANDLE handle = 0;
+	ASN1_HANDLE handle = 0;
 	OperationalState state = 0;
 	struct Scanner *sc = scanner_instance(handle, state);
 
@@ -143,7 +143,7 @@ void test_dim_peri_cfg_scanner_initialization(void)
 
 void test_dim_epi_cfg_scanner_initialization(void)
 {
-	HANDLE handle = 0;
+	ASN1_HANDLE handle = 0;
 	OperationalState state = 0;
 	struct Scanner *sc = scanner_instance(handle, state);
 
@@ -162,7 +162,7 @@ void test_dim_epi_cfg_scanner_initialization(void)
 void test_dim_metric_initialization(void)
 {
 
-	HANDLE handle = 0;
+	ASN1_HANDLE handle = 0;
 	MetricSpecSmall small = 0;
 	TYPE type;
 

@@ -39,7 +39,7 @@ char *data_strcp(const char *str);
 
 // Meta attributes
 void data_set_meta_att(DataEntry *data, char *name, char *value);
-void data_meta_set_handle(DataEntry *data, HANDLE value);
+void data_meta_set_handle(DataEntry *data, ASN1_HANDLE value);
 void data_meta_set_part_code(DataEntry *data, int part_code);
 void data_meta_set_attr_id(DataEntry *data, intu16 attr_id);
 void data_meta_set_personal_id(DataEntry *data, intu16 personal_id);
@@ -106,7 +106,7 @@ void data_set_sa_specification(DataEntry *data, char *att_name,
 			       SaSpec *sa_specification);
 
 void data_set_oid_type(DataEntry *data, char *att_name, OID_Type *type);
-void data_set_handle(DataEntry *data, char *att_name, HANDLE *handle);
+void data_set_handle(DataEntry *data, char *att_name, ASN1_HANDLE *handle);
 void data_set_attribute_metric_spec_small(DataEntry *data, char *att_name, MetricSpecSmall *spec_small);
 void data_set_attribute_metric_structure_small(DataEntry *data, char *att_name, MetricStructureSmall *struct_small);
 void data_set_attribute_value_map(DataEntry *data, char *att_name, AttrValMap *val_map);

@@ -49,7 +49,7 @@ struct Metric {
 	 *
 	 * Qualifier: Mandatory
 	 */
-	HANDLE handle;
+	ASN1_HANDLE handle;
 
 	/**
 	 * This attribute defines a specific static type of this object
@@ -123,7 +123,7 @@ struct Metric {
 	 *
 	 * Qualifier: Optional
 	 */
-	HANDLE source_handle_reference;
+	ASN1_HANDLE source_handle_reference;
 
 	/**
 	 *This attribute defines a textual representation of Type

@@ -368,7 +368,7 @@ Request *mds_service_action_data_request(Context *ctx, DataReqMode data_req_mode
 			= data_apdu->message.u.roiv_cmipConfirmedAction.action_info_args.length
 			  + sizeof(intu16)
 			  + sizeof(OID_Type)
-			  + sizeof(HANDLE);
+			  + sizeof(ASN1_HANDLE);
 
 			apdu->u.prst.length = data_apdu->message.length
 					      + sizeof(intu16) + sizeof(DATA_apdu_choice)
@@ -890,7 +890,7 @@ void mds_add_object(MDS *mds, struct MDS_object object)
  *
  * \param mds
  */
-struct MDS_object *mds_get_object_by_handle(MDS *mds, HANDLE obj_handle)
+struct MDS_object *mds_get_object_by_handle(MDS *mds, ASN1_HANDLE obj_handle)
 {
 	int object_list_size = 0;
 	int i;
@@ -1450,7 +1450,7 @@ void mds_set_attribute(MDS *mds, AVA_Type *attribute)
  *
  * \return a pointer to a request just done.
  */
-Request *mds_set_operational_state_of_the_scanner(Context *ctx, HANDLE handle, OperationalState state,
+Request *mds_set_operational_state_of_the_scanner(Context *ctx, ASN1_HANDLE handle, OperationalState state,
 		service_request_callback callback)
 {
 	Request *req = NULL;

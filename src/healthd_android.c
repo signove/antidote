@@ -476,7 +476,7 @@ void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env
 	DEBUG("device_reqactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
-	manager_set_operational_state_of_the_scanner(cid, (HANDLE) ihandle, os_enabled, NULL);
+	manager_set_operational_state_of_the_scanner(cid, (ASN1_HANDLE) ihandle, os_enabled, NULL);
 }
 
 /**
@@ -492,7 +492,7 @@ void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *e
 	DEBUG("device_reqdeactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
-	manager_set_operational_state_of_the_scanner(cid, (HANDLE) ihandle, os_disabled, NULL);
+	manager_set_operational_state_of_the_scanner(cid, (ASN1_HANDLE) ihandle, os_disabled, NULL);
 }
 
 /**

@@ -156,7 +156,7 @@ int service_is_id_valid(Context *ctx, InvokeIDType invoke_id);
 
 Request *service_check_known_invoke_id(Context *ctx, DATA_apdu *data_apdu);
 
-void service_configure_attribute(Context *ctx, OID_Type obj_class, HANDLE obj_handle, OID_Type attribute_id, Any attribute_value);
+void service_configure_attribute(Context *ctx, OID_Type obj_class, ASN1_HANDLE obj_handle, OID_Type attribute_id, Any attribute_value);
 
 /** @} */
 

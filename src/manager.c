@@ -473,7 +473,7 @@ void manager_request_association_abort(ContextId id)
  * @return pointer to request sent
  */
 Request *manager_set_operational_state_of_the_scanner(ContextId id,
-		HANDLE handle, OperationalState state,
+		ASN1_HANDLE handle, OperationalState state,
 		service_request_callback callback)
 {
 	Context *ctx = context_get(id);

@@ -1553,7 +1553,7 @@ gboolean device_set_time(Device *obj, guint64 time, GError **err)
 gboolean device_reqactivationscanner(Device *obj, gint handle, GError **err)
 {
 	DEBUG("device_reqactivationscanner");
-	manager_set_operational_state_of_the_scanner(obj->handle, (HANDLE) handle, os_enabled, NULL);
+	manager_set_operational_state_of_the_scanner(obj->handle, (ASN1_HANDLE) handle, os_enabled, NULL);
 	return TRUE;
 }
 
@@ -1567,7 +1567,7 @@ gboolean device_reqactivationscanner(Device *obj, gint handle, GError **err)
 gboolean device_reqdeactivationscanner(Device *obj, gint handle, GError **err)
 {
 	DEBUG("device_reqdeactivationscanner");
-	manager_set_operational_state_of_the_scanner(obj->handle, (HANDLE) handle, os_disabled, NULL);
+	manager_set_operational_state_of_the_scanner(obj->handle, (ASN1_HANDLE) handle, os_disabled, NULL);
 	return TRUE;
 }
 

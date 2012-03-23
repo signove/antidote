@@ -62,7 +62,7 @@ struct PMStore {
 	 * Qualifier: Mandatory
 	 *
 	 */
-	HANDLE handle;
+	ASN1_HANDLE handle;
 
 	/**
 	 * This attribute defines basic capabilities of the PM-store
@@ -206,8 +206,8 @@ void pmstore_service_set_attribute(struct PMStore *pm_store, AVA_Type *attribute
 
 int pmstore_set_attribute(struct PMStore *pmstore, OID_Type attr_id, ByteStreamReader *stream);
 
-DataList *pmstore_get_data_as_datalist(Context *ctx, HANDLE handle);
+DataList *pmstore_get_data_as_datalist(Context *ctx, ASN1_HANDLE handle);
 
-DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, HANDLE handle);
+DataList *pmstore_get_segment_info_data_as_datalist(Context *ctx, ASN1_HANDLE handle);
 
 #endif /* PMSTORE_H_ */

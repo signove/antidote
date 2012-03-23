@@ -511,7 +511,7 @@ void decode_getresultsimple(ByteStreamReader *stream, GetResultSimple *pointer, 
 void decode_handlelist(ByteStreamReader *stream, HANDLEList *pointer, int *error)
 {
 	CLV();
-	CHILDREN16(HANDLE);
+	CHILDREN16(ASN1_HANDLE);
 	EPILOGUE(handlelist);
 }
 
