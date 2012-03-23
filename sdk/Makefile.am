@@ -1,0 +1,13 @@
+INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
+
+bin_PROGRAMS = simulator_agent
+
+simulator_agent_SOURCES = simulator_agent.c simulator_parser.c jsmn.c
+
+simulator_agent_LDADD = \
+             ../src/communication/plugin/libcommpluginimpl.la \
+             ../src/libantidote.la
+
+install-data-local: healthd.conf
+	$(mkinstalldirs) $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL_DATA) $(srcdir)/healthd.conf $(DESTDIR)/etc/dbus-1/system.d/

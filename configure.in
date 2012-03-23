@@ -76,7 +76,8 @@ AC_CONFIG_FILES([Makefile \
 	  src/trans/Makefile \
 	  src/trans/plugin/Makefile \
           src/specializations/Makefile \
-          src/antidote.pc
+          src/antidote.pc \
+          sdk/Makefile \
           tests/Makefile \
           tests/api/Makefile \
           tests/dim/Makefile \
