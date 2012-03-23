@@ -85,7 +85,13 @@ void decode_observationscan(ByteStreamReader *stream, ObservationScan *pointer, 
 void decode_scanreportpergrouped(ByteStreamReader *stream, ScanReportPerGrouped *pointer, int *error);
 void decode_systemmodel(ByteStreamReader *stream, SystemModel *pointer, int *error);
 void decode_observationscanlist(ByteStreamReader *stream, ObservationScanList *pointer, int *error);
+#ifdef WIN32
+extern "C" {
+    __declspec(dllexport) void __cdecl decode_apdu(ByteStreamReader *stream, APDU *pointer, int *error);
+}
+#else
 void decode_apdu(ByteStreamReader *stream, APDU *pointer, int *error);
+#endif
 void decode_prst_apdu(ByteStreamReader *stream, PRST_apdu *pointer, int *error);
 void decode_pmsegmententrymap(ByteStreamReader *stream, PmSegmentEntryMap *pointer, int *error);
 void decode_any(ByteStreamReader *stream, Any *pointer, int *error);

@@ -84,7 +84,13 @@ void del_observationscan(ObservationScan *pointer);
 void del_scanreportpergrouped(ScanReportPerGrouped *pointer);
 void del_systemmodel(SystemModel *pointer);
 void del_observationscanlist(ObservationScanList *pointer);
+#ifdef WIN32
+extern "C" {
+    __declspec(dllexport) void __cdecl del_apdu(APDU *pointer);
+}
+#else
 void del_apdu(APDU *pointer);
+#endif
 void del_prst_apdu(PRST_apdu *pointer);
 void del_pmsegmententrymap(PmSegmentEntryMap *pointer);
 void del_any(Any *pointer);

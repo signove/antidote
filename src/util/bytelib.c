@@ -37,9 +37,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include "bytelib.h"
+#ifndef WIN32
+        #include <arpa/inet.h>
+#else
+        #include<float.h>
+        #include<WinSock2.h>
+#endif
 #include "src/util/log.h"
+#include "bytelib.h"
 
 /**
  * \cond Undocumented
@@ -92,6 +97,19 @@ const intu32 FIRST_S_RESERVED_VALUE = MDER_S_POSITIVE_INFINITY;
 // 10 ** upper(11 * log(2) / log(10))
 #define MDER_SFLOAT_PRECISION 10000
 
+
+#ifdef WIN32
+int round(double number)
+{
+    return (number >= 0) ? (int)(number + 0.5) : (int)(number - 0.5);
+}
+
+#define isnan(x) _isnan(x)
+#define isinf(x) (!_finite(x))
+#define NAN _FPCLASS_SNAN
+#define INFINITY _FPCLASS_PINF
+
+#endif
 
 const double reserved_float_values[5] = {INFINITY, NAN, NAN, NAN, -INFINITY};
 

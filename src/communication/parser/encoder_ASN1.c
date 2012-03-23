@@ -40,6 +40,9 @@
 #include "src/util/log.h"
 #include "src/communication/parser/encoder_ASN1.h"
 
+#ifdef WIN32
+#define __func__ __FUNCTION__
+#endif
 
 /**
  * \cond Undocumented
