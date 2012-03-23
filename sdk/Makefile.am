@@ -8,6 +8,3 @@ simulator_agent_LDADD = \
              ../src/communication/plugin/libcommpluginimpl.la \
              ../src/libantidote.la
 
-install-data-local: healthd.conf
-	$(mkinstalldirs) $(DESTDIR)/etc/dbus-1/system.d
-	$(INSTALL_DATA) $(srcdir)/healthd.conf $(DESTDIR)/etc/dbus-1/system.d/
