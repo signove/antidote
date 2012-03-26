@@ -53,6 +53,11 @@
 static unsigned int plugin_id = 0;
 
 /**
+ * Connection ID generator (each connection gets a new ID)
+ */
+static unsigned int last_conn_id = 0;
+
+/**
  * \cond Undocumented
  */
 
@@ -74,46 +79,59 @@ static PluginGlibSocketListener *listener = NULL;
  */
 typedef struct NetworkSocket {
 	GSocketService *service;
+	int tcp_port;
+} NetworkSocket;
+
+/**
+ * Struct which contains connection context
+ */
+typedef struct Connection {
 	GSocket *socket;
 	GSocketConnection *connection;
-	int tcp_port;
+	unsigned int conn_id;
 	char *addr;
-} NetworkSocket;
+} Connection;
 
 /**
  * List of the sockets
  */
 static LinkedList *sockets = NULL;
 
+/**
+ * List of connections
+ */
+static LinkedList *connections = NULL;
+
 
 /**
- * Search socket by port number - comparison function
+ * Search connection by connid - comparison function
  *
  * @param arg Port number
  * @param element element to compare
  * @return non-0 if matches
  */
-static int search_socket_by_port(void *arg, void *element)
+static int search_connection_by_connid(void *arg, void *element)
 {
-	int port = *((int *) arg);
-	NetworkSocket *sk = (NetworkSocket *) element;
+	unsigned int conn_id = *((unsigned int *) arg);
+	Connection *conn = (Connection *) element;
 
-	if (sk == NULL) {
+	if (conn == NULL) {
 		return 0;
 	}
 
-	return port == sk->tcp_port;
+	return conn_id == conn->conn_id;
 }
+
 /**
- * Get NetworkSocket given port number
+ * Get Connection given connection ID
  *
- * @param port
- * @return NetworkSocket or NULL if not found
+ * @param conn_id the connection context id
+ * @return Connection or NULL if not found
  */
-static NetworkSocket *get_socket(int port)
+static Connection *get_connection(unsigned int conn_id)
 {
-	return (NetworkSocket *) llist_search_first(sockets, &port,
-			&search_socket_by_port);
+	return (Connection *) llist_search_first(connections, &conn_id,
+			&search_connection_by_connid);
 }
 
 /**
@@ -124,10 +142,46 @@ static NetworkSocket *get_socket(int port)
  */
 static int network_force_disconnect(Context *ctx)
 {
-	NetworkSocket *sk = get_socket(ctx->id.connid);
-	gint fd = g_socket_get_fd(sk->socket);
+	Connection *conn = get_connection(ctx->id.connid);
+	gint fd = g_socket_get_fd(conn->socket);
 	close(fd);
 	return TCP_ERROR_NONE;
+}
+
+/**
+ * Destroy connection structure
+ *
+ * @param element Pointer to Connection
+ * @return 0 if failure
+ */
+static int destroy_connection(void *element)
+{
+	Connection *conn = (Connection*) element;
+
+	if (conn != NULL) {
+		DEBUG(" glib socket: connection %d closed ", conn->conn_id);
+		g_object_unref(conn->connection);
+		free(conn->addr);
+		conn->addr = 0;
+
+		free(conn);
+		conn = NULL;
+	}
+
+	return 1;
+}
+
+/**
+ * Remove connection structure from list
+ *
+ * @param element Pointer to Connection
+ * @return 0 if failure
+ */
+static int remove_connection(Connection *conn)
+{
+	llist_remove(connections, conn);
+	destroy_connection(conn);
+	return 1;
 }
 
 /**
@@ -143,20 +197,23 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 {
 	DEBUG(" glib socket: network_read_apdu");
 
-	Context *ctx = (Context *) data;
-	NetworkSocket *sk = get_socket(ctx->id.connid);
+	unsigned int conn_id = GPOINTER_TO_UINT(data);
+	Connection *conn = get_connection(conn_id);
+	if (!conn)
+		return FALSE;
+
 	int fd = g_io_channel_unix_get_fd(source);
 
 	if (condition & (G_IO_ERR | G_IO_HUP)) {
 		DEBUG(" glib socket: conn closed with error");
-		ContextId cid = {plugin_id, sk->tcp_port};
+		ContextId cid = {plugin_id, conn->conn_id};
 		communication_transport_disconnect_indication(cid);
 		if (listener) {
-			listener->peer_disconnected(cid, sk->addr);
+			listener->peer_disconnected(cid, conn->addr);
 		}
 		g_io_channel_unref(source);
 		close(fd);
-		g_object_unref(sk->connection);
+		remove_connection(conn);
 		return FALSE;
 	}
 
@@ -168,14 +225,14 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 
 	if (bytes_read <= 0) {
 		DEBUG(" glib socket: connection closed read %" G_GSIZE_FORMAT "", bytes_read);
-		ContextId cid = {plugin_id, sk->tcp_port};
+		ContextId cid = {plugin_id, conn->conn_id};
 		communication_transport_disconnect_indication(cid);
 		if (listener) {
-			listener->peer_disconnected(cid, sk->addr);
+			listener->peer_disconnected(cid, conn->addr);
 		}
 		close(fd);
 		g_io_channel_unref(source);
-		g_object_unref(sk->connection);
+		remove_connection(conn);
 		free(buffer);
 		buffer = NULL;
 		return FALSE;
@@ -217,8 +274,13 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	DEBUG(" glib socket: APDU received ");
 	ioutil_print_buffer(stream->buffer_cur, bytes_read);
 
-	DEBUG(" glib socket: sending to stack...");
-	communication_process_input_data(ctx, stream);
+	ContextId id = {plugin_id, conn_id};
+	Context *ctx = context_get(id);
+
+	if (ctx) {
+		DEBUG(" glib socket: sending to stack...");
+		communication_process_input_data(ctx, stream);
+	}
 
 	return TRUE;
 }
@@ -252,20 +314,33 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 	gint fd = g_socket_get_fd(socket);
 	GIOChannel *channel = g_io_channel_unix_new(fd);
 
-	ContextId cid = {plugin_id, sk->tcp_port};
+	unsigned int conn_id = ++last_conn_id;
+	ContextId cid = {plugin_id, conn_id};
+
+	char *lladdr;
+	if (asprintf(&lladdr, "%s:%d", saddr, conn_id) < 0) {
+		// TODO handle error
+	}
+	free(saddr);
 
 	Context *ctx = communication_transport_connect_indication(cid);
 
 	if (ctx != NULL && channel != NULL) {
-		sk->socket = socket;
-		sk->connection = connection;
-		if (sk->addr)
-			free(sk->addr);
-		sk->addr = saddr;
+		Connection *conn = calloc(1, sizeof(Connection));
+
+		conn->socket = socket;
+		conn->connection = connection;
+		conn->conn_id = conn_id;
+		conn->addr = lladdr;
+
+		llist_add(connections, conn);
+
 		g_io_add_watch(channel, G_IO_IN | G_IO_HUP | G_IO_ERR,
-					(GIOFunc) network_read_apdu, ctx);
+					(GIOFunc) network_read_apdu,
+					GUINT_TO_POINTER(conn_id));
+
 		if (listener) {
-			listener->peer_connected(cid, sk->addr);
+			listener->peer_connected(cid, conn->addr);
 		}
 	} else {
 		DEBUG("Could not add watch");
@@ -286,7 +361,6 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
  */
 static int init_socket(void *element)
 {
-
 	NetworkSocket *sk = (NetworkSocket *) element;
 
 	if (sk->tcp_port == 0) {
@@ -367,13 +441,13 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
  */
 static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
-	NetworkSocket *sk = get_socket(ctx->id.connid);
+	Connection *conn = get_connection(ctx->id.connid);
 
-	if (sk != NULL && g_socket_is_connected(sk->socket)) {
+	if (conn != NULL && g_socket_is_connected(conn->socket)) {
 		DEBUG(" glib socket: sending APDU...");
 
 		GError *error = NULL;
-		gsize bytes_written = g_socket_send(sk->socket,
+		gsize bytes_written = g_socket_send(conn->socket,
 						    (gchar *) stream->buffer, stream->size, NULL,
 						    &error);
 
@@ -418,9 +492,6 @@ static int destroy_socket(void *element)
 
 		DEBUG(" glib socket: socket %d closed ", socket->tcp_port);
 
-		free(socket->addr);
-		socket->addr = 0;
-
 		free(socket);
 		socket = NULL;
 	}
@@ -436,8 +507,10 @@ static int destroy_socket(void *element)
  */
 static int network_finalize()
 {
+	llist_destroy(connections, &destroy_connection);
 	llist_destroy(sockets, &destroy_socket);
 	sockets = NULL;
+	connections = NULL;
 	return TCP_ERROR_NONE;
 }
 
@@ -494,6 +567,8 @@ int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts,
 	}
 
 	va_end(port_list);
+
+	connections = llist_new();
 
 	plugin->network_init = network_init;
 	plugin->network_wait_for_data = network_wait_for_data;
