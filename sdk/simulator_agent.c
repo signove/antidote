@@ -48,7 +48,7 @@
 #include "agent.h"
 #include "simulator_parser.h"
 
-static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99, 0xbb, 0xdd, 0xff };
+static intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99, 0xbb, 0xdd, 0xff };
 
 // HTTP stuff
 #define SIMULATOR_PORT 8036
@@ -496,12 +496,15 @@ int main(int argc, char **argv)
 		} else if (strstr(argv[4], "BloodPressure") != 0) {
 			event_report_cb = blood_pressure_event_report_cb;
 			specialization = 0x02BC;
+			AGENT_SYSTEM_ID_VALUE[7] -= 1;
 		} else if (strstr(argv[4], "WeightScale") != 0) {
 			event_report_cb = weightscale_event_report_cb;
 			specialization = 0x05DC;
+			AGENT_SYSTEM_ID_VALUE[7] -= 2;
 		} else if (strstr(argv[4], "GlucoseMeter") != 0) {
 			event_report_cb = glucometer_event_report_cb;
 			specialization = 0x06A4;
+			AGENT_SYSTEM_ID_VALUE[7] -= 3;
 		} else {
 			show_command_error_info(argv[0]);
 		}
