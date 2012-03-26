@@ -582,7 +582,7 @@ int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts,
 
 /**
  * Sets a listener to event of this plugin
- * @param plugin
+ * @param slistener Socket listener
  */
 void plugin_glib_socket_set_listener(PluginGlibSocketListener *slistener)
 {
