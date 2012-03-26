@@ -156,7 +156,7 @@ char *get_ip(char *host)
  */
 char *call_Emulator(char *host, char* page)
 {
-	char buf[2048];
+	char buf[65536];
 	struct sockaddr_in *remote;
 
 	int sock = create_tcp_socket();
@@ -194,7 +194,7 @@ char *call_Emulator(char *host, char* page)
 	memset(buf, 0, sizeof(buf));
 
 	// Read data
-	tmpres = recv(sock, buf, 1024, 0); //TODO: Check for other macro instead of BUFSIZ
+	tmpres = recv(sock, buf, 65535, 0); //TODO: Check for other macro instead of BUFSIZ
 
 	free(get);
 	free(remote);
@@ -453,6 +453,7 @@ void sigalrm(int dummy)
 
 			// Run command
 			if (simulator_command != NULL) {
+				printf("Simulator command, message %d\n", simulator_command->message);
 				if (simulator_command->message == send_data) {
 					agent_send_data(CONTEXT_ID);
 				}
@@ -466,6 +467,8 @@ void sigalrm(int dummy)
 				}
 
 				free_parser_result(simulator_command);
+			} else {
+				printf("*** Simulator command NOT parsed\n");
 			}
 		}
 		free(emulator_Data);
