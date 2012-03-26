@@ -140,7 +140,7 @@ static void print_help()
 			"        --help                	Print this help\n"
 			"        --fifo [--sensor=type] Run FIFO mode with default file descriptors\n"
 			"        --tcp  [--sensor=type] Run TCP mode on default port\n"
-			" where type can assume the values pulseoximeter, bloodpressure and weightscale");
+			"        Where type can be pulseoximeter, bloodpressure, glucometer or weightscale\n\n");
 }
 
 /**
