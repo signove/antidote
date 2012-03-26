@@ -92,6 +92,7 @@ sample_bt_agent_LDADD = \
 		communication/plugin/bluez/libbluezplugin.la \
 		libantidote.la \
 		@GLIB_LIBS@ \
+		@GIO_LIBS@ \
 		@DBUS_LIBS@ \
 		@DBUS_GLIB_LIBS@
 
