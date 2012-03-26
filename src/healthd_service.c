@@ -71,6 +71,7 @@ static PluginBluezListener bluez_listener;
 #ifndef ANDROID_HEALTHD
 static PluginUsbListener usb_listener;
 #endif
+static PluginGlibSocketListener tcpp_listener;
 
 static const int DBUS_SERVER = 0;
 static const int TCP_SERVER = 1;
@@ -1981,6 +1982,10 @@ init_plugin:
 #ifndef ANDROID_HEALTHD
 	if (tcpp_support) {
 		plugin_glib_socket_setup(&tcp_plugin, 1, 6024);
+		tcpp_listener.peer_connected = call_agent_connected;
+		tcpp_listener.peer_disconnected = call_agent_disconnected;
+		plugin_glib_socket_set_listener(&tcpp_listener);
+
 		tcp_plugin.timer_count_timeout = timer_count_timeout;
 		tcp_plugin.timer_reset_timeout = timer_reset_timeout;
 		plugins[plugin_count++] = &tcp_plugin;

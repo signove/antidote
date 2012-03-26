@@ -65,6 +65,11 @@ static const int BACKLOG = 1;
  */
 
 /**
+ * Plugin listener for non-stack events e.g. connection
+ */
+static PluginGlibSocketListener *listener = NULL;
+
+/**
  * Struct which contains network context
  */
 typedef struct NetworkSocket {
@@ -72,7 +77,7 @@ typedef struct NetworkSocket {
 	GSocket *socket;
 	GSocketConnection *connection;
 	int tcp_port;
-
+	char *addr;
 } NetworkSocket;
 
 /**
@@ -146,6 +151,9 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 		DEBUG(" glib socket: conn closed with error");
 		ContextId cid = {plugin_id, sk->tcp_port};
 		communication_transport_disconnect_indication(cid);
+		if (listener) {
+			listener->peer_disconnected(cid, sk->addr);
+		}
 		g_io_channel_unref(source);
 		close(fd);
 		g_object_unref(sk->connection);
@@ -162,6 +170,9 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 		DEBUG(" glib socket: connection closed read %" G_GSIZE_FORMAT "", bytes_read);
 		ContextId cid = {plugin_id, sk->tcp_port};
 		communication_transport_disconnect_indication(cid);
+		if (listener) {
+			listener->peer_disconnected(cid, sk->addr);
+		}
 		close(fd);
 		g_io_channel_unref(source);
 		g_object_unref(sk->connection);
@@ -235,7 +246,6 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 
 	char *saddr = g_inet_address_to_string(addr);
 	DEBUG("New Connection from %s:%d\n", saddr, sk->tcp_port);
-	free(saddr);
 
 	GSocket *socket = g_socket_connection_get_socket(connection);
 
@@ -249,8 +259,14 @@ gboolean new_connection(GSocketService *service, GSocketConnection *connection,
 	if (ctx != NULL && channel != NULL) {
 		sk->socket = socket;
 		sk->connection = connection;
+		if (sk->addr)
+			free(sk->addr);
+		sk->addr = saddr;
 		g_io_add_watch(channel, G_IO_IN | G_IO_HUP | G_IO_ERR,
 					(GIOFunc) network_read_apdu, ctx);
+		if (listener) {
+			listener->peer_connected(cid, sk->addr);
+		}
 	} else {
 		DEBUG("Could not add watch");
 		g_object_unref(connection);
@@ -402,6 +418,9 @@ static int destroy_socket(void *element)
 
 		DEBUG(" glib socket: socket %d closed ", socket->tcp_port);
 
+		free(socket->addr);
+		socket->addr = 0;
+
 		free(socket);
 		socket = NULL;
 	}
@@ -484,6 +503,15 @@ int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts,
 	plugin->network_finalize = network_finalize;
 
 	return TCP_ERROR_NONE;
+}
+
+/**
+ * Sets a listener to event of this plugin
+ * @param plugin
+ */
+void plugin_glib_socket_set_listener(PluginGlibSocketListener *slistener)
+{
+	listener = slistener;
 }
 
 /** @} */

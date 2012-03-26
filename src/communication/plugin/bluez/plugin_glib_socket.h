@@ -36,6 +36,23 @@
 
 int plugin_glib_socket_setup(CommunicationPlugin *plugin, int numberOfPorts, ...);
 
+/**
+ * GlibSocket plugin listener definition
+ */
+typedef struct PluginGlibSocketListener {
+	/**
+	 * Called when agent connects
+	 */
+	gboolean (*peer_connected)(ContextId cid, const char *btaddr);
+
+	/**
+	 * Called when agent disconnects
+	 */
+	gboolean (*peer_disconnected)(ContextId cid, const char *btaddr);
+} PluginGlibSocketListener;
+
+void plugin_glib_socket_set_listener(PluginGlibSocketListener *plugin);
+
 // TODO means to init a connection (for an agent)
 
 
