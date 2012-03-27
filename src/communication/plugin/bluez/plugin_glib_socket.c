@@ -36,6 +36,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <sys/socket.h>
+#include <string.h>
 
 #include "src/util/strbuff.h"
 #include "src/communication/communication.h"
@@ -90,6 +91,8 @@ typedef struct Connection {
 	GSocketConnection *connection;
 	unsigned int conn_id;
 	char *addr;
+	unsigned char *buffer;
+	int buffer_length;
 } Connection;
 
 /**
@@ -163,6 +166,9 @@ static int destroy_connection(void *element)
 		g_object_unref(conn->connection);
 		free(conn->addr);
 		conn->addr = 0;
+		free(conn->buffer);
+		conn->buffer = 0;
+		conn->buffer_length = 0;
 
 		free(conn);
 		conn = NULL;
@@ -218,10 +224,9 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	}
 
 	gsize bytes_read;
-	gsize max_size = 64512; // Max packet length for protocol
-	unsigned char *buffer = malloc(max_size);
+	unsigned char localbuf[64512]; // Max packet length for protocol
 
-	bytes_read = recv(fd, buffer, max_size, 0);
+	bytes_read = recv(fd, localbuf, 64512, 0);
 
 	if (bytes_read <= 0) {
 		DEBUG(" glib socket: connection closed read %" G_GSIZE_FORMAT "", bytes_read);
@@ -233,46 +238,51 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 		close(fd);
 		g_io_channel_unref(source);
 		remove_connection(conn);
-		free(buffer);
-		buffer = NULL;
 		return FALSE;
 	}
 
-	// Check Header size
-	if (bytes_read < 4) {
-		DEBUG(" glib socket: APDU header should have at least 4 bytes: %ld.",
-		      (long) bytes_read);
-		free(buffer);
-		buffer = NULL;
+	conn->buffer = realloc(conn->buffer, conn->buffer_length + bytes_read);
+	memcpy(conn->buffer + conn->buffer_length, localbuf, bytes_read);
+	conn->buffer_length += bytes_read;
+
+	if (conn->buffer_length < 4) {
+		DEBUG("Received partial APDU (read only %d)",
+					conn->buffer_length);
 		return TRUE;
 	}
 
-	int apdu_size = (buffer[2] << 8 | buffer[3]);
+	int apdu_size = (conn->buffer[2] << 8 | conn->buffer[3]) + 4;
 
 	// Check APDU size
-	// FIXME this only works if TCP delivers atomically,
-	// which is not true in real network conditions
-	if (bytes_read != (apdu_size + 4)) {
-		ERROR("Error reading apdu bytes (read %" G_GSIZE_FORMAT ", expected %d)", bytes_read, apdu_size + 4);
-		free(buffer);
-		buffer = NULL;
+	if (conn->buffer_length < apdu_size) {
+		DEBUG("Received partial APDU (read %d, expected %d)",
+			conn->buffer_length, apdu_size);
 		return TRUE;
 	}
 
+	unsigned char *apdu_buffer = conn->buffer;
+	conn->buffer = 0;
+	conn->buffer_length -= apdu_size;
+
+	if (conn->buffer_length > 0) {
+		// leave the rest of next APDU in buffer
+		conn->buffer = malloc(conn->buffer_length);
+		memcpy(conn->buffer, apdu_buffer + apdu_size, conn->buffer_length);
+	}
 
 	// Create bytestream
-	ByteStreamReader *stream = byte_stream_reader_instance((unsigned char *) buffer,
-				   bytes_read);
+	ByteStreamReader *stream = byte_stream_reader_instance(apdu_buffer,
+								apdu_size);
 
 	if (stream == NULL) {
-		ERROR(" glib socket: Error creating bytelib");
-		free(buffer);
-		buffer = NULL;
+		ERROR(" glib socket: Error creating stream");
+		free(apdu_buffer);
+		apdu_buffer = NULL;
 		return TRUE;
 	}
 
 	DEBUG(" glib socket: APDU received ");
-	ioutil_print_buffer(stream->buffer_cur, bytes_read);
+	ioutil_print_buffer(stream->buffer_cur, apdu_size);
 
 	ContextId id = {plugin_id, conn_id};
 	Context *ctx = context_get(id);
@@ -468,7 +478,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 
 	}
 
-	ERROR(" glib socket : cannot send APDU, socket is not connected");
+	DEBUG(" glib socket : cannot send APDU, socket is not connected");
 	return TCP_ERROR;
 }
 
