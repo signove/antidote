@@ -219,7 +219,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 
 	gsize bytes_read;
 	gsize max_size = 64512; // Max packet length for protocol
-	gchar *buffer = (gchar *) malloc(max_size);
+	unsigned char *buffer = malloc(max_size);
 
 	bytes_read = recv(fd, buffer, max_size, 0);
 
@@ -253,7 +253,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	// FIXME this only works if TCP delivers atomically,
 	// which is not true in real network conditions
 	if (bytes_read != (apdu_size + 4)) {
-		ERROR("Error reading apdu bytes");
+		ERROR("Error reading apdu bytes (read %d, expected %d)", bytes_read, apdu_size + 4);
 		free(buffer);
 		buffer = NULL;
 		return TRUE;
