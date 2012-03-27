@@ -100,7 +100,12 @@ void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 {
 	DEBUG("channel connected at plugin");
 	ContextId cid = {plugin_id, handle};
-	communication_transport_connect_indication(cid, "jni");
+	char *lladdr;
+	if (asprintf(&lladdr, "jni%d", handle) < 0) {
+		// TODO handle
+	}
+	communication_transport_connect_indication(cid, lladdr);
+	free(lladdr);
 }
 
 /**
@@ -115,7 +120,12 @@ void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env,
 {
 	DEBUG("channel disconnected at plugin");
 	ContextId cid = {plugin_id, handle};
-	communication_transport_disconnect_indication(cid, "jni");
+	char *lladdr;
+	if (asprintf(&lladdr, "jni%d", handle) < 0) {
+		// TODO handle
+	}
+	communication_transport_disconnect_indication(cid, lladdr);
+	free(lladdr);
 }
 
 /**
