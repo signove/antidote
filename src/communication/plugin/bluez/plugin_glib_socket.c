@@ -253,7 +253,7 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	// FIXME this only works if TCP delivers atomically,
 	// which is not true in real network conditions
 	if (bytes_read != (apdu_size + 4)) {
-		ERROR("Error reading apdu bytes (read %d, expected %d)", bytes_read, apdu_size + 4);
+		ERROR("Error reading apdu bytes (read %" G_GSIZE_FORMAT ", expected %d)", bytes_read, apdu_size + 4);
 		free(buffer);
 		buffer = NULL;
 		return TRUE;
