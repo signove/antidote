@@ -48,6 +48,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+// #define TEST_FRAGMENTATION 1
+
 /**
  * Plugin ID attributed by stack
  */
@@ -456,20 +458,28 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	if (conn != NULL && g_socket_is_connected(conn->socket)) {
 		DEBUG(" glib socket: sending APDU...");
 
-		GError *error = NULL;
-		gsize bytes_written = g_socket_send(conn->socket,
-						    (gchar *) stream->buffer, stream->size, NULL,
-						    &error);
+		int written = 0;
 
-		if (bytes_written < 0) {
-			g_error(" glib socket : Error writing: %s\n", error->message);
-			return TCP_ERROR;
-		}
+		while (written < stream->size) {
+			GError *error = NULL;
+			int to_send = stream->size - written;
+#ifdef TEST_FRAGMENTATION
+			to_send = to_send > 50 ? 50 : to_send;
+#endif
+			DEBUG(" network:tcp sending %d bytes...", to_send);
+			int ret = g_socket_send(conn->socket,
+					((gchar *) stream->buffer) + written,
+					to_send, NULL, &error);
+			if (ret < 0) {
+				DEBUG(" glib socket : Error writing: %s\n", error->message);
+				g_error_free(error);
+				return TCP_ERROR;
+			} else if (ret == 0) {
+				DEBUG(" glib socket : socket closed on write");
+				return TCP_ERROR;
+			}
 
-		if (bytes_written != stream->size) {
-			DEBUG(" glib socket: tcp Error sending APDU. %ld bytes sent. "
-			      "Should have sent %d.", (long) bytes_written, stream->size);
-			return TCP_ERROR;
+			written += ret;
 		}
 
 		DEBUG(" network:tcp APDU sent ");

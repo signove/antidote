@@ -53,6 +53,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+// #define TEST_FRAGMENTATION 1
+
 /**
  * Plugin ID attributed by stack
  */
@@ -356,23 +358,32 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
 	NetworkSocket *sk = get_socket(ctx->id.connid);
 
-	if (sk != NULL) {
+	if (sk == NULL)
+		return TCP_ERROR;
 
-		int ret = write(sk->client_sk, stream->buffer, stream->size);
+	int written = 0;
 
-		if (ret != stream->size) {
-			DEBUG(" network:tcp Error sending APDU. %d bytes sent. "
-			      "Should have sent %d.", ret, stream->size);
+	while (written < stream->size) {
+		int to_send = stream->size - written;
+#ifdef TEST_FRAGMENTATION
+		to_send = to_send > 50 ? 50 : to_send;
+#endif
+		int ret = write(sk->client_sk, stream->buffer + written, to_send);
+
+		DEBUG(" network:tcp sent %d bytes", to_send);
+
+		if (ret <= 0) {
+			DEBUG(" network:tcp Error sending APDU.");
 			return TCP_ERROR;
 		}
 
-		DEBUG(" network:tcp APDU sent ");
-		ioutil_print_buffer(stream->buffer, stream->size);
-
-		return TCP_ERROR_NONE;
+		written += ret;
 	}
 
-	return TCP_ERROR;
+	DEBUG(" network:tcp APDU sent ");
+	ioutil_print_buffer(stream->buffer, stream->size);
+
+	return TCP_ERROR_NONE;
 }
 
 /**
