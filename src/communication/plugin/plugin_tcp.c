@@ -98,6 +98,16 @@ typedef struct NetworkSocket {
 	 * Connected status
 	 */
 	int connected;
+
+	/**
+	 * Reception buffer
+	 */
+	intu8 *buffer;
+
+	/**
+	 * Reception buffer length
+	 */
+	int buffer_size;
 } NetworkSocket;
 
 /**
@@ -281,64 +291,70 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	ContextId cid = {plugin_id, sk->tcp_port};
 
 	if (sk != NULL) {
-		// Needed to get buffer_cur size
-		intu8 tmp_buffer[4];
-		int ret = read(sk->client_sk, &tmp_buffer, 4);
+		intu8 localbuf[65535];
+		int bytes_read = read(sk->client_sk, localbuf, 65535);
 
-		if (ret == -1) {
+		if (bytes_read < 0) {
 			sk->connected = 0;
+			free(sk->buffer);
+			sk->buffer = 0;
+			sk->buffer_size = 0;
 			communication_transport_disconnect_indication(cid);
 			// kludge to reinstante fixed context id used in samples
 			communication_transport_connect_indication(cid);
 			return NULL;
-		} else if (ret == 0) {
+		} else if (bytes_read == 0) {
 			sk->connected = 0;
+			free(sk->buffer);
+			sk->buffer = 0;
+			sk->buffer_size = 0;
 			communication_transport_disconnect_indication(cid);
 			// kludge to reinstante fixed context id used in samples
 			communication_transport_connect_indication(cid);
 			return NULL;
-		} else if (ret != 4) {
-			DEBUG(" network:tcp Stream should have at least 4 bytes: %d.", ret);
+		}
+
+		sk->buffer = realloc(sk->buffer, sk->buffer_size + bytes_read);
+		memcpy(sk->buffer + sk->buffer_size, localbuf, bytes_read);
+		sk->buffer_size += bytes_read;
+
+		if (sk->buffer_size < 4) {
+			DEBUG(" network:tcp incomplete APDU (received %d)",
+							sk->buffer_size);
 			return NULL;
 		}
 
-		int size = (tmp_buffer[2] << 8 | tmp_buffer[3]);
-		int buffer_size = size + 4;
-		intu8 *buffer = (intu8 *) malloc(buffer_size);
+		int apdu_size = (sk->buffer[2] << 8 | sk->buffer[3]) + 4;
 
-		// Copy the read bytes to the final buffer_cur
-		int i;
-
-		for (i = 0; i < 4; i++) {
-			buffer[i] = tmp_buffer[i];
-		}
-
-		// Read the remaining bytes
-		int bytes_read = read(sk->client_sk, (buffer + 4), size);
-
-		if (buffer_size != (bytes_read + 4)) {
-			DEBUG(" network:tcp Read failed: incomplete APDU received.");
-			DEBUG(" network:tcp Should have read %d bytes, but read %d bytes",
-			      buffer_size, bytes_read);
-			DEBUG(" network:tcp RECEIVED ");
-			ioutil_print_buffer(buffer, bytes_read + 4);
-			free(buffer);
-			buffer = NULL;
+		if (sk->buffer_size < apdu_size) {
+			DEBUG(" network:tcp incomplete APDU (expect %d received %d)",
+							apdu_size, sk->buffer_size);
 			return NULL;
 		}
 
 		// Create bytestream
-		ByteStreamReader *stream = byte_stream_reader_instance(buffer, buffer_size);
+		ByteStreamReader *stream = byte_stream_reader_instance(sk->buffer, apdu_size);
 
 		if (stream == NULL) {
 			DEBUG(" network:tcp Error creating bytelib");
-			free(buffer);
-			buffer = NULL;
+			free(sk->buffer);
+			sk->buffer = NULL;
+			sk->buffer_size = 0;
 			return NULL;
 		}
 
+		sk->buffer = 0;
+		sk->buffer_size -= apdu_size;
+		if (sk->buffer_size > 0) {
+			// leave next APDU in place
+			// TODO if there is more than one complete APDU, all should 
+			// be sent to stack immediately
+			sk->buffer = malloc(sk->buffer_size);
+			memcpy(sk->buffer, stream->buffer_cur + apdu_size, sk->buffer_size);
+		}
+
 		DEBUG(" network:tcp APDU received ");
-		ioutil_print_buffer(stream->buffer_cur, buffer_size);
+		ioutil_print_buffer(stream->buffer_cur, apdu_size);
 
 		return stream;
 	}
@@ -410,6 +426,10 @@ static int destroy_socket(void *element)
 
 		socket->connected = 0;
 		DEBUG(" network tcp: socket %d closed ", socket->tcp_port);
+
+		free(socket->buffer);
+		socket->buffer = 0;
+		socket->buffer_size = 0;
 
 		free(socket);
 		socket = NULL;

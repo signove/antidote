@@ -64,6 +64,8 @@ static const int BACKLOG = 1;
 
 static int sk = -1;
 static int port = 0;
+intu8 *buffer = NULL;
+static int buffer_size = 0;
 
 /**
  * Initialize network layer.
@@ -187,66 +189,71 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		return NULL;
 	}
 
-	// Needed to get buffer_cur size
-	intu8 tmp_buffer[4];
-	int ret = read(sk, &tmp_buffer, 4);
-
 	ContextId cid = {plugin_id, port};
 
-	if (ret <= -1) {
+	intu8 localbuf[65535];
+	int bytes_read = read(sk, localbuf, 65535);
+
+	if (bytes_read < 0) {
 		close(sk);
+		free(buffer);
+		buffer = 0;
+		buffer_size = 0;
 		communication_transport_disconnect_indication(cid);
 		DEBUG(" network:tcp error");
 		sk = -1;
 		return NULL;
-	} else if (ret == 0) {
+	} else if (bytes_read == 0) {
 		close(sk);
+		free(buffer);
+		buffer = 0;
+		buffer_size = 0;
 		communication_transport_disconnect_indication(cid);
 		DEBUG(" network:tcp closed");
 		sk = -1;
 		return NULL;
-	} else if (ret != 4) {
-		DEBUG(" network:tcp Stream should have at least 4 bytes: %d.", ret);
+	}
+
+	buffer = realloc(buffer, buffer_size + bytes_read);
+	memcpy(buffer + buffer_size, localbuf, bytes_read);
+	buffer_size += bytes_read;
+
+	if (buffer_size < 4) {
+		DEBUG(" network:tcp incomplete APDU (received %d)", buffer_size);
 		return NULL;
 	}
 
-	int size = (tmp_buffer[2] << 8 | tmp_buffer[3]);
-	int buffer_size = size + 4;
-	intu8 *buffer = (intu8 *) malloc(buffer_size);
+	int apdu_size = (buffer[2] << 8 | buffer[3]) + 4;
 
-	// Copy the read bytes to the final buffer_cur
-	int i;
-
-	for (i = 0; i < 4; i++) {
-		buffer[i] = tmp_buffer[i];
-	}
-
-	// Read the remaining bytes
-	int bytes_read = read(sk, (buffer + 4), size);
-
-	if (buffer_size != (bytes_read + 4)) {
-		DEBUG(" network:tcp Read failed: incomplete APDU received.");
-		DEBUG(" network:tcp Should have read %d bytes, but read %d bytes",
-		      buffer_size, bytes_read);
-		DEBUG(" network:tcp RECEIVED ");
-		ioutil_print_buffer(buffer, bytes_read + 4);
-		free(buffer);
-		buffer = NULL;
+	if (buffer_size < apdu_size) {
+		DEBUG(" network:tcp incomplete APDU (expected %d received %d",
+		      					apdu_size, bytes_read);
 		return NULL;
 	}
 
 	// Create bytestream
-	ByteStreamReader *stream = byte_stream_reader_instance(buffer, buffer_size);
+	ByteStreamReader *stream = byte_stream_reader_instance(buffer, apdu_size);
 
 	if (stream == NULL) {
 		DEBUG(" network:tcp Error creating bytelib");
 		free(buffer);
 		buffer = NULL;
+		buffer_size = 0;
 		return NULL;
 	}
 
+	buffer = 0;
+	buffer_size -= apdu_size;
+	if (buffer_size > 0) {
+		// leave next APDU in place
+		// TODO if there is more than one complete APDU, all should 
+		// be sent to stack immediately
+		buffer = malloc(buffer_size);
+		memcpy(buffer, stream->buffer_cur + apdu_size, buffer_size);
+	}
+
 	DEBUG(" network:tcp APDU received ");
-	ioutil_print_buffer(stream->buffer_cur, buffer_size);
+	ioutil_print_buffer(stream->buffer_cur, apdu_size);
 
 	return stream;
 }
@@ -296,6 +303,10 @@ static int network_disconnect(Context *ctx)
 	close(sk);
 	sk = -1;
 
+	free(buffer);
+	buffer = 0;
+	buffer_size = 0;
+
 	return TCP_ERROR_NONE;
 }
 
@@ -308,6 +319,10 @@ static int network_finalize()
 {
 	close(sk);
 	sk = -1;
+
+	free(buffer);
+	buffer = 0;
+	buffer_size = 0;
 
 	return TCP_ERROR_NONE;
 }

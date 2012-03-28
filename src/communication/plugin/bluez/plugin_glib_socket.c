@@ -268,6 +268,8 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 
 	if (conn->buffer_length > 0) {
 		// leave the rest of next APDU in buffer
+		// TODO if there is more than one complete APDU, all should 
+		// be sent to stack immediately
 		conn->buffer = malloc(conn->buffer_length);
 		memcpy(conn->buffer, apdu_buffer + apdu_size, conn->buffer_length);
 	}
