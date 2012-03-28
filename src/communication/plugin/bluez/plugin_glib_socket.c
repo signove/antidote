@@ -247,53 +247,54 @@ gboolean network_read_apdu(GIOChannel *source, GIOCondition condition,
 	memcpy(conn->buffer + conn->buffer_length, localbuf, bytes_read);
 	conn->buffer_length += bytes_read;
 
-	if (conn->buffer_length < 4) {
-		DEBUG("Received partial APDU (read only %d)",
-					conn->buffer_length);
-		return TRUE;
-	}
+	while (conn->buffer) {
+		if (conn->buffer_length < 4) {
+			DEBUG("Received partial APDU (read only %d)",
+						conn->buffer_length);
+			return TRUE;
+		}
 
-	int apdu_size = (conn->buffer[2] << 8 | conn->buffer[3]) + 4;
+		int apdu_size = (conn->buffer[2] << 8 | conn->buffer[3]) + 4;
 
-	// Check APDU size
-	if (conn->buffer_length < apdu_size) {
-		DEBUG("Received partial APDU (read %d, expected %d)",
-			conn->buffer_length, apdu_size);
-		return TRUE;
-	}
+		// Check APDU size
+		if (conn->buffer_length < apdu_size) {
+			DEBUG("Received partial APDU (read %d, expected %d)",
+				conn->buffer_length, apdu_size);
+			return TRUE;
+		}
 
-	unsigned char *apdu_buffer = conn->buffer;
-	conn->buffer = 0;
-	conn->buffer_length -= apdu_size;
+		unsigned char *apdu_buffer = conn->buffer;
+		conn->buffer = 0;
+		conn->buffer_length -= apdu_size;
 
-	if (conn->buffer_length > 0) {
-		// leave the rest of next APDU in buffer
-		// TODO if there is more than one complete APDU, all should 
-		// be sent to stack immediately
-		conn->buffer = malloc(conn->buffer_length);
-		memcpy(conn->buffer, apdu_buffer + apdu_size, conn->buffer_length);
-	}
+		if (conn->buffer_length > 0) {
+			// leave the rest of next APDU in buffer
+			conn->buffer = malloc(conn->buffer_length);
+			memcpy(conn->buffer, apdu_buffer + apdu_size,
+						conn->buffer_length);
+		}
 
-	// Create bytestream
-	ByteStreamReader *stream = byte_stream_reader_instance(apdu_buffer,
-								apdu_size);
+		// Create bytestream
+		ByteStreamReader *stream = byte_stream_reader_instance(apdu_buffer,
+									apdu_size);
 
-	if (stream == NULL) {
-		ERROR(" glib socket: Error creating stream");
-		free(apdu_buffer);
-		apdu_buffer = NULL;
-		return TRUE;
-	}
+		if (stream == NULL) {
+			ERROR(" glib socket: Error creating stream");
+			free(apdu_buffer);
+			apdu_buffer = NULL;
+			return TRUE;
+		}
 
-	DEBUG(" glib socket: APDU received ");
-	ioutil_print_buffer(stream->buffer_cur, apdu_size);
+		DEBUG(" glib socket: APDU received ");
+		ioutil_print_buffer(stream->buffer_cur, apdu_size);
 
-	ContextId id = {plugin_id, conn_id};
-	Context *ctx = context_get(id);
+		ContextId id = {plugin_id, conn_id};
+		Context *ctx = context_get(id);
 
-	if (ctx) {
-		DEBUG(" glib socket: sending to stack...");
-		communication_process_input_data(ctx, stream);
+		if (ctx) {
+			DEBUG(" glib socket: sending to stack...");
+			communication_process_input_data(ctx, stream);
+		}
 	}
 
 	return TRUE;

@@ -108,6 +108,11 @@ typedef struct NetworkSocket {
 	 * Reception buffer length
 	 */
 	int buffer_size;
+
+	/**
+	 * Signals that buffer may have another APDU
+	 */
+	int buffer_retry;
 } NetworkSocket;
 
 /**
@@ -290,7 +295,15 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	NetworkSocket *sk = get_socket(ctx->id.connid);
 	ContextId cid = {plugin_id, sk->tcp_port};
 
-	if (sk != NULL) {
+	if (sk == NULL) {
+		ERROR("network tcp: network_get_apdu_stream cannot found a valid sokcet");
+		return NULL;
+	}
+
+	if (sk->buffer_retry) {
+		// see if there is another complete APDU in buffer
+		sk->buffer_retry = 0;
+	} else {
 		intu8 localbuf[65535];
 		int bytes_read = read(sk->client_sk, localbuf, 65535);
 
@@ -317,50 +330,46 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		sk->buffer = realloc(sk->buffer, sk->buffer_size + bytes_read);
 		memcpy(sk->buffer + sk->buffer_size, localbuf, bytes_read);
 		sk->buffer_size += bytes_read;
-
-		if (sk->buffer_size < 4) {
-			DEBUG(" network:tcp incomplete APDU (received %d)",
-							sk->buffer_size);
-			return NULL;
-		}
-
-		int apdu_size = (sk->buffer[2] << 8 | sk->buffer[3]) + 4;
-
-		if (sk->buffer_size < apdu_size) {
-			DEBUG(" network:tcp incomplete APDU (expect %d received %d)",
-							apdu_size, sk->buffer_size);
-			return NULL;
-		}
-
-		// Create bytestream
-		ByteStreamReader *stream = byte_stream_reader_instance(sk->buffer, apdu_size);
-
-		if (stream == NULL) {
-			DEBUG(" network:tcp Error creating bytelib");
-			free(sk->buffer);
-			sk->buffer = NULL;
-			sk->buffer_size = 0;
-			return NULL;
-		}
-
-		sk->buffer = 0;
-		sk->buffer_size -= apdu_size;
-		if (sk->buffer_size > 0) {
-			// leave next APDU in place
-			// TODO if there is more than one complete APDU, all should 
-			// be sent to stack immediately
-			sk->buffer = malloc(sk->buffer_size);
-			memcpy(sk->buffer, stream->buffer_cur + apdu_size, sk->buffer_size);
-		}
-
-		DEBUG(" network:tcp APDU received ");
-		ioutil_print_buffer(stream->buffer_cur, apdu_size);
-
-		return stream;
 	}
 
-	ERROR("network tcp: network_get_apdu_stream cannot found a valid sokcet");
-	return NULL;
+	if (sk->buffer_size < 4) {
+		DEBUG(" network:tcp incomplete APDU (received %d)",
+						sk->buffer_size);
+		return NULL;
+	}
+
+	int apdu_size = (sk->buffer[2] << 8 | sk->buffer[3]) + 4;
+
+	if (sk->buffer_size < apdu_size) {
+		DEBUG(" network:tcp incomplete APDU (expect %d received %d)",
+						apdu_size, sk->buffer_size);
+		return NULL;
+	}
+
+	// Create bytestream
+	ByteStreamReader *stream = byte_stream_reader_instance(sk->buffer, apdu_size);
+
+	if (stream == NULL) {
+		DEBUG(" network:tcp Error creating bytelib");
+		free(sk->buffer);
+		sk->buffer = NULL;
+		sk->buffer_size = 0;
+		return NULL;
+	}
+
+	sk->buffer = 0;
+	sk->buffer_size -= apdu_size;
+	if (sk->buffer_size > 0) {
+		// leave next APDU in place
+		sk->buffer_retry = 1;
+		sk->buffer = malloc(sk->buffer_size);
+		memcpy(sk->buffer, stream->buffer_cur + apdu_size, sk->buffer_size);
+	}
+
+	DEBUG(" network:tcp APDU received ");
+	ioutil_print_buffer(stream->buffer_cur, apdu_size);
+
+	return stream;
 }
 
 /**
