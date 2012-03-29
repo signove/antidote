@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <unistd.h>
 #include <dbus/dbus.h>
+#include <pthread.h>
 #include "src/manager_p.h"
 #include "src/communication/communication.h"
 #include "src/communication/context_manager.h"
@@ -164,6 +165,69 @@ static void tcp_mode()
 	DEFAULT_CONTEXT_ID = cid;
 	// Four concurrent Agent support
 	plugin_network_tcp_setup(&comm_plugin, 4, DEFAULT_CONTEXT_ID, 6025, 6026, 6027);
+}
+
+static int plugin_pthread_cancel_connection_loop(Context *ctx)
+{
+	int rc = 0;
+	ThreadContext *thread_ctx = ctx->multithread;
+
+	if (thread_ctx != NULL && thread_ctx->connection_loop_thread != NULL) {
+		fprintf(stderr, " Stopping connection thread \n");
+		rc = pthread_cancel(*thread_ctx->connection_loop_thread);
+
+		if (rc == 0) {
+			pthread_join(*thread_ctx->connection_loop_thread, NULL);
+		}
+
+		free(thread_ctx->connection_loop_thread);
+		thread_ctx->connection_loop_thread = NULL;
+	}
+
+	return 1;
+}
+
+static void *run_communication_connection_loop(void *arg)
+{
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+	communication_connection_loop((Context *) arg);
+
+	pthread_exit(NULL);
+}
+
+static int plugin_pthread_connection_loop(Context *ctx)
+{
+	// Start thread
+
+	ThreadContext *threadctx = (ThreadContext *) ctx->multithread;
+
+	threadctx->connection_loop_thread = malloc(sizeof(pthread_t));
+	int return_code = pthread_create(threadctx->connection_loop_thread,
+					 NULL, run_communication_connection_loop, (void *) ctx);
+
+	if (return_code) {
+		fprintf(stderr, "Cannot start connection thread, "
+		      "cause: return code from pthread_create() is %d\n",
+		      return_code);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+static void plugin_pthread_manager_start()
+{
+	manager_start();
+	context_iterate(plugin_pthread_connection_loop);
+}
+
+static void plugin_pthread_manager_stop()
+{
+	context_iterate(plugin_pthread_cancel_connection_loop);
+	manager_stop();
 }
 
 /**

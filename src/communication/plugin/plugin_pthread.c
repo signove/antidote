@@ -1,7 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /**
  * \file plugin_pthread.c
- * \brief Posix thread plugin source.
+ * \brief Posix thread plugin mixin source.
  *
  * Copyright (C) 2010 Signove Tecnologia Corporation.
  * All rights reserved.
@@ -38,23 +38,15 @@
 #include "src/util/log.h"
 #include "src/communication/communication.h"
 #include "src/communication/context_manager.h"
-#include "src/manager_p.h"
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-typedef struct ThreadContext {
-	pthread_mutex_t mutex;
-	pthread_mutexattr_t mutex_attr;
-
-	// Timer Thread
-	pthread_t *timeout_thread;
-
-	// Connection Loop
-	pthread_t *connection_loop_thread;
-
-} ThreadContext;
-
+/**
+ * Get multithreading control structure of a context
+ * @param ctx context
+ * @return ThreadContext structure
+ */
 static ThreadContext *get_thread_ctx(Context *ctx)
 {
 	if (ctx->multithread == NULL) {
@@ -118,85 +110,8 @@ static void plugin_pthread_ctx_unlock(Context *ctx)
 }
 
 /**
- * Runs thread to get network input
- */
-static void *run_communication_connection_loop(void *arg)
-{
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-	communication_connection_loop((Context *) arg);
-
-	pthread_exit(NULL);
-}
-
-/**
- * Runs connection loop a asynchronously.
- */
-static int plugin_pthread_connection_loop(Context *ctx)
-{
-	// Start thread
-
-	ThreadContext *threadctx = (ThreadContext *) ctx->multithread;
-
-	threadctx->connection_loop_thread = malloc(sizeof(pthread_t));
-	int return_code = pthread_create(threadctx->connection_loop_thread,
-					 NULL, run_communication_connection_loop, (void *) ctx);
-
-	if (return_code) {
-		ERROR("Cannot start connection thread, "
-		      "cause: return code from pthread_create() is %d",
-		      return_code);
-
-		return 0;
-	}
-
-	return 1;
-}
-
-/**
- * Cancel and destroy connection thread
- */
-static int plugin_pthread_cancel_connection_loop(Context *ctx)
-{
-	int rc = 0;
-	ThreadContext *thread_ctx = get_thread_ctx(ctx);
-
-	if (thread_ctx != NULL && thread_ctx->connection_loop_thread != NULL) {
-		DEBUG(" Stopping connection thread ");
-		rc = pthread_cancel(*thread_ctx->connection_loop_thread);
-
-		if (rc == 0) {
-			pthread_join(*thread_ctx->connection_loop_thread, NULL);
-		}
-
-		free(thread_ctx->connection_loop_thread);
-		thread_ctx->connection_loop_thread = NULL;
-	}
-
-	return 1;
-}
-
-/**
- * Start to listen agents and run connection loop a asynchronously.
- */
-void plugin_pthread_manager_start()
-{
-	manager_start();
-	context_iterate(plugin_pthread_connection_loop);
-}
-
-/**
- * Stop to listen agents and cancel connection loop a asynchronously.
- */
-void plugin_pthread_manager_stop()
-{
-	context_iterate(plugin_pthread_cancel_connection_loop);
-	manager_stop();
-}
-
-/**
- * Timer run
+ * Pthread-based implementation for timeout function
+ * Runnable part
  */
 static void *timer_run(void *arg)
 {
@@ -231,7 +146,8 @@ static void *timer_run(void *arg)
 }
 
 /**
- * Blocks current thread and waits for timeout thread termination
+ * Blocks current thread and waits for timeout thread termination.
+ * This plug-in feature is actually used by unit-testing only.
  *
  * @param context
  * @return thread termination value
@@ -242,6 +158,7 @@ static void timer_wait_for_timeout(Context *ctx)
 	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 	pthread_join(*thread_ctx->timeout_thread, NULL);
 }
+
 /**
  * Reset timeout counter state.
  * This method locks the communication layer thread.
@@ -269,9 +186,10 @@ static void timer_reset_timeout(Context *ctx)
 }
 
 /**
- * pthread imnplementation for timeout function
+ * Pthread-based implementation for timeout function
  *
  * @param context
+ * @return timer id
  */
 static int timer_count_timeout(Context *ctx)
 {
@@ -305,7 +223,12 @@ static int timer_count_timeout(Context *ctx)
 
 /**
  * Setups PTHREAD support for communication lock/unlock operations
- * and for timer features
+ * and for timer features.
+ * Note: Since pthread is a "mixin" plug-in that adds multithreading
+ * support e.g. context locking and unlocking.
+ * It is not a complete communication plugin, so the CommunicationPlugin
+ * struct must be completed by another plugin that actually implements
+ * communication.
  *
  * @param plugin
  */

@@ -36,15 +36,27 @@
 #ifndef PLUGIN_PTHREAD_H_
 #define PLUGIN_PTHREAD_H_
 
+#include <pthread.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
 
 void plugin_pthread_setup(CommunicationPlugin *plugin);
 
-void plugin_pthread_manager_start();
+/**
+ * Plugin-specific structure to take care of multithreading
+ */
+typedef struct ThreadContext {
+	pthread_mutex_t mutex;
+	pthread_mutexattr_t mutex_attr;
 
-void plugin_pthread_manager_stop();
+	// Timer Thread
+	pthread_t *timeout_thread;
 
+	/**
+	 * Used by unit-testing
+	 */
+	pthread_t *connection_loop_thread;
+} ThreadContext;
 
 /** @} */
 
