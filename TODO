@@ -5,6 +5,7 @@ Document Set-Time
 Document --tcpp
 
 v21: Update document regarding:
+	* --fifo removed
         * plugin_pthread is mixin
 	* transcoding system_ids
 	* fill changelog

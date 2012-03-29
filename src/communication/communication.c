@@ -46,8 +46,6 @@
 #include "src/communication/configuring.h"
 #include "src/communication/disassociating.h"
 #include "src/communication/plugin/plugin.h"
-#include "src/communication/plugin/plugin_fifo.h"
-#include "src/communication/plugin/plugin_tcp.h"
 #include "src/communication/service.h"
 #include "src/util/bytelib.h"
 #include "src/communication/parser/encoder_ASN1.h"

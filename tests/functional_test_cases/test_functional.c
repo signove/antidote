@@ -41,7 +41,7 @@
 #include "src/communication/extconfigurations.h"
 #include "src/util/ioutil.h"
 #include "src/util/log.h"
-#include "src/communication/plugin/plugin_fifo.h"
+#include "src/communication/plugin/plugin_tcp.h"
 #include "src/communication/plugin/plugin_pthread.h"
 #include <unistd.h>
 
@@ -51,7 +51,13 @@ CommunicationPlugin FUNCTIONAL_TEST_COMM_PLUGIN;
 int functional_test_init()
 {
 	FUNCTIONAL_TEST_COMM_PLUGIN = communication_plugin();
-	plugin_network_fifo_setup(&FUNCTIONAL_TEST_COMM_PLUGIN, FUNC_TEST_SINGLE_CONTEXT, 0);
+
+	/* Note: this exploits some inner TCP plugin details: only one
+	   concurrent context/connection, and connection id is the port */
+	plugin_network_tcp_setup(&FUNCTIONAL_TEST_COMM_PLUGIN,
+				FUNC_TEST_SINGLE_CONTEXT.plugin,
+				FUNC_TEST_SINGLE_CONTEXT.connid);
+
 	plugin_pthread_setup(&FUNCTIONAL_TEST_COMM_PLUGIN);
 	CommunicationPlugin *plugins[] = {&FUNCTIONAL_TEST_COMM_PLUGIN, 0};
 	manager_init(plugins);

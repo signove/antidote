@@ -65,7 +65,6 @@
 #include "src/asn1/phd_types.h"
 #include "src/communication/communication.h"
 #include "src/communication/service.h"
-#include "src/communication/plugin/plugin_fifo.h"
 #include "src/manager_p.h"
 #include "src/util/strbuff.h"
 #include "src/util/ioutil.h"

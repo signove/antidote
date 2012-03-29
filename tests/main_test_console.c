@@ -48,7 +48,6 @@
 #include "src/util/strbuff.h"
 #include "src/communication/service.h"
 #include "src/communication/plugin/plugin_tcp.h"
-#include "src/communication/plugin/plugin_fifo.h"
 #include "src/communication/plugin/plugin_pthread.h"
 
 /**
@@ -153,11 +152,6 @@ static void dbus_mode()
 	// plugin_network_dbus_setup(&comm_plugin, 0);
 }
 
-static void fifo_mode()
-{
-	plugin_network_fifo_setup(&comm_plugin, DEFAULT_CONTEXT_ID, 0);
-}
-
 static void tcp_mode()
 {
 	int port = 6024;
@@ -250,8 +244,6 @@ int main(int argc, char **argv)
 			dbus_mode();
 		} else if (strcmp(argv[1], "--tcp") == 0) {
 			tcp_mode();
-		} else if (strcmp(argv[1], "--fifo") == 0) {
-			fifo_mode();
 		} else {
 			fprintf(stderr, "ERROR: %s invalid option\n", argv[1]);
 			fprintf(stderr,
@@ -264,8 +256,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Try `ieee_manager_console --help' for more information.\n");
 		exit(1);
 	} else {
-		// Fifo is default mode
-		dbus_mode();
+		// TCP is default mode
+		tcp_mode();
 	}
 
 	fprintf(stderr, "\nIEEE 11073 Test application\n");

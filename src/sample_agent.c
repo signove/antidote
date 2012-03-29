@@ -38,7 +38,6 @@
 #include <time.h>
 
 #include <ieee11073.h>
-#include "communication/plugin/plugin_fifo.h"
 #include "communication/plugin/plugin_tcp_agent.h"
 #include "specializations/pulse_oximeter.h"
 #include "specializations/blood_pressure_monitor.h"
@@ -160,14 +159,6 @@ static void timer_reset_timeout(Context *ctx)
 static int timer_count_timeout(Context *ctx)
 {
 	return 1;
-}
-
-/**
- * Configure application to use fifo plugin
- */
-static void fifo_mode()
-{
-	plugin_network_fifo_setup(&comm_plugin, CONTEXT_ID, 0);
 }
 
 /**
@@ -332,8 +323,6 @@ int main(int argc, char **argv)
 			exit(0);
 		} else if (strcmp(argv[1], "--tcp") == 0) {
 			tcp_mode();
-		} else if (strcmp(argv[1], "--fifo") == 0) {
-			fifo_mode();
 		} else {
 			fprintf(stderr, "ERROR: invalid option: %s\n", argv[1]);
 			fprintf(stderr, "Try `%s --help'"
@@ -347,8 +336,8 @@ int main(int argc, char **argv)
 			" for more information.\n", argv[0]);
 		exit(1);
 	} else {
-		// FIFO is default mode
-		fifo_mode();
+		// TCP is default mode
+		tcp_mode();
 	}
 
 	fprintf(stderr, "\nIEEE 11073 sample agent\n");

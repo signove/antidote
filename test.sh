@@ -102,20 +102,6 @@ gen_test_reports()
 	
 }
 
-
-create_test_io() 
-{
-	#Create I/O fifos for test application
-	
-	if [ ! -p read_fifo  ]; then
-		 mkfifo read_fifo 
-	fi
-
-	if [ ! -p write_fifo  ]; then
-		 mkfifo write_fifo 
-	fi
-}
-
 coverage_phase_pre_execution()
 {
   lcov -q --directory src --zerocounters
@@ -134,7 +120,6 @@ gen_coverage_reports()
 run_phase_pre_execution()
 {
 	build
-	create_test_io
 	coverage_phase_pre_execution
 }
 
