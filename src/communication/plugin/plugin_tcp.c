@@ -214,13 +214,6 @@ static int init_socket(void *element)
 	ContextId cid = {plugin_id, sk->tcp_port};
 	communication_transport_connect_indication(cid);
 
-	if (error < 0) {
-		DEBUG(" network:tcp Error in listen %d", sk->server_sk);
-		close(sk->server_sk);
-		sk->server_sk = 0;
-		return 0;
-	}
-
 	return 1;
 }
 
