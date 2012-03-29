@@ -316,6 +316,7 @@ static int network_disconnect(Context *ctx)
 	free(buffer);
 	buffer = 0;
 	buffer_size = 0;
+	buffer_retry = 0;
 
 	return TCP_ERROR_NONE;
 }
