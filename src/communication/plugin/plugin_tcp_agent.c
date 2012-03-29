@@ -303,7 +303,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 }
 
 /**
- * Sends an encoded apdu
+ * Network disconnect
  *
  * @param ctx
  * @return TCP_ERROR_NONE
