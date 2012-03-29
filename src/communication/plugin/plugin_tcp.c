@@ -182,7 +182,7 @@ static int init_socket(void *element)
 	if (error < 0) {
 		DEBUG(" network:tcp Error opening the tcp socket");
 		close(sk->server_sk);
-		sk->server_sk = 0;
+		sk->server_sk = -1;
 		return 0;
 	}
 
@@ -198,7 +198,7 @@ static int init_socket(void *element)
 	if (error < 0) {
 		DEBUG(" network:tcp Error in bind %d socket: %d", sk->server_sk, errno);
 		close(sk->server_sk);
-		sk->server_sk = 0;
+		sk->server_sk = -1;
 		return 0;
 	}
 
@@ -207,7 +207,7 @@ static int init_socket(void *element)
 	if (error < 0) {
 		DEBUG(" network:tcp Error in listen %d", sk->server_sk);
 		close(sk->server_sk);
-		sk->server_sk = 0;
+		sk->server_sk = -1;
 		return 0;
 	}
 
@@ -262,8 +262,8 @@ static int network_tcp_wait_for_data(Context *ctx)
 				DEBUG(" network:tcp Error in accept %d", sk->server_sk);
 				close(sk->client_sk);
 				close(sk->server_sk);
-				sk->client_sk = 0;
-				sk->server_sk = 0;
+				sk->client_sk = -1;
+				sk->server_sk = -1;
 				return TCP_ERROR;
 			}
 
@@ -405,25 +405,25 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 }
 
 /**
- * Destroys a socket and its NetworkSocket descriptor
+ * Finalizes a socket (can be re-initialized again)
  *
  * @param element contains a NetworkSocket struct pointer
  */
-static int destroy_socket(void *element)
+static int fin_socket(void *element)
 {
 	NetworkSocket *socket = (NetworkSocket *) element;
 
 	if (socket != NULL) {
-		if (socket->client_sk != 0) {
+		if (socket->client_sk >= 0) {
 			DEBUG(" network:tcp Closing socket %d", socket->client_sk);
 			close(socket->client_sk);
-			socket->client_sk = 0;
+			socket->client_sk = -1;
 		}
 
-		if (socket->server_sk != 0) {
+		if (socket->server_sk >= 0) {
 			DEBUG(" network:tcp Closing socket %d", socket->server_sk);
 			close(socket->server_sk);
-			socket->server_sk = 0;
+			socket->server_sk = -1;
 		}
 
 		socket->connected = 0;
@@ -432,13 +432,34 @@ static int destroy_socket(void *element)
 		free(socket->buffer);
 		socket->buffer = 0;
 		socket->buffer_size = 0;
-
-		free(socket);
-		socket = NULL;
 	}
 
 	return 1;
 
+}
+
+/**
+ * Network disconnect
+ *
+ * @param ctx
+ * @return TCP_ERROR_NONE
+ */
+static int network_disconnect(Context *ctx)
+{
+	NetworkSocket *sk = get_socket(ctx->id.connid);
+
+	if (sk == NULL)
+		return TCP_ERROR;
+
+	close(sk->client_sk);
+	sk->client_sk = -1;
+
+	free(sk->buffer);
+	sk->buffer = 0;
+	sk->buffer_size = 0;
+	sk->buffer_retry = 0;
+
+	return TCP_ERROR_NONE;
 }
 
 /**
@@ -448,8 +469,7 @@ static int destroy_socket(void *element)
  */
 static int network_finalize()
 {
-	llist_destroy(sockets, &destroy_socket);
-	sockets = NULL;
+	llist_iterate(sockets, &fin_socket);
 
 	return TCP_ERROR_NONE;
 }
@@ -462,7 +482,6 @@ static int network_finalize()
  */
 static int create_socket(int port)
 {
-
 	DEBUG("network tcp: creating socket configuration on port %d", port);
 
 	if (sockets == NULL) {
@@ -477,6 +496,8 @@ static int create_socket(int port)
 	}
 
 	socket->tcp_port = port;
+	socket->server_sk = -1;
+	socket->client_sk = -1;
 	return TCP_ERROR_NONE;
 }
 
@@ -496,8 +517,14 @@ int plugin_network_tcp_setup(CommunicationPlugin *plugin, int numberOfPorts,
 
 	DEBUG("network:tcp Initializing %d sockets", numberOfPorts);
 
+	if (sockets) {
+		// plugin was already initialized once
+		llist_destroy(sockets, (llist_handle_element) free);
+		sockets = NULL;
+	}
+
 	int port;
-	int i = 0;
+	int i;
 
 	for (i = 0; i < numberOfPorts; i++) {
 		port = va_arg(port_list, int);
@@ -513,6 +540,7 @@ int plugin_network_tcp_setup(CommunicationPlugin *plugin, int numberOfPorts,
 	plugin->network_wait_for_data = network_tcp_wait_for_data;
 	plugin->network_get_apdu_stream = network_get_apdu_stream;
 	plugin->network_send_apdu_stream = network_send_apdu_stream;
+	plugin->network_disconnect = network_disconnect;
 	plugin->network_finalize = network_finalize;
 
 	return TCP_ERROR_NONE;
