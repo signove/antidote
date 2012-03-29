@@ -83,6 +83,9 @@ static void plugin_pthread_ctx_finalize(Context *ctx)
 	pthread_mutexattr_destroy(&thread_ctx->mutex_attr);
 	pthread_mutex_destroy(&thread_ctx->mutex);
 
+	free(thread_ctx->timeout_thread);
+	thread_ctx->timeout_thread = NULL;
+
 	free(ctx->multithread);
 	ctx->multithread = NULL;
 }
@@ -141,6 +144,7 @@ static void *timer_run(void *arg)
 
 	free(thread_ctx->timeout_thread);
 	thread_ctx->timeout_thread = NULL;
+
 	plugin_pthread_ctx_unlock(ctx);
 	pthread_exit(NULL);
 }
