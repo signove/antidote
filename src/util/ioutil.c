@@ -141,8 +141,6 @@ int ioutil_buffer_to_file(const char *file_path,
  */
 void ioutil_print_buffer(intu8 *buffer, int size)
 {
-	DEBUG("Buffer data:");
-
 	char  *str = calloc(size*4, sizeof(char));
 
 	int i;
