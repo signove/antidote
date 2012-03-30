@@ -1,3 +1,27 @@
+Antidote 2.0.5
+--------------
+
+* Added Set-Time support to top-level APIs
+
+* Removed FIFO support
+
+* Added sdk/ folder with tools
+
+* HANDLE typedef renamed to ASN1_HANDLE to facilitate,
+  and other changes to facilitate porting to Windows
+
+* Many Doxygen documentation fixes
+
+* Improved TCP/IP communication plug-ins
+
+* Fixed compilation of sample_bt_agent (added @GIO_LIBS@)
+  that seems to break compilation in Ubuntu 12.04
+
+* Added Java example of healthd client (doc/examples/java).
+
+* Many small bugfixes
+
+
 Antidote 2.0
 ------------
 

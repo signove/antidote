@@ -1,17 +1,6 @@
 Roadmap/TODO
 ------------
 
-Document Set-Time
-Document --tcpp
-
-v21: Update document regarding:
-	* --fifo removed
-        * plugin_pthread is mixin
-	* transcoding system_ids
-	* fill changelog
-	* SDK scripts
-	* ASN1_HANDLE
-
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
 
