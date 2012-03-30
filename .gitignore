@@ -40,3 +40,4 @@ config.guess
 config.log
 config.status
 config.sub
+sdk/simulator_agent
