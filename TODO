@@ -111,3 +111,6 @@ USB: SIGINT does not exit main loop when a USB device
 Add fragmentation tests
 
 remove (harmless) write() failure in unit tests
+
+Think about moving octet logging from TCP plug-in
+to core
