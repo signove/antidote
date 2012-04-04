@@ -483,10 +483,8 @@ void sigalrm(int dummy)
  */
 int main(int argc, char **argv)
 {
-
-
-	void *event_report_cb;
-	int specialization;
+	void *event_report_cb = NULL;
+	int specialization = 0;
 	// Just for test..
 	//host = "192.168.100.129";
 
