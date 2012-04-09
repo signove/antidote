@@ -55,6 +55,7 @@
 #include "src/communication/plugin/bluez/plugin_glib_socket.h"
 #endif
 #include "src/util/log.h"
+#include "src/util/linkedlist.h"
 #include "src/communication/service.h"
 #include "src/dim/pmstore_req.h"
 
@@ -91,8 +92,16 @@ typedef struct {
 } tcp_client;
 
 static const unsigned int PORT = 9005;
-static GSList *tcp_clients = NULL;
+static LinkedList *_tcp_clients = NULL;
 static int server_fd = -1;
+
+static LinkedList *tcp_clients()
+{
+	if ( ! _tcp_clients) {
+		_tcp_clients = llist_new();
+	}
+	return _tcp_clients;
+}
 
 static void tcp_close(tcp_client *client)
 {
@@ -103,7 +112,7 @@ static void tcp_close(tcp_client *client)
 	client->fd = -1;
 	free(client->buf);
 	client->buf = 0;
-	tcp_clients = g_slist_remove(tcp_clients, client);
+	llist_remove(tcp_clients(), client);
 	free(client);
 }
 
@@ -223,7 +232,7 @@ static gboolean tcp_accept(GIOChannel *src, GIOCondition cond, gpointer data)
 	GIOChannel *channel = g_io_channel_unix_new(fd);
 	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, tcp_read, new_client);
 
-	tcp_clients = g_slist_prepend(tcp_clients, new_client);
+	llist_add(tcp_clients(), new_client);
 
 	return TRUE;
 }
@@ -251,7 +260,6 @@ static void tcp_listen()
 
 static void tcp_announce(const char *command, const char *path, const char *arg)
 {
-	GSList *i;
 	char *msg;
 	char *j;
 	char *arg2 = strdup(arg);
@@ -267,8 +275,11 @@ static void tcp_announce(const char *command, const char *path, const char *arg)
 
 	printf("%s\n", msg);
 	
-	for (i = tcp_clients; i; i = i->next) {
-		tcp_send(i->data, msg);
+	LinkedNode *i = tcp_clients()->first;
+
+	while (i) {
+		tcp_send(i->element, msg);
+		i = i->next;
 	}
 
 	free(arg2);
@@ -519,13 +530,21 @@ static void device_object_init(Device *obj)
 static char *client_agent = NULL;
 static char *client_name = NULL;
 
-static GSList *devices = NULL;
+static LinkedList *_devices = NULL;
 
 static DBusGConnection *bus = NULL;
 static DBusGProxy *agent_proxy = NULL;
 
 static const char *get_device_object(const char *, ContextId);
 static void get_agent_proxy();
+
+static LinkedList *devices()
+{
+	if (! _devices) {
+		_devices = llist_new();
+	}
+	return _devices;
+}
 
 /**
  * Callback related to manager.Configure D-Bus method.
@@ -622,6 +641,19 @@ void self_configure()
 	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 }
 
+
+static int cmp_device_by_handle(void *arg, void *nodeElement) 
+{
+	ContextId handle = *((ContextId *) arg);
+	Device *candidate = (Device *) nodeElement;
+
+	if (candidate->handle.plugin == handle.plugin &&
+	    candidate->handle.connid == handle.connid) {
+		return 1;
+	}
+	return 0;
+}
+
 /**
  * Finds device object given handle
  *
@@ -630,21 +662,21 @@ void self_configure()
  */
 static Device *device_by_handle(ContextId handle)
 {
-	GSList *i;
-	Device *device = NULL;
-
 	/* search for conn handle in current devices */
-	for (i = devices; i; i = i->next) {
-		Device *candidate = i->data;
+	Device *dev = llist_search_first(devices(), &handle, cmp_device_by_handle);
+	return dev;
+}
 
-		if (candidate->handle.plugin == handle.plugin &&
-		    candidate->handle.connid == handle.connid) {
-			device = candidate;
-			break;
-		}
+
+static int cmp_device_by_addr(void *arg, void *nodeElement) 
+{
+	const char *low_addr = (const char *) arg;
+	Device *candidate = (Device *) nodeElement;
+	
+	if (strcmp(low_addr, candidate->addr) == 0) {
+		return 1;
 	}
-
-	return device;
+	return 0;
 }
 
 /**
@@ -655,22 +687,13 @@ static Device *device_by_handle(ContextId handle)
  */
 static Device *device_by_addr(const char *low_addr)
 {
-	GSList *i;
-	Device *device = NULL;
-
 	/* search for addr in current devices */
-	for (i = devices; i; i = i->next) {
-		Device *candidate = i->data;
-
-		if (strcmp(candidate->addr, low_addr) == 0) {
-			device = candidate;
-			break;
-		}
-	}
-
-	return device;
+	
+	Device *dev = llist_search_first(devices(), 
+				(void *) low_addr,
+				cmp_device_by_addr);
+	return dev;
 }
-
 /**
  * Destroys a device object, given handle and/or device pointer
  * @param device Device object to destroy
@@ -692,7 +715,7 @@ static void destroy_device(Device *device)
 	device->handle = z;
 
 	g_object_unref(device);
-	devices = g_slist_remove(devices, device);
+	llist_remove(devices(), device);
 }
 
 /**
@@ -710,11 +733,16 @@ void client_disconnected()
 		// a reason to remove all devices, because we may be in
 		// the middle of a session and healthd must keep track of
 		// devices even if no client is connected.
+	
 		if (0) {
-			while (devices)
-				destroy_device(devices->data);
-		}
+			while (devices()->first) {
+				destroy_device(devices()->first->element);
+			}
 
+			llist_destroy(devices(), NULL);
+
+			_devices = NULL;
+		}
 		agent_proxy = NULL;
 		client_agent = NULL;
 		client_name = NULL;
@@ -731,7 +759,6 @@ void client_disconnected()
 static const char *get_device_object(const char *low_addr, ContextId conn_handle)
 {
 	static long int dev_counter = 0;
-
 	Device *device = NULL;
 
 	if (low_addr) {
@@ -760,7 +787,7 @@ static const char *get_device_object(const char *low_addr, ContextId conn_handle
 			dbus_g_connection_register_g_object(bus, device->path,
 						    	G_OBJECT(device));
 		}
-		devices = g_slist_prepend(devices, device);
+		llist_add(devices(), device);
 	}
 
 	device->handle = conn_handle;
