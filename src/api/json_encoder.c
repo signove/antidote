@@ -61,14 +61,14 @@ static void describe_simple_entry(SimpleDataEntry *simple, StringBuffer *sb)
 		return;
 	}
 
-	strbuff_cat(sb, "simple: {");
-	strbuff_cat(sb, "name: \"");
+	strbuff_cat(sb, "\"simple\": {");
+	strbuff_cat(sb, "\"name\": \"");
 	strbuff_cat(sb, simple->name);
 	strbuff_cat(sb, "\", ");
-	strbuff_cat(sb, "type: \"");
+	strbuff_cat(sb, "\"type\": \"");
 	strbuff_cat(sb, simple->type);
 	strbuff_cat(sb, "\", ");
-	strbuff_cat(sb, "value: \"");
+	strbuff_cat(sb, "\"value\": \"");
 	strbuff_cat(sb, simple->value);
 	strbuff_cat(sb, "\"");
 	strbuff_cat(sb, "}");
@@ -84,15 +84,15 @@ static void describe_cmp_entry(CompoundDataEntry *cmp, StringBuffer *sb)
 {
 	if (!cmp->name || !cmp->entries) {
 		// A malformed message might generate empty Data Entries
-		strbuff_cat(sb, "compound: {}");
+		strbuff_cat(sb, "\"compound\": {}");
 		return;
 	}
 
-	strbuff_cat(sb, "compound: { ");
-	strbuff_cat(sb, "name: \"");
+	strbuff_cat(sb, "\"compound\": { ");
+	strbuff_cat(sb, "\"name\": \"");
 	strbuff_cat(sb, cmp->name);
 	strbuff_cat(sb, "\", ");
-	strbuff_cat(sb, "entries: ");
+	strbuff_cat(sb, "\"entries\": ");
 
 	read_entries(cmp->entries, cmp->entries_count, sb);
 
@@ -111,16 +111,16 @@ static void describe_meta_data(DataEntry *data, StringBuffer *sb)
 	if (data != NULL && data->meta_data.size > 0 && data->meta_data.values
 	    != NULL) {
 
-		strbuff_cat(sb, "meta_data: [");
+		strbuff_cat(sb, "\"meta_data\": [");
 		int i = 0;
 
 		for (i = 0; i < data->meta_data.size; i++) {
 			MetaAtt *meta = &data->meta_data.values[i];
 
 			if (meta != NULL && meta->name != NULL) {
-				strbuff_cat(sb, "{name: \"");
+				strbuff_cat(sb, "{\"name\": \"");
 				strbuff_cat(sb, meta->name);
-				strbuff_cat(sb, "\", value: \"");
+				strbuff_cat(sb, "\", \"value\": \"");
 				strbuff_cat(sb, meta->value);
 				strbuff_cat(sb, "\"}");
 
