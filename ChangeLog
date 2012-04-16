@@ -1,3 +1,28 @@
+Antidote 2.1
+------------
+
+* Added RORJ and ROER APDU handling
+
+* Multithreading improvements, API changes
+
+* Moved connection and disconnection events to core,
+  API changes
+
+* Refactoring of writer streams (for e.g. encoding APDUs)
+
+* APDU encoder refactoring
+
+* Set-Time transcoding support
+
+* PM-Store fixes (mostly API-level)
+
+* strbuff optimization (benefits e.g. XML and JSON encoders)
+
+* JSON encoder fix
+
+* Removed FIFO communication plug-in
+
+
 Antidote 2.0.5
 --------------
 
