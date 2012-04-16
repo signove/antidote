@@ -197,7 +197,7 @@ void context_remove_all()
 		// get one context id to be destroyed
 		gil_lock();
 
-		if (context_list->size <= 0) {
+		if ((!context_list) || (context_list->size <= 0)) {
 			gil_unlock();
 			break;
 		}
