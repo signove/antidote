@@ -300,6 +300,7 @@ void functional_test_configuring_tc_2_4()
 
 	// Second step
 
+	context_unlock(ctx);
 	manager_start(); CTX2();
 
 	state = communication_get_state(ctx);
