@@ -9,8 +9,6 @@
 #include <communication/plugin/plugin_bluez.h>
 #include <communication/service.h>
 
-static PluginBluezListener bluez_listener;
-
 static gboolean display_measurementdata(ContextId, char *);
 static gboolean display_disassociated(ContextId);
 static gboolean display_associated(ContextId, char *);
@@ -71,13 +69,13 @@ void hdp_configure()
 	plugin_bluez_update_data_types(TRUE, hdp_data_types); // TRUE=sink
 }
 
-static gboolean display_connected(ContextId conn_handle, const char *low_addr)
+static int display_connected(Context *ctx, const char *low_addr)
 {
 	printf("Device connected context %d:%d addr %s\n",
-		conn_handle.plugin, (int) conn_handle.connid,
+		ctx->id.plugin, (int) ctx->id.connid,
 		low_addr);
 
-	return TRUE;
+	return 1;
 }
 
 static gboolean display_associated(ContextId conn_handle, char *xml)
@@ -105,13 +103,13 @@ static gboolean display_disassociated(ContextId conn_handle)
 	return TRUE;
 }
 
-static gboolean display_disconnected(ContextId conn_handle, const char *low_addr)
+static int display_disconnected(Context *ctx, const char *low_addr)
 {
 	printf("Device disconnected context %d:%d addr %s\n",
-		conn_handle.plugin, (int) conn_handle.connid,
+		ctx->id.plugin, (int) ctx->id.connid,
 		low_addr);
 
-	return TRUE;
+	return 1; 
 }
 
 static GMainLoop *mainloop = NULL;
@@ -137,9 +135,6 @@ int main(int argc, char *argv[])
 	plugin = communication_plugin();
 
 	plugin_bluez_setup(&plugin);
-	bluez_listener.peer_connected = display_connected;
-	bluez_listener.peer_disconnected = display_disconnected;
-	plugin_bluez_set_listener(&bluez_listener);
 
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
@@ -153,6 +148,8 @@ int main(int argc, char *argv[])
 	listener.segment_data_received = 0;
 	listener.device_available = &device_associated;
 	listener.device_unavailable = &device_disassociated;
+	listener.device_connected = &display_connected;
+	listener.device_disconnected = &display_disconnected;
 
 	manager_add_listener(listener);
 	manager_start();

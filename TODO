@@ -5,11 +5,6 @@ ROER and RORJ
 	- pmstore
 	- get mds attributes
 
-v21: Update document regarding:
-	* connection/disconnection callbacks
-	* thread lock plugin: 0 = all, API changes / additions
-	* transcoding set-time, pmstore support
-
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
 
