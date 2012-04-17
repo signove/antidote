@@ -8,6 +8,10 @@ ROER and RORJ
 Add support to additional specializations in sample_bt_agent
 	(already present in sample_agent)
 
+Add DiscoverServices call to sample_bt_agent
+
+Add JSON API to healthd, test_healthd etc.
+
 Move sample/testing programs to their own sources
 
 Fragment healthd in several modules
@@ -17,6 +21,8 @@ Handle unit multiples (*_X_* names)
 Add unit testing cases for Agent and PM-Store.
 
 Add unit testing cases for GetConfiguration and PMStore ops
+
+Add more multithreading/with concurrency unit testing cases
 
 Transcoding:
 	Blocking/rerouting of requests like PM-Store
@@ -28,18 +34,12 @@ Add checksum to extended configuration cache file
 Migrate from dbus-glib to glib-included bindings for
 D-Bus (since glib 2.26).
 
-TODOs/FIXMEs
-
-
-Low priority
-------------
+TODOs/FIXMEs in code
 
 ASN.1: use "open" stream writers, no need to specify count.
 
 ASN.1: mitigate the need of Any structures and intermediate
        encoding. Create helper functions
-
-Search for FIXMEs and TODOs in code and deal with them
 
 Try to reduce module coupling, with is currently very high.
 
