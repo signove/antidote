@@ -110,7 +110,7 @@ static ByteStreamReader *get_apdu(struct Context *ctx);
 static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream);
 static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy);
 static int force_disconnect_channel(struct Context *ctx);
-static int disconnect_channel(guint64 handle);
+static int disconnect_channel(guint64 handle, int passive);
 
 /**
  * Callback called from BlueZ layer, when device connects (BT-wise)
@@ -247,6 +247,7 @@ static char *get_device_addr(const char *path)
 			       &props, G_TYPE_INVALID)) {
 		if (error) {
 			ERROR("Can't call device GetProperties: %s", error->message);
+			g_error_free(error);
 		} else {
 			ERROR("Can't call device GetProperties, probably disconnected");
 		}
@@ -316,7 +317,6 @@ static channel_object *get_channel(const char *path)
 	}
 
 	return NULL;
-
 }
 
 
@@ -336,7 +336,6 @@ static channel_object *get_channel_by_handle(guint64 handle)
 	}
 
 	return NULL;
-
 }
 
 
@@ -356,18 +355,35 @@ static channel_object *get_channel_by_fd(int fd)
 	}
 
 	return NULL;
-
 }
 
 
 /**
  * Remove channel path from channel proxy list
  */
-static void remove_channel(const char *path)
+static void remove_channel(const char *path, int passive)
 {
 	channel_object *c = get_channel(path);
 
 	if (c) {
+		GError *error = NULL;
+		device_object *d = get_device_object(c->device);
+
+		if (d && !passive) {
+			if (!dbus_g_proxy_call(d->proxy, "DestroyChannel",
+						&error,
+						DBUS_TYPE_G_OBJECT_PATH,
+						path,
+						G_TYPE_INVALID,
+						G_TYPE_INVALID)) {
+				if (error) {
+					DEBUG("Err destroying HDP channel %s",
+								error->message);
+					g_error_free(error);
+				}
+			}
+		}
+
 		g_free(c->path);
 		g_free(c->device);
 		g_object_unref(c->proxy);
@@ -389,15 +405,17 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	DBusGProxy *proxy;
 	GIOChannel *gio;
 
-	if (get_channel(path))
-		remove_channel(path);
-
-	proxy = dbus_g_proxy_new_for_name(conn, "org.bluez", path,
-					  "org.bluez.HealthChannel");
-
 	gio = g_io_channel_unix_new(fd);
 	g_io_add_watch(gio, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 		       data_received, NULL);
+
+	if (get_channel(path)) {
+		c->fd = fd;
+		return 0;
+	}
+
+	proxy = dbus_g_proxy_new_for_name(conn, "org.bluez", path,
+					  "org.bluez.HealthChannel");
 
 	c = (channel_object *) g_new(channel_object, 1);
 	c->path = g_strdup(path);
@@ -532,6 +550,11 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 	device_path = dbus_g_proxy_get_path(proxy);
 	handle = add_channel(path, device_path, fd);
 
+	if (!handle) {
+		// channel already known, reconnected
+		return;
+	}
+
 	dev = get_device_object(device_path);
 
 	if (dev) {
@@ -552,21 +575,18 @@ static void channel_deleted(DBusGProxy *proxy, const char *path, gpointer user_d
 {
 	DEBUG("channel destroyed: %s", path);
 	channel_closed(path);
-
-	// TODO use reconnection feature instead of making
-	// channel closure == channel 'destruction'
 }
 
 /**
  * Forces closure of a channel
  */
-static int disconnect_channel(guint64 handle)
+static int disconnect_channel(guint64 handle, int passive)
 {
 	channel_object *c = get_channel_by_handle(handle);
 
 	if (c) {
 		DEBUG("removing channel");
-		remove_channel(c->path);
+		remove_channel(c->path, passive);
 		return 1;
 	} else {
 		DEBUG("unknown handle/channel");
@@ -580,7 +600,7 @@ static int disconnect_channel(guint64 handle)
  */
 static int force_disconnect_channel(Context *c)
 {
-	return disconnect_channel(c->id.connid);
+	return disconnect_channel(c->id.connid, 0);
 }
 
 
@@ -615,7 +635,7 @@ static gboolean disconnect_device_signals(const char *device_path)
 			c = i->data;
 
 			if (strcmp(c->device, device_path) == 0) {
-				disconnect_channel(c->handle);
+				disconnect_channel(c->handle, 0);
 				dirty = TRUE;
 				break;
 			}
@@ -643,7 +663,7 @@ static void disconnect_all_devices()
 
 
 /**
- * Takes care of channel closure
+ * Takes care of channel closure, when initiative is remote
  */
 static void channel_closed(const char *path)
 {
@@ -663,7 +683,7 @@ static void channel_closed(const char *path)
 		device_disconnected(c->handle, c->device);
 	}
 
-	disconnect_channel(c->handle);
+	disconnect_channel(c->handle, 1);
 }
 
 
@@ -676,7 +696,7 @@ static void disconnect_all_channels()
 
 	while (channels) {
 		chan = channels->data;
-		disconnect_channel(chan->handle);
+		disconnect_channel(chan->handle, 0);
 	}
 }
 
@@ -814,6 +834,7 @@ static void connect_adapter(const char *adapter)
 			       &props, G_TYPE_INVALID)) {
 		if (error) {
 			ERROR("Can't get device list: %s", error->message);
+			g_error_free(error);
 		} else {
 			ERROR("Can't get device list, probably disconnected");
 		}
@@ -1039,6 +1060,7 @@ static void destroy_health_applications()
 				       G_TYPE_INVALID)) {
 			if (error) {
 				ERROR("Can't call DestroyApplication: %s", error->message);
+				g_error_free(error);
 			} else {
 				DEBUG("Can't call DestroyApplication, probably disconnected");
 			}
@@ -1095,6 +1117,7 @@ static void find_current_adapters()
 			       &props, G_TYPE_INVALID)) {
 		if (error) {
 			ERROR("Can't get adapter list: %s", error->message);
+			g_error_free(error);
 		} else {
 			ERROR("Can't get adapter list, probably disconnected");
 		}
@@ -1338,8 +1361,9 @@ static gboolean data_received(GIOChannel *gio, GIOCondition cond, gpointer dummy
 	}
 
 	if (!more) {
-		channel_closed(c->path);
 		g_io_channel_unref(gio);
+		close(c->fd);
+		c->fd = -1;
 	}
 
 	return more;
@@ -1421,16 +1445,16 @@ void plugin_bluez_connect_cb(DBusGProxy *dev_proxy, DBusGProxyCall *id,
 				gpointer user_data)
 {
 	gboolean ok;
-	GError *err = NULL;
+	GError *error = NULL;
 	char *channel_path = NULL;
 
-	ok = dbus_g_proxy_end_call(dev_proxy, id, &err,
+	ok = dbus_g_proxy_end_call(dev_proxy, id, &error,
 			DBUS_TYPE_G_OBJECT_PATH, &channel_path,
 			G_TYPE_INVALID);
 
-	if (!ok) {
-		DEBUG("connection initiation error: %s", err->message);
-		g_error_free(err);
+	if (!ok && error) {
+		DEBUG("connection initiation error: %s", error->message);
+		g_error_free(error);
 		return;
 	}
 
