@@ -41,6 +41,7 @@
 #include "src/communication/context_manager.h"
 #include "src/util/log.h"
 #include "src/util/linkedlist.h"
+#include "healthd_common.h"
 #include "healthd_service.h"
 #include "healthd_ipc.h"
 #include "healthd_ipc_auto.h"

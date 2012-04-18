@@ -51,6 +51,8 @@
 #include "src/util/linkedlist.h"
 #include "src/dim/pmstore_req.h"
 #include "healthd_ipc.h"
+#include "healthd_ipc_dbus.h"
+#include "healthd_common.h"
 #include "healthd_service.h"
 
 #define SRV_SERVICE_NAME "com.signove.health"

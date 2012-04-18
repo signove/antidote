@@ -38,11 +38,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <jni.h>
-#include <ieee11073.h>
+#include "src/communication/context_manager.h"
 #include "src/communication/plugin/android/plugin_android.h"
 #include "src/util/log.h"
-#include "src/communication/service.h"
-#include "src/dim/pmstore_req.h"
+#include "healthd_common.h"
+
+healthd_ipc ipc;
 
 JavaVM *cached_jvm = 0;
 JNIEnv *java_get_env();
@@ -65,15 +66,6 @@ static jmethodID jni_up_segmentinfo = 0;
 static jmethodID jni_up_segmentdataresponse = 0;
 static jmethodID jni_up_segmentdata = 0;
 static jmethodID jni_up_segmentcleared = 0;
-
-static void notif_java_measurementdata(ContextId, char *);
-static void notif_java_disassociated(ContextId);
-static void notif_java_associated(ContextId, char *);
-static void notif_java_segmentinfo(ContextId, int, char *);
-static void notif_java_segmentdataresponse(ContextId, int, int, int);
-static void notif_java_segmentdata(ContextId, int, int, char *);
-static void notif_java_segmentcleared(ContextId, int, int, int);
-static void notif_java_pmstoredata(ContextId, int, char *);
 
 static CommunicationPlugin plugin;
 
@@ -131,110 +123,12 @@ static int timer_count_timeout(Context *ctx)
 }
 
 /**
- * Callback for when new data has been received.
- *
- * @param ctx current context.
- * @param list a pointer to data list.
+ * TODO schedule a function call in idle loop
  */
-void new_data_received(Context *ctx, DataList *list)
+void healthd_idle_add(void*, void*)
 {
-	DEBUG("Medical Device System Data");
-
-	char *data = xml_encode_data_list(list);
-
-	if (data) {
-		notif_java_measurementdata(ctx->id, data);
-		free(data);
-	}
-}
-
-typedef struct {
-	ContextId id;
-	int handle;
-	int instnumber;
-	DataList *list;
-} segment_data_evt;
-
-/*
-// FIXME
-static void segment_data_received_phase2(gpointer revt)
-{
-	segment_data_evt *evt = revt;
-
-	DEBUG("PM-Segment Data phase 2");
-
-	char *data = xml_encode_data_list(evt->list);
-
-	if (data) {
-		notif_java_segmentdata(evt->id, evt->handle, evt->instnumber, data);
-		free(data);
-	}
-
-	data_list_del(evt->list);
-	free(revt);
-	return FALSE;
-}
-*/
-
-
-/**
- * Callback for when PM-Segment data has been received.
- *
- * @param ctx current context.
- * @param handle the PM-Store handle
- * @param instnumber the PM-Segment instance number
- * @param list a pointer to data list.
- */
-void segment_data_received(Context *ctx, int handle, int instnumber, DataList *list)
-{
-	DEBUG("PM-Segment Data");
-	segment_data_evt *evt = calloc(1, sizeof(segment_data_evt));
-
-	// Different from other callback events, "list" is not freed by core, but
-	// it is passed ownership instead.
-
-	// Encoding a whole PM-Segment to XML may take a *LONG* time. If the program
-	// is single-threaded, encoding here would block the 11073 stack, causing
-	// the agent to abort because it didn't get confirmation in time.
-
-	// So, encoding XML from data list is better left to a thread, or, at very
-	// least, delayed until there are no pending events.
-
-	evt->id = ctx->id;
-	evt->handle = handle;
-	evt->instnumber = instnumber;
-	evt->list = list;
-
-	// g_idle_add(segment_data_received_phase2, evt);
-	// FIXME
-}
-
-
-/**
- * Device has been associated.
- *
- * @param ctx current context.
- * @param list the data list of elements.
- */
-void device_associated(Context *ctx, DataList *list)
-{
-	DEBUG("Device associated");
-
-	char *data = xml_encode_data_list(list);
-
-	if (data) {
-		notif_java_associated(ctx->id, data);
-		free(data);
-	}
-}
-
-/**
- * Device has been disassociated
- */
-void device_disassociated(Context *ctx)
-{
-	DEBUG("Device unassociated");
-	notif_java_disassociated(ctx->id);
+	// TODO
+	DEBUG("TODO healthd_idle_add");
 }
 
 /************* Agent method call proxies ***************/
@@ -382,29 +276,6 @@ static void notif_java_disassociated(ContextId conn_handle)
 
 
 /**
- * Callback used to request mds attributes
- *
- *\param ctx
- *\param response_apdu
- */
-static void device_reqmdsattr_callback(Context *ctx, Request *r, DATA_apdu *response_apdu)
-{
-	DEBUG("Medical Device Attributes");
-
-	DataList *list = manager_get_mds_attributes(ctx->id);
-
-	if (list) {
-		char *data = xml_encode_data_list(list);
-		if (data) {
-			notif_java_deviceattributes(ctx->id, data);
-			free(data);
-		}
-		data_list_del(list);
-	}
-}
-
-
-/**
  * Interface to request mds attributes
  *
  * \param env JNI thread environment
@@ -416,7 +287,7 @@ void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject 
 	DEBUG("device_reqmdsattr");
 	ContextId cid = {plugin_id, handle};
 
-	manager_request_get_all_mds_attributes(cid, device_reqmdsattr_callback);
+	device_reqmdsatttr(cid);
 }
 
 /**
@@ -428,20 +299,12 @@ void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject 
  */
 jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobject obj, jint handle)
 {
-	DataList *list;
 	char *xml_out;
 
-	DEBUG("device_getconfig");
+	DEBUG("jni getconfig");
 	ContextId cid = {plugin_id, handle};
 
-	list = manager_get_configuration(cid);
-
-	if (list) {
-		xml_out = xml_encode_data_list(list);
-		data_list_del(list);
-	} else {
-		xml_out = strdup("");
-	}
+	device_get_configuration(cid, &xml_out);
 
 	jstring jxml = (*env)->NewStringUTF(env, xml_out);
 	free(xml_out);
@@ -458,10 +321,10 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
  */
 void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
-	DEBUG("device_reqmeasurement");
+	DEBUG("jni reqmeasurement");
 	ContextId cid = {plugin_id, handle};
 
-	manager_request_measurement_data_transmission(cid, NULL);
+	device_req_measurementdata(cid);
 }
 
 /**
@@ -474,10 +337,10 @@ void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobj
  */
 void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
-	DEBUG("device_reqactivationscanner");
+	DEBUG("jni reqactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
-	manager_set_operational_state_of_the_scanner(cid, (ASN1_HANDLE) ihandle, os_enabled, NULL);
+	device_reqoperascanner(cid, ihandle);
 }
 
 /**
@@ -490,10 +353,10 @@ void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env
  */
 void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
-	DEBUG("device_reqdeactivationscanner");
+	DEBUG("jni reqdeactivationscanner");
 	ContextId cid = {plugin_id, handle};
 
-	manager_set_operational_state_of_the_scanner(cid, (ASN1_HANDLE) ihandle, os_disabled, NULL);
+	device_set_operational_state_of_scanner(cid, ihandle);
 }
 
 /**
@@ -505,10 +368,10 @@ void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *e
  */
 void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
-	DEBUG("device_releaseassoc");
+	DEBUG("jni releaseassoc");
 	ContextId cid = {plugin_id, handle};
 
-	manager_request_association_release(cid);
+	device_releaseassoc(cid);
 }
 
 /**
@@ -520,35 +383,10 @@ void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobjec
  */
 void Java_com_signove_health_service_JniBridge_Cabortassoc(JNIEnv *env, jobject obj, jint handle)
 {
-	DEBUG("device_abortassoc");
+	DEBUG("jni abortassoc");
 	ContextId cid = {plugin_id, handle};
 
-	manager_request_association_release(cid);
-}
-
-/**
- * Callback for PM-Store GET
- *
- * \param ctx
- * \param r Request object
- * \param response_apdu
- */
-static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
-{
-	PMStoreGetRet *ret = (PMStoreGetRet*) r->return_data;
-	DataList *list;
-	char *data;
-
-	if (!ret)
-		return;
-
-	if ((list = manager_get_pmstore_data(ctx->id, ret->handle))) {
-		if ((data = xml_encode_data_list(list))) {
-			notif_java_pmstoredata(ctx->id, ret->handle, data);
-			free(data);
-			data_list_del(list);
-		}
-	}
+	device_abortassoc(cid);
 }
 
 /**
@@ -562,67 +400,11 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 						jobject obj, jint handle, jint ihandle)
 {
-	DEBUG("device_get_pmstore");
+	DEBUG("jni get_pmstore");
 	ContextId cid = {plugin_id, handle};
-	manager_request_get_pmstore(cid, ihandle, device_get_pmstore_cb);
+
+	device_get_pmstore(cid, ihandle);
 	return 0;
-}
-
-/**
- * Callback for PM-Store get segment info response
- *
- *\param ctx
- *\param r Request object
- *\param response_apdu
- */
-static void device_get_segminfo_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
-{
-	PMStoreGetSegmInfoRet *ret = (PMStoreGetSegmInfoRet*) r->return_data;
-	DataList *list;
-	char *data;
-
-	if (!ret)
-		return;
-
-	if ((list = manager_get_segment_info_data(ctx->id, ret->handle))) {
-		if ((data = xml_encode_data_list(list))) {
-			notif_java_segmentinfo(ctx->id, ret->handle, data);
-			free(data);
-			data_list_del(list);
-		}
-	}
-}
-
-/**
- * Callback for PM-Store segment data response
- *
- *\param ctx
- *\param response_apdu
- */
-static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
-{
-	PMStoreGetSegmDataRet *ret = (PMStoreGetSegmDataRet*) r->return_data;
-
-	if (!ret)
-		return;
-
-	notif_java_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->response);
-}
-
-/**
- * Callback for PM-Store clear segment response
- *
- *\param ctx
- *\param response_apdu
- */
-static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_apdu)
-{
-	PMStoreClearSegmRet *ret = (PMStoreClearSegmRet*) r->return_data;
-
-	if (!ret)
-		return;
-
-	notif_java_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
 }
 
 /**
@@ -637,12 +419,10 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject
 {
 	Request *req;
 
-	DEBUG("device_get_segminfo");
+	DEBUG("jni get_segminfo");
 	ContextId cid = {plugin_id, handle};
 
-	req = manager_request_get_segment_info(cid, ihandle,
-						device_get_segminfo_cb);
-	return req ? 0 : 1;
+	return device_request_get_segment_info(cid, ihandle);
 }
 
 /**
@@ -657,14 +437,10 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject
 jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
-	Request *req;
-
-	DEBUG("device_get_segmdata");
+	DEBUG("jni get_segmdata");
 	ContextId cid = {plugin_id, handle};
 
-	req = manager_request_get_segment_data(cid, ihandle,
-				instnumber, device_get_segmdata_cb);
-	return req ? 0 : 1;
+	return device_request_get_segment(data, cid, ihandle, instnumber);
 }
 
 /**
@@ -681,12 +457,10 @@ jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobje
 {
 	Request *req;
 
-	DEBUG("device_clearsegmdata");
+	DEBUG("jni clearsegmdata");
 	ContextId cid = {plugin_id, handle};
 
-	req = manager_request_clear_segment(cid, ihandle,
-				instnumber, device_clear_segm_cb);
-	return req ? 0 : 1;
+	return device_clear_segment(cid, ihandle, instnumber);
 }
 
 /**
@@ -703,13 +477,11 @@ jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jo
 {
 	Request *req;
 
-	DEBUG("device_clearsegmdata");
+	DEBUG("jni clearsegmdata");
 
 	ContextId cid = {plugin_id, handle};
 
-	req = manager_request_clear_segments(cid, ihandle,
-				device_clear_segm_cb);
-	return req ? 0 : 1;
+	return device_clearallsegmdata(cid, ihandle);
 }
 
 /**
@@ -779,6 +551,18 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 
 	DEBUG("healthd C: starting mgr");
 	manager_start();
+
+	ipc->call_agent_measurementdata = &notif_java_measurementdata;
+	ipc->call_agent_connected = &notif_java_connected;
+	ipc->call_agent_disconnected = &notif_java_disconnected;
+	ipc->call_agent_associated = &notif_java_associated;
+	ipc->call_agent_disassociated = &notif_java_disassociated;
+	ipc->call_agent_segmentinfo = &notif_java_segmentinfo;
+	ipc->call_agent_segmentdataresponse = &notif_java_segmentdataresponse;
+	ipc->call_agent_segmentdata = &notif_java_segmentdata;
+	ipc->call_agent_segmentcleared = &notif_java_segmentcleared;
+	ipc->call_agent_pmstoredata = &notif_java_pmstoredata;
+	ipc->call_agent_deviceattributes = &notif_java_deviceattributes;
 }
 
 void Java_com_signove_health_service_JniBridge_Chealthdfinalize(JNIEnv *env, jobject obj)
