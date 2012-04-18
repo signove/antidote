@@ -63,6 +63,7 @@ CFLAGS="$CFLAGS $CUNIT_CFLAGS -Isrc -g -pthread -Wall -Werror -fPIC"
 LIBS="$LIBS -lm $CUNIT_LIBS"
 
 AC_CONFIG_FILES([Makefile \
+          apps/Makefile \
           src/Makefile \
           src/api/Makefile \
           src/dim/Makefile \

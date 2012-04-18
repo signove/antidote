@@ -11,3 +11,4 @@ include $(BASE_PATH)/src/dim/Android.mk
 include $(BASE_PATH)/src/api/Android.mk
 include $(BASE_PATH)/src/trans/Android.mk
 include $(BASE_PATH)/src/Android.mk
+include $(BASE_PATH)/apps/Android.mk
