@@ -11,14 +11,14 @@ ieee_manager_LDADD = \
              ../src/libantidote.la
 
 # Minimal sample app to use the IEEE protocol facade (agent)
-ieee_agent_SOURCES = sample_agent.c
+ieee_agent_SOURCES = sample_agent.c sample_agent_common.c
 
 ieee_agent_LDADD = \
              ../src/communication/plugin/libcommpluginimpl.la \
              ../src/libantidote.la
 
 # Sample agent that uses Bluetooth (BlueZ) plug-in
-sample_bt_agent_SOURCES = sample_bt_agent.c
+sample_bt_agent_SOURCES = sample_bt_agent.c sample_agent_common.c
 sample_bt_agent_CFLAGS = @GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 sample_bt_agent_LDADD = \

@@ -2,7 +2,7 @@
 
 SCRIPT_DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 AGENT_EXEC=simulator_agent
-MANAGER_EXEC=../src/ieee_manager
+MANAGER_EXEC=../apps/ieee_manager
 IP_ADDRESS=$1
 SENSOR_LIST='PulseOximeter BloodPressure WeightScale GlucoseMeter'
 

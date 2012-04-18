@@ -40,15 +40,12 @@
 
 #include <ieee11073.h>
 #include "src/communication/plugin/bluez/plugin_bluez.h"
-#include "specializations/pulse_oximeter.h"
 #include "agent.h"
+#include "sample_agent_common.h"
 
 /**
  * \cond Undocumented
  */
-
-static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
-		0xbb, 0xdd, 0xff};
 
 static int oximeter_specialization = 0x0190;
 guint16 hdp_data_types[] = {0x1004, 0x00};
@@ -222,46 +219,6 @@ static void device_disconnected(Context *ctx, const char *addr)
 	fprintf(stderr, "bt_disconnected %s\n", addr);
 }
 
-
-/**
- * Generate data for oximeter event report
- */
-static void *event_report_cb()
-{
-	time_t now;
-	struct tm nowtm;
-	struct oximeter_event_report_data* data =
-		malloc(sizeof(struct oximeter_event_report_data));
-
-	time(&now);
-	localtime_r(&now, &nowtm);
-
-	data->beats = 60.5 + random() % 20;
-	data->oximetry = 90.5 + random() % 10;
-	data->century = nowtm.tm_year / 100 + 19;
-	data->year = nowtm.tm_year % 100;
-	data->month = nowtm.tm_mon + 1;
-	data->day = nowtm.tm_mday;
-	data->hour = nowtm.tm_hour;
-	data->minute = nowtm.tm_min;
-	data->second = nowtm.tm_sec;
-	data->sec_fractions = 50;
-
-	return data;
-}
-
-/**
- * Generate data for MDS
- *
- * @return MDS system data, particularly the system id
- */
-static struct mds_system_data *mds_data_cb()
-{
-	struct mds_system_data* data = malloc(sizeof(struct mds_system_data));
-	memcpy(&data->system_id, AGENT_SYSTEM_ID_VALUE, 8);
-	return data;
-}
-
 /**
  * Main function
  * @param argc Argument count
@@ -289,7 +246,7 @@ int main(int argc, char **argv)
 	plugin_bluez_setup(&comm_plugin);
 
 	agent_init(plugins, oximeter_specialization,
-			event_report_cb, mds_data_cb);
+			oximeter_event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;

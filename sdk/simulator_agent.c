@@ -47,8 +47,7 @@
 #include "specializations/glucometer.h"
 #include "agent.h"
 #include "simulator_parser.h"
-
-static intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99, 0xbb, 0xdd, 0xff };
+#include "../apps/sample_agent_common.h"
 
 // HTTP stuff
 #define SIMULATOR_PORT 8036
@@ -300,128 +299,6 @@ static void configure_tcp_plugin()
 	CONTEXT_ID.plugin = 1;
 	CONTEXT_ID.connid = port;
 	plugin_network_tcp_agent_setup(&comm_plugin, port);
-}
-
-/**
- * Generate data for oximeter event report
- */
-static void *oximeter_event_report_cb()
-{
-	time_t now;
-	struct tm nowtm;
-	struct oximeter_event_report_data* data =
-		malloc(sizeof(struct oximeter_event_report_data));
-
-	time(&now);
-	localtime_r(&now, &nowtm);
-
-	data->beats = 60.5 + random() % 20;
-	data->oximetry = 90.5 + random() % 10;
-	data->century = nowtm.tm_year / 100 + 19;
-	data->year = nowtm.tm_year % 100;
-	data->month = nowtm.tm_mon + 1;
-	data->day = nowtm.tm_mday;
-	data->hour = nowtm.tm_hour;
-	data->minute = nowtm.tm_min;
-	data->second = nowtm.tm_sec;
-	data->sec_fractions = 50;
-
-	return data;
-}
-
-/**
- * Generate data for blood pressure event report
- */
-static void *blood_pressure_event_report_cb()
-{
-	time_t now;
-	struct tm nowtm;
-	struct blood_pressure_event_report_data* data =
-		malloc(sizeof(struct blood_pressure_event_report_data));
-
-	time(&now);
-	localtime_r(&now, &nowtm);
-
-	data->systolic = 110 + random() % 30;
-	data->diastolic = 70 + random() % 20;
-	data->mean = 90 + random() % 10;
-	data->pulse_rate = 60 + random() % 30;
-
-	data->century = nowtm.tm_year / 100 + 19;
-	data->year = nowtm.tm_year % 100;
-	data->month = nowtm.tm_mon + 1;
-	data->day = nowtm.tm_mday;
-	data->hour = nowtm.tm_hour;
-	data->minute = nowtm.tm_min;
-	data->second = nowtm.tm_sec;
-	data->sec_fractions = 50;
-
-	return data;
-}
-
-/**
- * Generate data for weight scale event report
- */
-static void *weightscale_event_report_cb()
-{
-	time_t now;
-	struct tm nowtm;
-	struct weightscale_event_report_data* data =
-		malloc(sizeof(struct weightscale_event_report_data));
-
-	time(&now);
-	localtime_r(&now, &nowtm);
-
-	data->weight = 70.2 + random() % 20;
-	data->bmi = 20.3 + random() % 10;
-
-	data->century = nowtm.tm_year / 100 + 19;
-	data->year = nowtm.tm_year % 100;
-	data->month = nowtm.tm_mon + 1;
-	data->day = nowtm.tm_mday;
-	data->hour = nowtm.tm_hour;
-	data->minute = nowtm.tm_min;
-	data->second = nowtm.tm_sec;
-	data->sec_fractions = 50;
-
-	return data;
-}
-
-/**
- * Generate data for Glucometer event report
- */
-static void *glucometer_event_report_cb()
-{
-	time_t now;
-	struct tm nowtm;
-	struct glucometer_event_report_data* data =
-		malloc(sizeof(struct glucometer_event_report_data));
-
-	time(&now);
-	localtime_r(&now, &nowtm);
-
-	data->capillary_whole_blood = 10.2 + random() % 20;
-
-	data->century = nowtm.tm_year / 100 + 19;
-	data->year = nowtm.tm_year % 100;
-	data->month = nowtm.tm_mon + 1;
-	data->day = nowtm.tm_mday;
-	data->hour = nowtm.tm_hour;
-	data->minute = nowtm.tm_min;
-	data->second = nowtm.tm_sec;
-	data->sec_fractions = 50;
-
-	return data;
-}
-
-/**
- * Generate data for MDS
- */
-static struct mds_system_data *mds_data_cb()
-{
-	struct mds_system_data* data = malloc(sizeof(struct mds_system_data));
-	memcpy(&data->system_id, AGENT_SYSTEM_ID_VALUE, 8);
-	return data;
 }
 
 /**
