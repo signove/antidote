@@ -3,7 +3,7 @@
 
 Name:       antidote
 Summary:    IEEE 11073 Protocol Implementation
-Version:    2.0.0
+Version:    2.1.0
 Release:    3
 Group:      System/Daemons
 License:    LGPLv2.1 
@@ -87,6 +87,7 @@ cp -a doc/html %{buildroot}%{_docdir}/antidote/
 %exclude %{_bindir}/sample_bt_agent
 %exclude %{_bindir}/ieee_manager_console
 %exclude %{_bindir}/main_test_suite
+%exclude %{_bindir}/simulator_agent
 
 %files devel
 %defattr(-,root,root,-)
