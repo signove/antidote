@@ -291,8 +291,7 @@ void device_reqactivationscanner(ContextId ctx, int handle)
  * deactivate scanner
  *
  * \param ctx 
- * \param ohandle Object handle
- * \param err
+ * \param handle Object handle
  */
 void device_reqdeactivationscanner(ContextId ctx, int handle)
 {

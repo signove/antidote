@@ -594,7 +594,7 @@ static void call_agent_measurementdata(ContextId conn_handle, char *xml)
  * @param handle PM-Store handle
  * @param xml PM-Segment instance data in XML format
  */
-static void call_agent_segmentinfo(ContextId conn_handle, guint handle, gchar *xml)
+static void call_agent_segmentinfo(ContextId conn_handle, unsigned int handle, char *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -637,7 +637,7 @@ static void call_agent_segmentinfo(ContextId conn_handle, guint handle, gchar *x
  * @param status Return status
  */
 static void call_agent_segmentdataresponse(ContextId conn_handle,
-			guint handle, guint instnumber, guint retstatus)
+			unsigned int handle, unsigned int instnumber, unsigned int retstatus)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -680,8 +680,8 @@ static void call_agent_segmentdataresponse(ContextId conn_handle,
  * @param instnumber PM-Segment instance number
  * @param xml PM-Segment instance data in XML format
  */
-static void call_agent_segmentdata(ContextId conn_handle, guint handle,
-					guint instnumber, gchar *xml)
+static void call_agent_segmentdata(ContextId conn_handle, unsigned int handle,
+					unsigned int instnumber, char *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -723,7 +723,7 @@ static void call_agent_segmentdata(ContextId conn_handle, guint handle,
  * @param handle PM-Store handle
  * @param xml PM-Store data attributes in XML format
  */
-static void call_agent_pmstoredata(ContextId conn_handle, guint handle, gchar *xml)
+static void call_agent_pmstoredata(ContextId conn_handle, unsigned int handle, char *xml)
 {
 	DBusGProxyCall *call;
 	const char *device_path;
@@ -764,9 +764,9 @@ static void call_agent_pmstoredata(ContextId conn_handle, guint handle, gchar *x
  * @param handle PM-Store handle
  * @param PM-Segment instance number
  */
-static void call_agent_segmentcleared(ContextId conn_handle, guint handle,
-							guint instnumber,
-							guint retstatus)
+static void call_agent_segmentcleared(ContextId conn_handle, unsigned int handle,
+							unsigned int instnumber,
+							unsigned int retstatus)
 {
 	DBusGProxyCall *call;
 	const char *device_path;

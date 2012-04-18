@@ -348,7 +348,6 @@ static void call_agent_segmentdataresponse(ContextId ctx,
  * @param handle PM-Store handle
  * @param instnumber PM-Segment instance number
  * @param xml PM-Segment instance data in XML format
- * @return success status
  */
 static void call_agent_segmentdata(ContextId ctx, unsigned int handle,
 					unsigned int instnumber, char *xml)
@@ -370,7 +369,6 @@ static void call_agent_segmentdata(ContextId ctx, unsigned int handle,
  * @param ctx device handle
  * @param handle PM-Store handle
  * @param xml PM-Store data attributes in XML format
- * @return success status
  */
 static void call_agent_pmstoredata(ContextId ctx, unsigned int handle, char *xml)
 {
@@ -391,7 +389,6 @@ static void call_agent_pmstoredata(ContextId ctx, unsigned int handle, char *xml
  * @param ctx device handle
  * @param handle PM-Store handle
  * @param PM-Segment instance number
- * @return success status
  */
 static void call_agent_segmentcleared(ContextId ctx, unsigned int handle,
 							unsigned int instnumber,
@@ -411,7 +408,6 @@ static void call_agent_segmentcleared(ContextId ctx, unsigned int handle,
  *
  * @param ctx Context ID
  * @param xml Data in xml format
- * @return success status
  */
 static void call_agent_deviceattributes(ContextId ctx, char *xml)
 {
@@ -422,7 +418,6 @@ static void call_agent_deviceattributes(ContextId ctx, char *xml)
  * Function that calls agent.Disassociated method.
  *
  * @param ctx Context ID
- * @return success status
  */
 static void call_agent_disassociated(ContextId ctx)
 {
@@ -435,7 +430,6 @@ static void call_agent_disassociated(ContextId ctx)
  *
  * @param ctx Context ID
  * @param low_addr Device address e.g. Bluetooth MAC
- * @return success status
  */
 static void call_agent_disconnected(ContextId ctx, const char *low_addr)
 {
