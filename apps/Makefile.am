@@ -30,7 +30,7 @@ sample_bt_agent_LDADD = \
 		@DBUS_GLIB_LIBS@
 
 #healthd: D-BUS Service for IEEE protocol facade              
-healthd_SOURCES = healthd_service.c
+healthd_SOURCES = healthd_service.c healthd_ipc_dbus.c healthd_ipc_tcp.c healthd_ipc_auto.c
 healthd_CFLAGS = @DBUS_CFLAGS@ @GLIB_CFLAGS@ @GIO_CFLAGS@
 
 healthd_LDADD = \

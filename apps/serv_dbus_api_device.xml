@@ -4,64 +4,64 @@
   <interface name="com.signove.health.device">
     <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="srv"/>
     <method name="Connect">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_connect"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_connect"/>
     </method>
     <method name="Disconnect">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_disconnect"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_disconnect"/>
     </method>
     <method name="RequestDeviceAttributes">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqmdsattr"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_reqmdsattr"/>
     </method>
     <method name="GetConfiguration">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_getconfig"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_getconfig"/>
       <arg type="s" name="xml" direction="out"/>
     </method>
     <method name="RequestActivationScanner">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqactivationscanner"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_reqactivationscanner"/>
       <arg type="i" name="handle" direction="in"/>
     </method>
     <method name="RequestDeactivationScanner">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqdeactivationscanner"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_reqdeactivationscanner"/>
       <arg type="i" name="handle" direction="in"/>
     </method>
     <method name="RequestMeasurementDataTransmission">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_reqmdsattr"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_reqmdsattr"/>
     </method>
     <method name="ReleaseAssociation">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_releaseassoc"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_releaseassoc"/>
     </method>
     <method name="AbortAssociation">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_abortassoc"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_abortassoc"/>
     </method>
     <method name="GetPMStore">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_get_pmstore"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_get_pmstore"/>
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
     <method name="GetSegmentInfo">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_get_segminfo"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_get_segminfo"/>
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
     <method name="GetSegmentData">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_get_segmdata"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_get_segmdata"/>
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="pmsegment_instnumber" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
     <method name="ClearSegment">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_clearsegmdata"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_clearsegmdata"/>
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="pmsegment_instnumber" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
     <method name="ClearAllSegments">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_clearallsegmdata"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_clearallsegmdata"/>
       <arg type="i" name="pmstore_handle" direction="in"/>
       <arg type="i" name="result" direction="out"/>
     </method>
     <method name="SetTime">
-      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="device_set_time"/>
+      <annotation name="org.freedesktop.DBus.GLib.CSymbol" value="dbus_device_set_time"/>
       <arg type="t" name="time_t" direction="in"/>
     </method>
   </interface>
