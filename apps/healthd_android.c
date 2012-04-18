@@ -37,8 +37,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ieee11073.h>
 #include <jni.h>
+#include <ieee11073.h>
 #include "src/communication/plugin/android/plugin_android.h"
 #include "src/util/log.h"
 #include "src/communication/service.h"
