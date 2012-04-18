@@ -179,7 +179,6 @@ static const char *tmp_locations[] = { "HEALTHD_TMP", "TMPDIR", "TEMP", "TMP",
  */
 char *ioutil_get_tmp()
 {
-	int i = 0;
 	char *tmp = NULL;
 	char *result = NULL;
 	int tmp_len = 0;
@@ -188,6 +187,7 @@ char *ioutil_get_tmp()
 	tmp = android_tmp_location;
 	mkdir(tmp, 0770);
 #else
+	int i = 0;
 	while (tmp_locations[i]) {
 		tmp = getenv(tmp_locations[i]);
 
