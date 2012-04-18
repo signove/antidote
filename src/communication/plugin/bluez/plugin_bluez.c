@@ -71,12 +71,15 @@ typedef struct device_object {
 	char *addr;
 	char *adapter;
 	DBusGProxy *proxy;
+	int channels;
+	guint64 first_handle;
 } device_object;
 
 typedef struct channel_object {
 	char *path;
 	char *device;
 	DBusGProxy *proxy;
+	int first;
 	int fd;
 	guint64 handle;
 } channel_object;
@@ -296,6 +299,7 @@ static void add_device(const char *path, DBusGProxy *proxy, const char *adapter_
 	dev->path = g_strdup(path);
 	dev->adapter = g_strdup(adapter_path);
 	dev->proxy = proxy;
+	dev->channels = 0;
 
 	devices = g_slist_prepend(devices, dev);
 }
@@ -369,6 +373,10 @@ static void remove_channel(const char *path, int passive)
 		GError *error = NULL;
 		device_object *d = get_device_object(c->device);
 
+		if (d) {
+			d->channels--;
+		}
+
 		if (d && !passive) {
 			if (!dbus_g_proxy_call(d->proxy, "DestroyChannel",
 						&error,
@@ -420,13 +428,27 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	c = (channel_object *) g_new(channel_object, 1);
 	c->path = g_strdup(path);
 	c->device = g_strdup(device);
-	c->handle = ++last_handle;
 	c->proxy = proxy;
 	c->fd = fd;
 
 	channels = g_slist_prepend(channels, c);
 
-	return c->handle;
+	device_object *dev = get_device_object(device);
+	if (dev) {
+		c->first = (++dev->channels == 1);
+		if (c->first) {
+			c->handle = ++last_handle;
+			dev->first_handle = c->handle;
+			return c->handle;
+		} else {
+			c->handle = dev->first_handle;
+			return 0;
+		}
+	} else {
+		ERROR("unknown dev %s", device);
+	}
+
+	return 0;
 }
 
 
@@ -552,6 +574,7 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 
 	if (!handle) {
 		// channel already known, reconnected
+		// or channel is secondary
 		return;
 	}
 
@@ -675,12 +698,14 @@ static void channel_closed(const char *path)
 
 	d = get_device_object(c->device);
 
-	// notifies higher layers
-	if (d) {
-		device_disconnected(c->handle, d->addr);
-	} else {
-		ERROR("Unknown device: %s", c->device);
-		device_disconnected(c->handle, c->device);
+	if (c->first) {
+		// notifies higher layers
+		if (d) {
+			device_disconnected(c->handle, d->addr);
+		} else {
+			ERROR("Unknown device: %s", c->device);
+			device_disconnected(c->handle, c->device);
+		}
 	}
 
 	disconnect_channel(c->handle, 1);
