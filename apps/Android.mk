@@ -7,7 +7,7 @@ LOCAL_MODULE_TAGS := debug eng
 
 LOCAL_CFLAGS:= -Wall
 
-LOCAL_SRC_FILES := healthd_android.c
+LOCAL_SRC_FILES := healthd_android.c healthd_common.c
 LOCAL_CFLAGS := -Wall
 LOCAL_C_INCLUDES := $(LOCAL_PATH) $(LOCAL_PATH)/.. $(LOCAL_PATH)/../src
 
