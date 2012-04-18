@@ -1,6 +1,19 @@
 Antidote 2.1
 ------------
 
+* Health Manager (healthd) source broken in modules:
+  healthd_common, healthd_ipc_*. Common code among
+  healthd_service and healthd_android is at healthd_common,
+  removing code redundancy
+
+* Removed code redundancy among sample agents
+
+* Applications moved from src/ to apps/; src/ only contains
+  the Antidote library and plug-ins now
+
+* BlueZ HDP plug-in improvements: delay disconnection event
+  until channel is effectively destroyed, not merely closed.
+
 * Added RORJ and ROER APDU handling
 
 * Multithreading improvements, API changes
