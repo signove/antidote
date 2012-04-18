@@ -65,7 +65,7 @@ static LinkedList *context_list = NULL;
 static int destroy_context(Context *context)
 {
 	if (context != NULL) {
-		DEBUG("destroying context %u:%llx",
+		DEBUG("destroying context %u:%llu",
 				context->id.plugin, context->id.connid);
 
 		if (context->fsm != NULL) {
@@ -135,7 +135,7 @@ Context *context_create(ContextId id, int type)
 	Context *context = calloc(1, sizeof(struct Context));
 
 	if (context == NULL) {
-		ERROR("Cannot create context %u:%llx", context->id.plugin, context->id.connid);
+		ERROR("Cannot create context %u:%llu", context->id.plugin, context->id.connid);
 		return NULL;
 	}
 
@@ -155,7 +155,7 @@ Context *context_create(ContextId id, int type)
 	llist_add(context_list, context);
 	gil_unlock();
 
-	DEBUG("Created context id %u:%llx", context->id.plugin, context->id.connid);
+	DEBUG("Created context id %u:%llu", context->id.plugin, context->id.connid);
 
 	return context;
 }
@@ -167,7 +167,7 @@ Context *context_create(ContextId id, int type)
  */
 void context_remove(ContextId id)
 {
-	DEBUG("Removing context %u:%llx", id.plugin, id.connid);
+	DEBUG("Removing context %u:%llu", id.plugin, id.connid);
 
 	// grab context and remove from list atomically
 	gil_lock();
@@ -230,7 +230,7 @@ Context *context_get_and_lock(ContextId id)
 			&context_search_by_id);
 
 	if (ctx == NULL) {
-		WARNING("Cannot find context id %u:%llx", id.plugin, id.connid);
+		WARNING("Cannot find context id %u:%llu", id.plugin, id.connid);
 		gil_unlock();
 		return ctx;
 	}
@@ -238,7 +238,7 @@ Context *context_get_and_lock(ContextId id)
 	if (ctx) {
 		communication_lock(ctx);
 		++ctx->ref;
-		DEBUG("Context @%p %u:%llx addref to %d", ctx,
+		DEBUG("Context @%p %u:%llu addref to %d", ctx,
 			ctx->id.plugin, ctx->id.connid, ctx->ref);
 	}
 
@@ -257,7 +257,7 @@ void context_unlock(Context *ctx)
 	if (ctx) {
 		--ctx->ref;
 		communication_unlock(ctx);
-		DEBUG("Context @%p %u:%llx unref to %d", ctx,
+		DEBUG("Context @%p %u:%llu unref to %d", ctx,
 			ctx->id.plugin, ctx->id.connid, ctx->ref);
 		// if ref=0, it is not on the list, so
 		// nobody has ownership and nobody will find it
