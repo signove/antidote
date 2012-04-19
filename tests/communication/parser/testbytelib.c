@@ -234,7 +234,7 @@ void test_read_intu32()
 
 void test_float()
 {
-	int error = 0; // FIXME
+	int error = 0;
 	ByteStreamWriter *stream = byte_stream_writer_instance(256);
 	unsigned char test_data[256];
 
@@ -250,15 +250,13 @@ void test_float()
 
 	ByteStreamReader *rstream = byte_stream_reader_instance(test_data, 256);
 	
-	// numbers with exact float representation
 	CU_ASSERT_EQUAL(read_float(rstream, &error), 0);
-	CU_ASSERT_EQUAL(read_float(rstream, &error), 0.5);
-	CU_ASSERT_EQUAL(read_float(rstream, &error), -0.5);
-	// numbers w/o exact float representation
-	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 25.1) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 25.1) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 36.7) < 0.00001);
-	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 36.7) < 0.00001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) -  0.5) < 0.000000001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) +  0.5) < 0.000000001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 25.1) < 0.000000001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 25.1) < 0.000000001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) - 36.7) < 0.000000001);
+	CU_ASSERT_TRUE(fabs(read_float(rstream, &error) + 36.7) < 0.000000001);
 
 	del_byte_stream_writer(stream, 1);
 	free(rstream);
