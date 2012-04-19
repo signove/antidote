@@ -324,8 +324,12 @@ static gboolean new_connection(GSocketService *service, GSocketConnection *conne
 
 	char *lladdr;
 	if (asprintf(&lladdr, "%s:%d", saddr, conn_id) < 0) {
-		// TODO handle error
+		free(saddr);
+		g_object_unref(connection);
+		g_object_unref(sockaddr);
+		return FALSE;
 	}
+
 	free(saddr);
 	saddr = NULL;
 
