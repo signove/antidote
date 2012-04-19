@@ -1092,8 +1092,7 @@ static void pmstore_populate_all_attributes(struct MDS *mds, struct PMStore *pms
 	for (i = 0; i < entry_count; ++i) {
 		DataEntry *data_entry = &segm_data_entry->u.compound.entries[i];
 		data_entry->choice = COMPOUND_DATA_ENTRY;
-		// TODO this name looks wrong (misleading)
-		data_entry->u.compound.name = data_strcp("Pm-Segment-Entry-Map");
+		data_entry->u.compound.name = data_strcp("Segment-Entry");
 		data_entry->u.compound.entries_count = 2;
 		data_entry->u.compound.entries = calloc(2, sizeof(DataEntry));
 
