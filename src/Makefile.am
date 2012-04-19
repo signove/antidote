@@ -20,8 +20,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = antidote.pc
 
 # dbus stuff
-# TODO: what is the macro to the share path?
-#dbusstuffdir = $(libdir)/../share/dbus-1/system-services/
+#dbusstuffdir = $(sharedir)/dbus-1/system-services/
 #dbusstuff_DATA = src/resources/com.signove.health.service
 
 #Install headers

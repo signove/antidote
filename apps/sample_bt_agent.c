@@ -60,7 +60,6 @@ static GMainLoop *mainloop = NULL;
 static int alarms = 0;
 static guint alrm_handle = 0;
 
-// WARNING TODO limits to 1 manager connection at a time
 static ContextId cid;
 
 /**

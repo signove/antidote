@@ -343,7 +343,7 @@ static void client_disconnected()
 		g_free(client_agent);
 		g_free(client_name);
 
-		// TODO IMHO even if D-Bus client disconnected, it is not
+		// IMHO even if D-Bus client disconnected, it is not
 		// a reason to remove all devices, because we may be in
 		// the middle of a session and healthd must keep track of
 		// devices even if no client is connected.
@@ -357,6 +357,7 @@ static void client_disconnected()
 
 			_devices = NULL;
 		}
+
 		agent_proxy = NULL;
 		client_agent = NULL;
 		client_name = NULL;

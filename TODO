@@ -14,6 +14,9 @@ Add JSON API to healthd, test_healthd etc.
 
 Handle unit multiples (*_X_* names)
 
+PM-Store x android support
+	idle_add callback to JniBridge
+
 Add unit testing cases for Agent and PM-Store.
 
 Add unit testing cases for GetConfiguration and PMStore ops
@@ -30,19 +33,12 @@ Add checksum to extended configuration cache file
 Migrate from dbus-glib to glib-included bindings for
 D-Bus (since glib 2.26).
 
-TODOs/FIXMEs in code
+Support extended configurations for agent role
 
 ASN.1: use "open" stream writers, no need to specify count.
 
 ASN.1: mitigate the need of Any structures and intermediate
        encoding. Create helper functions
-
-Try to reduce module coupling, with is currently very high.
-
-Try to remove 'special' state machine handling code from
-manager.c and agent.c; state machines should operate as
-autonomously as possible. Create more states to achieve
-that, if needed.
 
 Serialize transcoding Requests
 Unify Requests for native and transcoded devices

@@ -160,7 +160,6 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 	attr_list1->value[3].attribute_value.value = bsw->buffer;
 
 	std_object_list->value[1].obj_class = MDC_MOC_VMO_METRIC_NU;
-	// TODO verify obj_handle
 	std_object_list->value[1].obj_handle = 10;
 	AttributeList *attr_list2 = malloc(sizeof(AttributeList));
 	attr_list2->count = 4;
