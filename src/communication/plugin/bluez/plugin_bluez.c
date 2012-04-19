@@ -48,6 +48,7 @@
 #include <unistd.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
+#include "src/util/linkedlist.h"
 #include "src/util/log.h"
 #include "plugin_bluez.h"
 
@@ -95,11 +96,45 @@ typedef struct app_object {
 	gboolean is_sink;
 } app_object;
 
-static GSList *apps = NULL;
-static GSList *adapters = NULL;
-static GSList *devices = NULL;
-static GSList *channels = NULL;
+
+static LinkedList *_apps = NULL;
+static LinkedList *_adapters = NULL;
+static LinkedList *_devices = NULL;
+static LinkedList *_channels = NULL;
 static guint64 last_handle = 0;
+
+static LinkedList *apps()
+{
+	if (! _apps) {
+		_apps = llist_new();
+	}
+	return _apps;
+}
+
+static LinkedList *adapters()
+{
+	if (! _adapters){
+		_adapters = llist_new();
+	}
+	return _adapters;
+}
+
+static LinkedList *devices()
+{
+	if (! _devices) {
+		_devices = llist_new();
+	}
+	return _devices;
+}
+
+static LinkedList *channels()
+{
+	if (! _channels){
+		_channels = llist_new();
+	}
+	return _channels;
+}
+
 
 /**
  * \endcond
@@ -153,22 +188,32 @@ void plugin_bluez_setup(CommunicationPlugin *plugin)
 	plugin->network_finalize = finalize;
 }
 
+static int cmp_device_object(void *arg, void *nodeElement)
+{
+	const char *path = (char *) arg;
+	device_object *m = (device_object *) nodeElement;
+
+	if (strcmp(m->path, path) == 0)
+		return 1;
+	return 0;
+}
+
 /**
  * Fetch device struct from proxy list
  */
 static device_object *get_device_object(const char *path)
 {
-	GSList *i;
-	device_object *m;
+	return (device_object *) llist_search_first(devices(), (void *) path, cmp_device_object);
+}
 
-	for (i = devices; i; i = i->next) {
-		m = i->data;
+static int cmp_object_by_addr(void *arg, void *nodeElement)
+{
+	const char *bdaddr = (char *) arg;
+	device_object *m = (device_object *) nodeElement;
 
-		if (strcmp(m->path, path) == 0)
-			return m;
-	}
-
-	return NULL;
+	if (strcmp(m->addr, bdaddr) == 0)
+		return 1;
+	return 0;
 }
 
 /**
@@ -176,17 +221,7 @@ static device_object *get_device_object(const char *path)
  */
 static device_object *get_device_object_by_addr(const char *bdaddr)
 {
-	GSList *i;
-	device_object *m;
-
-	for (i = devices; i; i = i->next) {
-		m = i->data;
-
-		if (strcmp(m->addr, bdaddr) == 0)
-			return m;
-	}
-
-	return NULL;
+	return (device_object *) llist_search_first(devices(), (void *) bdaddr, cmp_object_by_addr);
 }
 
 /**
@@ -216,7 +251,7 @@ static void remove_device(const char *path)
 		g_free(dev->adapter);
 		g_object_unref(dev->proxy);
 		g_free(dev);
-		devices = g_slist_remove(devices, dev);
+		llist_remove(devices(), dev);
 	}
 }
 
@@ -301,64 +336,61 @@ static void add_device(const char *path, DBusGProxy *proxy, const char *adapter_
 	dev->proxy = proxy;
 	dev->channels = 0;
 
-	devices = g_slist_prepend(devices, dev);
+	llist_add(devices(), dev);
 }
 
+static int cmp_channel(void* arg, void* nodeElement)
+{
+	const char *path = (char *) arg;
+	channel_object *m = (channel_object *) nodeElement;
+
+	if (strcmp(m->path, path) == 0)
+		return 1;
+	return 0;
+}
 
 /**
  * Fetch channel struct from list
  */
 static channel_object *get_channel(const char *path)
 {
-	GSList *i;
-	channel_object *m;
-
-	for (i = channels; i; i = i->next) {
-		m = i->data;
-
-		if (strcmp(m->path, path) == 0)
-			return m;
-	}
-
-	return NULL;
+	return (channel_object *) llist_search_first(channels(), (void *) path, cmp_channel);
 }
 
+static int cmp_channel_by_handle(void *arg, void *nodeElement)
+{
+	guint64 varg = *(guint64*) arg;
+	channel_object *m = (channel_object *) nodeElement;
+
+	if (m->handle == varg)
+		return 1;
+	return 0;
+}
 
 /**
  * Fetch channel struct from list by handle
  */
 static channel_object *get_channel_by_handle(guint64 handle)
 {
-	GSList *i;
-	channel_object *m;
-
-	for (i = channels; i; i = i->next) {
-		m = i->data;
-
-		if (m->handle == handle)
-			return m;
-	}
-
-	return NULL;
+	return (channel_object *) llist_search_first(channels(), &handle, cmp_channel_by_handle);
 }
 
+static int cmp_channel_by_fd(void* arg, void* nodeElement)
+{
+	channel_object *m = (channel_object *) nodeElement;
+	int fd = *((int*) arg);
+
+	if (m->fd == fd && fd >= 0)
+		return 1;
+	return 0;
+}
 
 /**
  * Fetch channel struct from list by fd
  */
 static channel_object *get_channel_by_fd(int fd)
 {
-	GSList *i;
-	channel_object *m;
-
-	for (i = channels; i; i = i->next) {
-		m = i->data;
-
-		if (m->fd == fd && fd >= 0)
-			return m;
-	}
-
-	return NULL;
+	return (channel_object *) llist_search_first(channels(), &fd, cmp_channel_by_fd);
 }
 
 
@@ -398,8 +430,8 @@ static void remove_channel(const char *path, int passive)
 		shutdown(c->fd, SHUT_RDWR);
 		close(c->fd);
 		c->fd = -1;
+		llist_remove(channels(), c);
 		g_free(c);
-		channels = g_slist_remove(channels, c);
 	}
 }
 
@@ -431,7 +463,7 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	c->proxy = proxy;
 	c->fd = fd;
 
-	channels = g_slist_prepend(channels, c);
+	llist_add(channels(), c);
 
 	device_object *dev = get_device_object(device);
 	if (dev) {
@@ -451,24 +483,22 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	return 0;
 }
 
+static int cmp_adapter(void* arg, void* nodeElement)
+{
+	const char *path = (char *) arg;
+	adapter_object *m = (adapter_object *) nodeElement;
+
+	if (strcmp(m->path, path) == 0)
+		return 1;
+	return 0;
+}
 
 /**
  * Fetch adapter struct from list
  */
 static adapter_object *get_adapter(const char *path)
 {
-	GSList *i;
-	adapter_object *m;
-
-	for (i = adapters; i; i = i->next) {
-		m = i->data;
-
-		if (strcmp(m->path, path) == 0)
-			return m;
-	}
-
-	return NULL;
-
+	return (adapter_object *) llist_search_first(adapters(), (void *) path, cmp_adapter);
 }
 
 
@@ -483,7 +513,7 @@ static void remove_adapter(const char *path)
 		g_free(a->path);
 		g_object_unref(a->proxy);
 		g_free(a);
-		adapters = g_slist_remove(adapters, a);
+		llist_remove(adapters(), a);
 	}
 }
 
@@ -502,7 +532,7 @@ static void add_adapter(const char *path, DBusGProxy *proxy)
 	a->path = g_strdup(path);
 	a->proxy = proxy;
 
-	adapters = g_slist_prepend(adapters, a);
+	llist_add(adapters(), a);
 }
 
 /**
@@ -632,7 +662,6 @@ static int force_disconnect_channel(Context *c)
  */
 static gboolean disconnect_device_signals(const char *device_path)
 {
-	GSList *i;
 	channel_object *c;
 	DBusGProxy *proxy = get_device(device_path);
 	gboolean dirty;
@@ -653,16 +682,19 @@ static gboolean disconnect_device_signals(const char *device_path)
 	// Disconnect channels related to this device
 	do {
 		dirty = FALSE;
+		LinkedNode *i = channels()->first;
 
-		for (i = channels; i; i = i->next) {
-			c = i->data;
-
+		while (i) {
+			c = i->element;
+		
 			if (strcmp(c->device, device_path) == 0) {
 				disconnect_channel(c->handle, 0);
 				dirty = TRUE;
 				break;
 			}
+			i = i->next;
 		}
+        
 	} while (dirty);
 
 	remove_device(device_path);
@@ -678,10 +710,13 @@ static void disconnect_all_devices()
 {
 	device_object *dev;
 
-	while (devices) {
-		dev = devices->data;
+	while (devices()->first) {
+		dev = devices()->first->element;
 		disconnect_device_signals(dev->path);
 	}
+
+	llist_destroy(devices(), NULL);
+	_devices = NULL;
 }
 
 
@@ -719,12 +754,14 @@ static void disconnect_all_channels()
 {
 	channel_object *chan;
 
-	while (channels) {
-		chan = channels->data;
+	while (channels()->first) {
+		chan = channels()->first->element;
 		disconnect_channel(chan->handle, 0);
 	}
-}
 
+	llist_destroy(channels(), NULL);
+	_channels = NULL; 
+}
 
 /**
  * Connect HealthDevice signals, to get channel connection signals later
@@ -910,22 +947,35 @@ static void disconnect_adapter(const char *path)
 
 	// Disconnect devices related to this adapter
 	do {
-		GSList *i;
 		dirty = FALSE;
+		LinkedNode *i = devices()->first;
 
-		for (i = devices; i; i = i->next) {
-			d = i->data;
-
+		while (i) {
+			d = i->element;
 			if (strcmp(d->adapter, path) == 0) {
 				disconnect_device_signals(d->path);
 				dirty = TRUE;
 				break;
 			}
+			i = i->next;
 		}
+
 	} while (dirty);
 
 
 	remove_adapter(path);
+}
+
+static int cmp_data_type(void* arg, void* nodeElement)
+{
+	guint16 varg = *((guint16*) arg);
+	app_object *app = (app_object *) nodeElement;
+
+	if (app->data_type == varg || varg == 0) {
+		return 1;
+	}
+	return 0;
+    
 }
 
 /**
@@ -933,16 +983,7 @@ static void disconnect_adapter(const char *path)
  */
 static const app_object *find_application_by_type(guint16 data_type)
 {
-	GSList *i;
-
-	for (i = apps; i; i = i->next) {
-		app_object *app = i->data;
-		if (app->data_type == data_type || data_type == 0) {
-			return app;
-		}
-	}
-
-	return NULL;
+	return (app_object *) llist_search_first(apps(), &data_type, cmp_data_type);
 }
 
 /**
@@ -1044,7 +1085,7 @@ gboolean create_health_application(gboolean is_sink, guint16 data_type)
 	app->data_type = data_type;
 	app->is_sink = is_sink;
 
-	apps = g_slist_prepend(apps, app);
+	llist_add(apps(), app);
 
 	dbus_message_unref(reply);
 
@@ -1068,10 +1109,10 @@ static void destroy_health_applications()
 		ERROR("BlueZ health manager service not found");
 		return;
 	}
-
-	while (apps) {
+	
+	while (apps()->first) {
 		GError *error = NULL;
-		struct app_object *app = apps->data;
+		struct app_object *app = apps()->first->element;
 
 		DEBUG("Destroying %s", app->path);
 
@@ -1088,11 +1129,12 @@ static void destroy_health_applications()
 			}
 		}
 
-		apps = g_slist_remove(apps, app);
+		llist_remove(apps(), app);
 		g_free(app->path);
 		g_free(app);
 	}
-
+	llist_destroy(apps(), NULL);
+	_apps = NULL;
 	g_object_unref(proxy);
 }
 
@@ -1279,6 +1321,7 @@ static gboolean cleanup(gpointer data)
 	return FALSE;
 }
 
+
 /**
  * Disconnects all adapters
  */
@@ -1286,10 +1329,13 @@ static void disconnect_all_adapters()
 {
 	adapter_object *a;
 
-	while (adapters) {
-		a = adapters->data;
+	while (adapters()->first) {
+		a = adapters()->first->element;
 		disconnect_adapter(a->path);
 	}
+
+	llist_destroy(adapters(), NULL);
+	_adapters = NULL;
 }
 
 /**
