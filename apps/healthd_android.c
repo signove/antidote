@@ -133,7 +133,7 @@ static void timer_reset_timeout(Context *ctx)
  *
  * @param env JNI thread environment
  * @param obj JNI bridge object
- * @param id Context id (supplied when timer was created)
+ * @param handle Handle to get context
  */
 void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject obj, jint handle)
 {
