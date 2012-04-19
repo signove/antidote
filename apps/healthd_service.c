@@ -49,6 +49,7 @@
 #include "src/trans/plugin/example_oximeter.h"
 #include "src/communication/plugin/usb/plugin_usb.h"
 #include "src/communication/plugin/bluez/plugin_glib_socket.h"
+#include "src/trans/trans.h"
 #include "src/util/log.h"
 #include "src/util/linkedlist.h"
 #include "src/communication/service.h"

@@ -40,6 +40,10 @@
 #include "src/util/log.h"
 #include "plugin_android.h"
 
+// TODO kludge related to context IDs: we assume that, when Android calls
+// JNI functions listed here, it 'knows' it is a HDP context and uses
+// a 'low' plugin number.
+
 /**
  * Plugin ID attribued by stack
  */
@@ -98,6 +102,12 @@ static jmethodID jni_up_send_data;
 void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 						jobject obj, jint handle)
 {
+	if (handle >= 1000000) {
+		// TODO fix this kludge
+		DEBUG("wrong plugin for this context");
+		return;
+	}
+
 	DEBUG("channel connected at plugin");
 	ContextId cid = {plugin_id, handle};
 	char *lladdr;
@@ -118,6 +128,12 @@ void Java_com_signove_health_service_JniBridge_Cchannelconnected(JNIEnv *env,
 void Java_com_signove_health_service_JniBridge_Cchanneldisconnected(JNIEnv *env, jobject obj,
 								jint handle)
 {
+	if (handle >= 1000000) {
+		// TODO fix this kludge
+		DEBUG("wrong plugin for this context");
+		return;
+	}
+
 	DEBUG("channel disconnected at plugin");
 	ContextId cid = {plugin_id, handle};
 	char *lladdr;
@@ -227,6 +243,12 @@ static ByteStreamReader *get_apdu(struct Context *ctx)
 void Java_com_signove_health_service_JniBridge_Cdatareceived(JNIEnv *env, jobject obj,
 							jint handle, jbyteArray buf)
 {	
+	if (handle >= 1000000) {
+		// TODO fix this kludge
+		DEBUG("wrong plugin for this context");
+		return;
+	}
+
 	DEBUG("data received at plugin");
 
 	int len = (*env)->GetArrayLength(env, buf);

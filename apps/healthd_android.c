@@ -40,6 +40,7 @@
 #include <jni.h>
 #include <ieee11073.h>
 #include "src/communication/plugin/android/plugin_android.h"
+#include "src/communication/plugin/trans/plugin_trans.h"
 #include "src/util/log.h"
 #include "healthd_common.h"
 #include "healthd_ipc.h"
@@ -52,8 +53,7 @@ jobject bridge_obj = 0;
 
 char *android_tmp_location = 0;
 
-// TODO this assumes that there is only one communication plugin!
-static unsigned int plugin_id = 0;
+static unsigned int plugin_ids[2];
 
 static jmethodID jni_up_cancel_timer = 0;
 static jmethodID jni_up_create_timer = 0;
@@ -69,7 +69,49 @@ static jmethodID jni_up_segmentdata = 0;
 static jmethodID jni_up_segmentcleared = 0;
 
 static CommunicationPlugin plugin;
+CommunicationPlugin trans_plugin;
 
+// TODO kludge ahead!
+// 
+// We encode "plugin + id" from context id into a single int
+// using "(plugin order) * 1000000 + id" in order not to change
+// the JNI interfaces, that currently uses a single int as
+// connection context. We use plugin order instead of 
+// Antidote's plugin id in order to guarantee that numbers will
+// be low and plugin #0 is HDP (see below)
+//
+// Moreover, we reserve the plugin 0 (handles < 1000000) to
+// Bluetooth HDP devices, whose handle numbers are generated
+// at Java level. The Android communication plugin expects
+// this.
+
+#define TRANS_PLUGIN_ID_RANGE 1000000
+
+static jint context_to_handle(ContextId ctx)
+{
+	if (ctx.plugin == plugin_ids[0]) {
+		return ctx.connid;
+	} else if (ctx.plugin == plugin_ids[1]) {
+		return TRANS_PLUGIN_ID_RANGE + ctx.connid;
+	}
+	DEBUG("Could not translate ctx %d:%d to handle", ctx.plugin, (int) ctx.connid);
+	return 0;
+}
+
+static ContextId handle_to_context(jint handle)
+{
+	if ((handle >= 0) && (handle < TRANS_PLUGIN_ID_RANGE)) {
+		ContextId c = {plugin_ids[0], handle};
+		return c;
+	} else if (handle >= TRANS_PLUGIN_ID_RANGE) {
+		ContextId c = {plugin_ids[1], handle - TRANS_PLUGIN_ID_RANGE};
+		return c;
+	}
+	DEBUG("Could not translate handle %d to context", handle);
+	ContextId c = {0, 0};
+	return c;
+}
+ 
 /* Called by IEEE library */
 
 /**
@@ -80,9 +122,9 @@ static CommunicationPlugin plugin;
 static void timer_reset_timeout(Context *ctx)
 {
 	if (ctx->timeout_action.id) {
-		jint handle = ctx->timeout_action.id;
+		jint timer_handle = ctx->timeout_action.id;
 		JNIEnv *env = java_get_env();
-		(*env)->CallVoidMethod(env, bridge_obj, jni_up_cancel_timer, handle);
+		(*env)->CallVoidMethod(env, bridge_obj, jni_up_cancel_timer, timer_handle);
 	}
 }
 /**
@@ -93,10 +135,10 @@ static void timer_reset_timeout(Context *ctx)
  * @param obj JNI bridge object
  * @param id Context id (supplied when timer was created)
  */
-void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject obj, jint id)
+void Java_com_signove_health_service_JniBridge_Ctimeralarm(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("timer_alarm");
-	ContextId cid = {plugin_id, id};
+	ContextId cid = handle_to_context(handle); 
 	Context *ctx = context_get_and_lock(cid);
 	if (ctx) {
 		void (*f)() = ctx->timeout_action.func;
@@ -119,7 +161,7 @@ static int timer_count_timeout(Context *ctx)
 	ctx->timeout_action.id = (int) (*env)->CallIntMethod(env, bridge_obj,
 					jni_up_create_timer,
 					(jint) ctx->timeout_action.timeout * 1000,
-					(jint) ctx->id.connid);
+					context_to_handle(ctx->id));
 	return ctx->timeout_action.id;
 }
 
@@ -139,28 +181,28 @@ void healthd_idle_add(void* f, void *param)
  *
  * @return success status
  */
-static void notif_java_associated(ContextId conn_handle, char *xml)
+static void notif_java_associated(ContextId conn_cid, char *xml)
 {
 	JNIEnv *env = java_get_env();
 	jstring jxml = (*env)->NewStringUTF(env, xml);
 	(*env)->CallVoidMethod(env, bridge_obj, jni_up_associated,
-					(jint) conn_handle.connid, jxml);
+					context_to_handle(conn_cid), jxml);
 }
 
 /**
  * Function that calls D-Bus agent.MeasurementData method.
  *
- * @param conn_handle device handle
+ * @param conn_cid device handle
  * @param xml Data in xml format
  * @return success status
  */
-static void notif_java_measurementdata(ContextId conn_handle, char *xml)
+static void notif_java_measurementdata(ContextId conn_cid, char *xml)
 {
 	JNIEnv *env = java_get_env();
 	jstring jxml = (*env)->NewStringUTF(env, xml);
 	(*env)->CallVoidMethod(env, bridge_obj,
 				jni_up_measurementdata,
-				(jint) conn_handle.connid, jxml);
+				context_to_handle(conn_cid), jxml);
 }
 
 /**
@@ -170,7 +212,7 @@ static void notif_java_measurementdata(ContextId conn_handle, char *xml)
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentinfo(ContextId conn_handle, unsigned int handle, char *xml)
+static void notif_java_segmentinfo(ContextId conn_cid, unsigned int handle, char *xml)
 {
 	// JNIEnv *env = java_get_env();
 	// (*env)->CallVoidMethod(env, bridge_obj,jni_up_segmentinfo(conn_handle, handle, xml);
@@ -181,13 +223,13 @@ static void notif_java_segmentinfo(ContextId conn_handle, unsigned int handle, c
 /**
  * Function that calls D-Bus agent.SegmentDataResponse method.
  *
- * @param conn_handle device handle
+ * @param conn_cid device handle
  * @param handle PM-Store handle
  * @param instnumber PM-Segment instance number
  * @param status Return status
  * @return success status
  */
-static void notif_java_segmentdataresponse(ContextId conn_handle,
+static void notif_java_segmentdataresponse(ContextId conn_cid,
 			unsigned int handle, unsigned int instnumber, unsigned int retstatus)
 {
 	// JNIEnv *env = java_get_env();
@@ -199,13 +241,13 @@ static void notif_java_segmentdataresponse(ContextId conn_handle,
 /**
  * Function that calls D-Bus agent.SegmentData method.
  *
- * @param conn_handle device handle
+ * @param conn_cid device handle
  * @param handle PM-Store handle
  * @param instnumber PM-Segment instance number
  * @param xml PM-Segment instance data in XML format
  * @return success status
  */
-static void notif_java_segmentdata(ContextId conn_handle, unsigned int handle,
+static void notif_java_segmentdata(ContextId conn_cid, unsigned int handle,
 					unsigned int instnumber, char *xml)
 {
 	// JNIEnv *env = java_get_env();:q
@@ -218,12 +260,12 @@ static void notif_java_segmentdata(ContextId conn_handle, unsigned int handle,
 /**
  * Function that calls D-Bus agent.PMStoreData method.
  *
- * @param conn_handle device handle
+ * @param conn_cid device handle
  * @param handle PM-Store handle
  * @param xml PM-Store data attributes in XML format
  * @return success status
  */
-static void notif_java_pmstoredata(ContextId conn_handle, unsigned int handle, char *xml)
+static void notif_java_pmstoredata(ContextId conn_cid, unsigned int handle, char *xml)
 {
 	// JNIEnv *env = java_get_env();
 	// (*env)->CallVoidMethod(env, bridge_obj, jni_up_pmstoredata(conn_handle, handle, jxml);
@@ -234,12 +276,12 @@ static void notif_java_pmstoredata(ContextId conn_handle, unsigned int handle, c
 /**
  * Function that calls D-Bus agent.SegmentCleared method.
  *
- * @param conn_handle device handle
+ * @param conn_cid device handle
  * @param handle PM-Store handle
  * @param PM-Segment instance number
  * @return success status
  */
-static void notif_java_segmentcleared(ContextId conn_handle, unsigned int handle,
+static void notif_java_segmentcleared(ContextId conn_cid, unsigned int handle,
 							unsigned int instnumber,
 							unsigned int retstatus)
 {
@@ -254,13 +296,13 @@ static void notif_java_segmentcleared(ContextId conn_handle, unsigned int handle
  *
  * @return success status
  */
-static void notif_java_deviceattributes(ContextId conn_handle, char *xml)
+static void notif_java_deviceattributes(ContextId conn_cid, char *xml)
 {
 	JNIEnv *env = java_get_env();
 	jstring jxml = (*env)->NewStringUTF(env, xml);
 	(*env)->CallVoidMethod(env, bridge_obj,
 			jni_up_deviceattributes,
-			(jint) conn_handle.connid, jxml);
+			context_to_handle(conn_cid), jxml);
 }
 
 /**
@@ -268,12 +310,12 @@ static void notif_java_deviceattributes(ContextId conn_handle, char *xml)
  *
  * @return success status
  */
-static void notif_java_disassociated(ContextId conn_handle)
+static void notif_java_disassociated(ContextId conn_cid)
 {
 	JNIEnv *env = java_get_env();
 	(*env)->CallVoidMethod(env, bridge_obj,
 			jni_up_disassociated,
-			(jint) conn_handle.connid);
+			context_to_handle(conn_cid));
 }
 
 
@@ -287,7 +329,7 @@ static void notif_java_disassociated(ContextId conn_handle)
 void Java_com_signove_health_service_JniBridge_Creqmdsattr(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("jni reqmdsattr");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_reqmdsattr(cid);
 }
@@ -304,7 +346,7 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
 	char *xml_out;
 
 	DEBUG("jni getconfig");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_getconfig(cid, &xml_out);
 
@@ -324,7 +366,7 @@ jstring Java_com_signove_health_service_JniBridge_Cgetconfig(JNIEnv *env, jobjec
 void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("jni reqmeasurement");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_reqmeasurement(cid);
 }
@@ -340,7 +382,7 @@ void Java_com_signove_health_service_JniBridge_Creqmeasurement(JNIEnv *env, jobj
 void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("jni reqactivationscanner");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_reqactivationscanner(cid, handle);
 }
@@ -356,7 +398,7 @@ void Java_com_signove_health_service_JniBridge_Creqactivationscanner(JNIEnv *env
 void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("jni reqdeactivationscanner");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_reqdeactivationscanner(cid, handle);
 }
@@ -371,7 +413,7 @@ void Java_com_signove_health_service_JniBridge_Creqdeactivationscanner(JNIEnv *e
 void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("jni releaseassoc");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_releaseassoc(cid);
 }
@@ -386,7 +428,7 @@ void Java_com_signove_health_service_JniBridge_Creleaseassoc(JNIEnv *env, jobjec
 void Java_com_signove_health_service_JniBridge_Cabortassoc(JNIEnv *env, jobject obj, jint handle)
 {
 	DEBUG("jni abortassoc");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_abortassoc(cid);
 }
@@ -405,7 +447,7 @@ jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 	jint ret;
 
 	DEBUG("jni get_pmstore");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	device_get_pmstore(cid, ihandle, &ret);
 	return ret;
@@ -422,7 +464,7 @@ jint Java_com_signove_health_service_JniBridge_Cgetpmstore(JNIEnv *env,
 jint Java_com_signove_health_service_JniBridge_Cgetsegminfo(JNIEnv *env, jobject obj, jint handle, jint ihandle)
 {
 	DEBUG("jni get_segminfo");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	jint ret;
 	device_get_segminfo(cid, ihandle, &ret);
@@ -442,7 +484,7 @@ jint Java_com_signove_health_service_JniBridge_Cgetsegmdata(JNIEnv *env,
 			jobject obj, jint handle, jint ihandle, jint instnumber)
 {
 	DEBUG("jni get_segmdata");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	jint ret;
 	device_get_segmdata(cid, ihandle, instnumber, &ret);
@@ -462,7 +504,7 @@ jint Java_com_signove_health_service_JniBridge_Cclearsegmdata(JNIEnv *env, jobje
 					jint handle, jint ihandle, jint instnumber)
 {
 	DEBUG("jni clearsegmdata");
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	jint ret;
 	device_clearsegmdata(cid, ihandle, instnumber, &ret);
@@ -483,7 +525,7 @@ jint Java_com_signove_health_service_JniBridge_Cclearallsegmdata(JNIEnv *env, jo
 {
 	DEBUG("jni clearsegmdata");
 
-	ContextId cid = {plugin_id, handle};
+	ContextId cid = handle_to_context(handle);
 
 	jint ret;
 	device_clearallsegmdata(cid, ihandle, &ret);
@@ -533,18 +575,25 @@ void Java_com_signove_health_service_JniBridge_Chealthdinit(JNIEnv *env, jobject
 	DEBUG("healthd C: init comm plugin");
 
 	plugin = communication_plugin();
+	trans_plugin = communication_plugin();
 
 	plugin_android_setup(&plugin);
 	plugin.timer_count_timeout = timer_count_timeout;
 	plugin.timer_reset_timeout = timer_reset_timeout;
 
+	plugin_trans_setup(&trans_plugin);
+	trans_plugin.timer_count_timeout = timer_count_timeout;
+	trans_plugin.timer_reset_timeout = timer_reset_timeout;
+
 	DEBUG("healthd C: init manager");
 
-	CommunicationPlugin *plugins[] = {&plugin, 0};
+	CommunicationPlugin *plugins[] = {&plugin, &trans_plugin, 0};
 	manager_init(plugins);
-	plugin_id = communication_plugin_id(&plugin);
+	plugin_ids[0] = communication_plugin_id(&plugin);
+	plugin_ids[1] = communication_plugin_id(&trans_plugin);
 
-	DEBUG("healthd C: plugin id %d", plugin_id);
+	DEBUG("healthd C: plugin id %d", plugin_ids[0]);
+	DEBUG("healthd C: trans plugin id %d", plugin_ids[1]);
 	DEBUG("healthd C: init mgr listener");
 
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
