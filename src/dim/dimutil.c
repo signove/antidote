@@ -123,15 +123,12 @@ static char *dimutil_get_unit(struct Metric *metric)
  */
 static int dimutil_get_enumeration_partition(struct Enumeration *enumeration)
 {
-	// FIXME bug?
-	if (&(enumeration->metric) != NULL) {
-		if (enumeration->use_nom_partition) {
-			return enumeration->enum_observed_value_partition;
-		} else if (enumeration->metric.use_metric_id_partition_field) {
-			return enumeration->metric.metric_id_partition;
-		} else {
-			return enumeration->metric.type.partition;
-		}
+	if (enumeration->use_nom_partition) {
+		return enumeration->enum_observed_value_partition;
+	} else if (enumeration->metric.use_metric_id_partition_field) {
+		return enumeration->metric.metric_id_partition;
+	} else {
+		return enumeration->metric.type.partition;
 	}
 
 	return 0;
