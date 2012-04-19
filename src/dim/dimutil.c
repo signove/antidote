@@ -415,22 +415,24 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 			result = 0;
 			break;
 		}
-		// FIXME test if data_entry
-		data_set_basic_nu_obs_val(data_entry,
+
+		if (data_entry) {
+			data_set_basic_nu_obs_val(data_entry,
 					  "Basic-Nu-Observed-Value",
 					  &(numeric->basic_nu_observed_value));
 
-		data_set_meta_att(data_entry, data_strcp("partition"),
+			data_set_meta_att(data_entry, data_strcp("partition"),
 				  intu16_2str(dimutil_get_metric_partition(&(numeric->metric))));
 
-		data_set_meta_att(data_entry, data_strcp("metric-id"),
+			data_set_meta_att(data_entry, data_strcp("metric-id"),
 				  intu16_2str(dimutil_get_metric_ids(&(numeric->metric))));
 
-		data_set_meta_att(data_entry, data_strcp("unit-code"),
+			data_set_meta_att(data_entry, data_strcp("unit-code"),
 				  intu16_2str(dimutil_get_unit_code(&(numeric->metric))));
 
-		data_set_meta_att(data_entry, data_strcp("unit"),
+			data_set_meta_att(data_entry, data_strcp("unit"),
 				  dimutil_get_unit(&(numeric->metric)));
+		}
 		break;
 	case MDC_ATTR_NU_CMPD_VAL_OBS_BASIC:
 		del_basicnuobsvaluecmp(
@@ -498,11 +500,12 @@ int dimutil_fill_numeric_attr(struct Numeric *numeric, OID_Type attr_id,
 			break;
 		}
 
-		// FIXME teste data_entry?
-		data_set_nu_obs_val_cmp(data_entry,
+		if (data_entry) {
+			data_set_nu_obs_val_cmp(data_entry,
 					"Compound-Nu-Observed-Value",
 					&numeric->compound_nu_observed_value,
 					dimutil_get_metric_partition(&(numeric->metric)));
+		}
 
 		break;
 	case MDC_ATTR_NU_ACCUR_MSMT:
