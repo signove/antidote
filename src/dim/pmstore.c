@@ -1671,7 +1671,7 @@ static void pmstore_get_segment_data_as_datalist(struct MDS *mds,
 
 	entry->choice = COMPOUND_DATA_ENTRY;
 	if (asprintf(&s_inst_number, "%d", segment->instance_number) < 0) {
-		// TODO failure
+		return;
 	}
 	data_set_meta_att(entry, data_strcp("Instance-Number"), s_inst_number);
 
@@ -1712,7 +1712,6 @@ static void pmstore_get_segment_data_as_datalist(struct MDS *mds,
 
 	data_set_segment_stat(mds, segment, &values[i], "Segment-Statistics",
 				&segment->segment_statistics);
-
 	data_meta_set_attr_id(&values[i++], MDC_ATTR_SEG_STATS);
 
 	data_set_intu32(&values[i], "Usage-Count", &segment->segment_usage_count);
