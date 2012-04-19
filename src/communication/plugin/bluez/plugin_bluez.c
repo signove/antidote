@@ -955,9 +955,6 @@ gboolean create_health_application(gboolean is_sink, guint16 data_type)
 {
 	/* Create HealthApplication */
 
-	// TODO get application's role and data type from higher layers
-	// TODO multiple roles/data types
-
 	// Need to use non-GLib code here because GLib still does not have
 	// the G_TYPE_UINT16 type.
 

@@ -113,7 +113,6 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_unassociated,	fsm_evt_ind_transport_disconnect,				fsm_state_disconnected,		&communication_disconnect_tx}, // 2.2
 	{fsm_state_unassociated,	fsm_evt_req_assoc_rel,						fsm_state_unassociated,		NULL}, // 2.6
 	{fsm_state_unassociated,	fsm_evt_req_assoc_abort,					fsm_state_unassociated,		NULL}, // 2.7
-	// TODO: This function must return void
 	{fsm_state_unassociated,	fsm_evt_rx_aarq_acceptable_and_known_configuration,		fsm_state_operating,		&association_accept_config_tx}, // 2.9
 	{fsm_state_unassociated,	fsm_evt_rx_aarq_acceptable_and_unknown_configuration,		fsm_state_waiting_for_config,	&configuring_transition_waiting_for_config}, // 2.10
 

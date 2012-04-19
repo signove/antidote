@@ -128,8 +128,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_var(Context *ctx,
 			dimutil_update_mds_from_obs_scan(ctx->mds, &report_info->obs_scan_var.value[i],
 							 &data_list->values[0]);
 			manager_notify_evt_measurement_data_updated(ctx, data_list);
-		} else {
-			// TODO Error Condition
 		}
 	}
 }
@@ -156,8 +154,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_fixed(Context *ctx,
 		if (data_list != NULL) {
 			dimutil_update_mds_from_obs_scan_fixed(ctx->mds, &report_info->obs_scan_fixed.value[i], &data_list->values[0]);
 			manager_notify_evt_measurement_data_updated(ctx, data_list);
-		} else {
-			// TODO Error Condition
 		}
 	}
 }
@@ -192,8 +188,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_grouped(Context *ctx,
 			if (data_list != NULL) {
 				dimutil_update_mds_from_grouped_observations(ctx->mds, stream, &attr_map->value[j], &data_list->values[0]);
 				manager_notify_evt_measurement_data_updated(ctx, data_list);
-			} else {
-				// TODO Error Condition
 			}
 		}
 
@@ -232,8 +226,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_mp_var(Context *ctx,
 								 &report_info->scan_per_var.value[i].obs_scan_var.value[j],
 								 &data_list->values[0]);
 				manager_notify_evt_measurement_data_updated(ctx, data_list);
-			} else {
-				// TODO Error Condition
 			}
 		}
 	}
@@ -271,8 +263,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_mp_fixed(Context *ctx,
 								       &report_info->scan_per_fixed.value[i].obs_scan_fix.value[j],
 								       &data_list->values[0]);
 				manager_notify_evt_measurement_data_updated(ctx, data_list);
-			} else {
-				// TODO Error Condition
 			}
 		}
 	}
@@ -309,8 +299,6 @@ void peri_cfg_scanner_event_report_buf_scan_report_mp_grouped(Context *ctx,
 
 				dimutil_update_mds_from_grouped_observations(ctx->mds, stream, &attr_map->value[j], &data_list->values[0]);
 				manager_notify_evt_measurement_data_updated(ctx, data_list);
-			} else {
-				// TODO Error Condition
 			}
 		}
 

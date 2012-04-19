@@ -97,7 +97,7 @@ void association_unassociated_process_apdu(Context *ctx, APDU *apdu)
 	case RLRE_CHOSEN: // ignore
 		break;
 	default:
-		// TODO error handling
+		// ignore
 		break;
 	}
 }
@@ -128,7 +128,7 @@ void association_unassociated_process_apdu_agent(Context *ctx, APDU *apdu)
 	case RLRE_CHOSEN: // ignore
 		break;
 	default:
-		// TODO error handling
+		// ignore
 		break;
 	}
 }
@@ -196,7 +196,7 @@ static void association_process_aarq_apdu(Context *ctx, APDU *apdu)
 				       &data);
 	}
 
-	// TODO check rejected conditions
+	// other rejected conditions:
 	// REJECTED_UNAUTHORIZED;
 	// REJECTED_TRANSIENT;
 	// REJECTED_PERMANENT;

@@ -646,9 +646,8 @@ int pmstore_segment_data_event(Context *ctx, struct PMStore *pm_store,
 		pmsegment->fixed_segment_data.length = 0;
 	}
 
-	// TODO this is correct but not robust
-	// What if an agent sends all pieces but shuffled?
-	// (Try again to find an answer in 20601 doc. I didn't.)
+	// It is correct to expect segments to come in order
+	// (20601:2010, topic 8.9.3.4.2 item c)
 	if (event.segm_data_event_descr.segm_evt_entry_index != pmsegment->empiric_usage_count) {
 		DEBUG("PM-Segment data event: unexpected segment part");
 		return 0;

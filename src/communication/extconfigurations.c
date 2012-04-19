@@ -128,7 +128,6 @@ static void ext_configurations_create_environment()
 		DEBUG("mkdirp status %d", status);
 
 		if (status != 0) {
-			// TODO Check Error condition
 			ERROR("Unable to create configuration directory: %d", \
 			      errno);
 			return;
@@ -367,7 +366,6 @@ static void ext_configurations_write_file(octet_string *system_id,
 		del_byte_stream_writer(header_stream, 1);
 
 		if (err) {
-			// TODO Check Error condition
 			ERROR("error writing ext config index");
 			return;
 		}
@@ -544,7 +542,6 @@ ConfigObjectList *ext_configurations_get_configuration_attributes(
 		file_path = NULL;
 
 		if (buffer == NULL) {
-			// TODO Check Error condition
 			ERROR("ext_config_get could not read from file");
 			return NULL;
 		} else if (size != config->obj_size) {

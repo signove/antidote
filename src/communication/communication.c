@@ -396,9 +396,10 @@ int communication_is_network_started()
 }
 
 /**
- * @TODO_REVIEW_DOC
+ * Fire trasport disconnect event
  *
  * @param ctx
+ * @return 1
  */
 static int communication_fire_transport_disconnect_evt(Context *ctx)
 {
@@ -678,7 +679,6 @@ static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 		ERROR("Cannot process APDU in disconnected state ");
 		break;
 	case fsm_state_unassociated:
-		// TODO does it make sense manager to take initiative?
 		association_unassociated_process_apdu_agent(ctx, apdu);
 		break;
 	case fsm_state_associating:
