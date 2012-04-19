@@ -95,10 +95,9 @@ void communication_agent_roiv_event_report_respond_tx(FSMContext *ctx, fsm_event
  * @param evt state machine event
  * @param data state machine event data
  */
-void communication_agent_roiv_confirmed_error_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
+void communication_agent_roiv_confirmed_event_report_respond_tx(FSMContext *ctx, fsm_events evt, FSMEventData *data)
 {
 	/* TODO */
-	/* FIXME function name */
 }
 
 /**
