@@ -4,7 +4,7 @@ rm -rfv build
 ./autogen.sh && \
 ./configure && \
 make && \
-dpkg-buildpackage -rfakeroot -tc
+dpkg-buildpackage -rfakeroot -tc $*
 
 GEN_STATUS=$?
 
