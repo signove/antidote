@@ -128,4 +128,6 @@ void manager_request_association_release(ContextId id);
 
 void manager_request_association_abort(ContextId id);
 
+void manager_set_system_id(const intu8 *system_id, intu16 len);
+
 #endif /* MANAGER_H_ */

@@ -870,9 +870,25 @@ void manager_handle_transition_evt(Context *ctx, fsm_states previous, fsm_states
 	}
 }
 
-// TODO static variable, functions to register from app
-static const intu8 MANAGER_SYSTEM_ID[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
-static const intu16 MANAGER_SYSTEM_ID_LEN = 8;
+static const intu8 default_mgr_system_id[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
+static const intu16 default_mgr_system_id_len = 8;
+
+static intu8 *mgr_system_id = 0;
+static intu16 mgr_system_id_len = 0;
+
+/**
+ * Set manager system id
+ *
+ * @param system_id
+ * @param len
+ */
+void manager_set_system_id(const intu8 *system_id, intu16 len)
+{
+	free(mgr_system_id);
+	mgr_system_id_len = len;
+	mgr_system_id = malloc(len);
+	memcpy(mgr_system_id, system_id, len);
+}
 
 /**
  * Return length of manager system id
@@ -881,7 +897,12 @@ static const intu16 MANAGER_SYSTEM_ID_LEN = 8;
  */
 unsigned short int manager_system_id_length()
 {
-	return MANAGER_SYSTEM_ID_LEN;
+	if (!mgr_system_id) {
+		manager_set_system_id(default_mgr_system_id,
+					default_mgr_system_id_len);
+	}
+
+	return mgr_system_id_len;
 }
 
 /**
@@ -891,9 +912,14 @@ unsigned short int manager_system_id_length()
  */
 intu8 *manager_system_id()
 {
+	if (!mgr_system_id) {
+		manager_set_system_id(default_mgr_system_id,
+					default_mgr_system_id_len);
+	}
+
 	intu16 len = manager_system_id_length();
 	intu8 *id = malloc(len);
-	memcpy(id, MANAGER_SYSTEM_ID, len);
+	memcpy(id, mgr_system_id, len);
 	return id;
 }
 
