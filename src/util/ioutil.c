@@ -131,7 +131,7 @@ int ioutil_buffer_to_file(const char *file_path,
 	}
 
 	// Read file contents into buffer_cur
-	fwrite(buffer, buffer_size, 1, file);
+	fwrite(buffer, 1, buffer_size, file);
 	fclose(file);
 	return 0;
 }
