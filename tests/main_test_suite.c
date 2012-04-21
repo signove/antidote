@@ -162,9 +162,12 @@ int main(int argc, char *argv[])
 
 	/* Clean up registry and return */
 
+	int ret = (CU_get_number_of_tests_failed() > 0 ? 1 : 0);
 	CU_cleanup_registry();
-	pthread_exit((void *)CU_get_error());
-	return CU_get_error();
+	// pthread_exit((void *)CU_get_error());
+	// return CU_get_error();
+
+	return ret;
 }
 #endif
 
