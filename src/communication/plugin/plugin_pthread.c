@@ -87,6 +87,8 @@ static void plugin_pthread_ctx_init(Context *ctx)
 	pthread_mutex_init(&thread_ctx->mutex, &thread_ctx->mutex_attr);
 }
 
+static void timer_reset_timeout(Context *ctx);
+
 /**
  * Finalize thread context, in this case destroy pthread mutex.
  * @param ctx current context.
@@ -96,13 +98,12 @@ static void plugin_pthread_ctx_finalize(Context *ctx)
 	if (!ctx)
 		return;
 
+	timer_reset_timeout(ctx);
+
 	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 
 	pthread_mutexattr_destroy(&thread_ctx->mutex_attr);
 	pthread_mutex_destroy(&thread_ctx->mutex);
-
-	free(thread_ctx->timeout_thread);
-	thread_ctx->timeout_thread = NULL;
 
 	free(ctx->multithread);
 	ctx->multithread = NULL;
@@ -150,7 +151,6 @@ static void *timer_run(void *arg)
 	DEBUG(" timer: running timeout thread ");
 
 	Context *ctx = (Context *) arg;
-	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 
 	timeout_callback *callback = &ctx->timeout_action;
 
@@ -168,9 +168,6 @@ static void *timer_run(void *arg)
 	ctx->timeout_action.func = NULL;
 	ctx->timeout_action.timeout = 0;
 
-	free(thread_ctx->timeout_thread);
-	thread_ctx->timeout_thread = NULL;
-
 	plugin_pthread_ctx_unlock(ctx);
 	pthread_exit(NULL);
 }
@@ -187,6 +184,9 @@ static void timer_wait_for_timeout(Context *ctx)
 	DEBUG(" timer: Waiting for timeout thread termination.");
 	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 	pthread_join(*thread_ctx->timeout_thread, NULL);
+
+	free(thread_ctx->timeout_thread);
+	thread_ctx->timeout_thread = NULL;
 }
 
 /**
@@ -196,17 +196,14 @@ static void timer_wait_for_timeout(Context *ctx)
  */
 static void timer_reset_timeout(Context *ctx)
 {
-	int result = 0;
 	plugin_pthread_ctx_lock(ctx);
 	ThreadContext *thread_ctx = get_thread_ctx(ctx);
 
 	if (thread_ctx != NULL && thread_ctx->timeout_thread != NULL) {
 		DEBUG(" timer: Reseting timeout thread ");
-		result = pthread_cancel(*thread_ctx->timeout_thread);
 
-		if (result == 0) {
-			pthread_join(*thread_ctx->timeout_thread, NULL);
-		}
+		pthread_cancel(*thread_ctx->timeout_thread);
+		pthread_join(*thread_ctx->timeout_thread, NULL);
 	
 		free(thread_ctx->timeout_thread);
 		thread_ctx->timeout_thread = NULL;
@@ -223,6 +220,8 @@ static void timer_reset_timeout(Context *ctx)
  */
 static int timer_count_timeout(Context *ctx)
 {
+	static int last_id = 0;
+
 	plugin_pthread_ctx_lock(ctx);
 
 	timer_reset_timeout(ctx);
@@ -230,8 +229,7 @@ static int timer_count_timeout(Context *ctx)
 
 	if (thread_ctx->timeout_thread == NULL) {
 		thread_ctx->timeout_thread = malloc(sizeof(pthread_t));
-		// TODO using pointer as id
-		ctx->timeout_action.id = (long int) thread_ctx->timeout_thread;
+		ctx->timeout_action.id = ++last_id;
 
 		DEBUG("timer: Creating timeout counter thread id %d, time: %d",
 		      ctx->timeout_action.id,
