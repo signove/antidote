@@ -441,7 +441,6 @@ static void remove_channel(const char *path, int passive)
  */
 static guint64 add_channel(const char *path, const char *device, int fd)
 {
-	channel_object *c;
 	DBusGProxy *proxy;
 	GIOChannel *gio;
 
@@ -449,7 +448,8 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	g_io_add_watch(gio, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 		       data_received, NULL);
 
-	if (get_channel(path)) {
+	channel_object *c = get_channel(path);
+	if (c) {
 		c->fd = fd;
 		return 0;
 	}
