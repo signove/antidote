@@ -58,6 +58,9 @@ rm -rf %{buildroot}
 
 %make_install
 
+mkdir -p %{buildroot}%{_docdir}/antidote/
+cp -a doc/html %{buildroot}%{_docdir}/antidote/
+
 # >> install post
 # << install post
 
