@@ -1,10 +1,10 @@
 Source: antidote
 Priority: extra
 Maintainer: Ádrian Lívio Vasconcelos Guedes <adrian.guedes@signove.com>
-Build-Depends: debhelper (>= 7.0.50~), doxygen, libglib2.0-dev, libdbus-glib-1-dev, dbus (>= 1.4.0), libusb-1.0-0-dev
+Build-Depends: debhelper (>= 7), doxygen, libglib2.0-dev, libdbus-glib-1-dev, dbus (>= 1.4.0), libusb-1.0-0-dev, dh-autoreconf, graphviz
 Standards-Version: 3.8.4
 Section: libs
-Homepage: <http://oss.signove.com>
+Homepage: http://oss.signove.com
 
 Package: antidote-dev
 Section: libdevel
