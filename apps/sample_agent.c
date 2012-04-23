@@ -131,9 +131,8 @@ static void print_help()
 			"Utility tool to simulate IEEE 11073 agent\n\n"
 			"Usage: ieee_agent [OPTION]\n"
 			"Options:\n"
-			"        --help                	Print this help\n"
-			"        --fifo [--sensor=type] Run FIFO mode with default file descriptors\n"
-			"        --tcp  [--sensor=type] Run TCP mode on default port\n"
+			"        --help                 Print this help\n"
+			"        --sensor=type          Sensor type, default pulseoximeter\n"
 			"        Where type can be pulseoximeter, bloodpressure, glucometer or weightscale\n\n");
 }
 
@@ -177,41 +176,34 @@ int main(int argc, char **argv)
 	int opt = 0;
 	comm_plugin = communication_plugin();
 
-	if (argc == 3) {
-		if (strstr(argv[2], "pulseoximeter") != 0) {
+	if (argc == 1) {
+		opt = 1;
+	} else if (argc == 2) {
+                if (strstr(argv[1], "--help") != 0) {
+                        print_help();
+                        exit(0);
+		} else if (strstr(argv[1], "pulseoximeter") != 0) {
 			opt = 1;
-		} else if (strstr(argv[2], "bloodpressure") != 0) {
+		} else if (strstr(argv[1], "bloodpressure") != 0) {
 			opt = 2;
-		} else if (strstr(argv[2], "weightscale") != 0) {
+		} else if (strstr(argv[1], "weightscale") != 0) {
 			opt = 3;
-		} else if (strstr(argv[2], "glucometer") != 0) {
+		} else if (strstr(argv[1], "glucometer") != 0) {
 			opt = 4;
-		}
-	}
-
-	if (argc == 2 || opt != 0) {
-
-		if (strcmp(argv[1], "--help") == 0) {
-			print_help();
-			exit(0);
-		} else if (strcmp(argv[1], "--tcp") == 0) {
-			tcp_mode();
 		} else {
-			fprintf(stderr, "ERROR: invalid option: %s\n", argv[1]);
-			fprintf(stderr, "Try `%s --help'"
-				" for more information.\n", argv[0]);
-			exit(1);
+                        fprintf(stderr, "ERROR: invalid option: %s\n", argv[1]);
+                        fprintf(stderr, "Try `%s --help'"
+                                " for more information.\n", argv[0]);
+                        exit(1);
 		}
-
-	} else if (argc > 2) {
-		fprintf(stderr, "ERROR: Invalid number of options\n");
-		fprintf(stderr, "Try `%s --help'"
-			" for more information.\n", argv[0]);
-		exit(1);
 	} else {
-		// TCP is default mode
-		tcp_mode();
+		fprintf(stderr, "ERROR: invalid option: %s\n", argv[1]);
+		fprintf(stderr, "Try `%s --help'"
+				" for more information.\n", argv[0]);
+		exit(1);
 	}
+
+	tcp_mode();
 
 	fprintf(stderr, "\nIEEE 11073 sample agent\n");
 
@@ -257,3 +249,4 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
