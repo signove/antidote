@@ -44,6 +44,7 @@
 #include <glib.h>
 #include "src/communication/plugin/plugin.h"
 #include "src/communication/communication.h"
+#include "src/util/linkedlist.h"
 #include "src/util/log.h"
 #include "plugin_usb.h"
 #include "usb_phdc_drive.h"
@@ -70,15 +71,40 @@ typedef struct channel_object {
 	guint64 handle;
 } channel_object;
 
-static GSList *gios = NULL;
+static LinkedList *_gios = NULL;
 
-static GSList *devices = NULL;
-static GSList *channels = NULL;
+static LinkedList *_devices = NULL;
+static LinkedList *_channels = NULL;
 static guint64 last_handle = 0;
 
 // static GSList *apps = NULL;
 
 // static int send_data(guint64 handle, unsigned char *data, int len);
+
+
+static LinkedList *gios()
+{
+	if( ! _gios) {
+		_gios = llist_new();
+	}
+	return _gios;
+}
+
+static LinkedList *devices()
+{
+	if( ! _devices) {
+		_devices = llist_new();
+	}
+	return _devices;
+}
+
+static LinkedList *channels()
+{
+	if( ! _channels) {
+		_channels = llist_new();
+	}
+	return _channels;
+}
 
 static int init();
 static int finalize();
@@ -120,22 +146,23 @@ void plugin_usb_setup(CommunicationPlugin *plugin)
 	plugin->network_finalize = finalize;
 }
 
+static int cmp_device_object(void *arg, void *nodeElement)
+{
+	usb_phdc_device *impl = (usb_phdc_device *) arg;
+	device_object *m = (device_object *) nodeElement;
+
+	if(m->impl == impl) {
+		return 1;
+	}
+	return 0;
+}
+
 /**
  * Fetch device struct from proxy list
  */
 static device_object *get_device_object(const usb_phdc_device *impl)
 {
-	GSList *i;
-	device_object *m;
-
-	for (i = devices; i; i = i->next) {
-		m = i->data;
-
-		if (m->impl == impl)
-			return m;
-	}
-
-	return NULL;
+	return (device_object *) llist_search_first(devices(), (void *) impl, cmp_device_object);
 }
 
 
@@ -149,7 +176,7 @@ static void remove_device(const usb_phdc_device *impl)
 	if (dev) {
 		g_free(dev->addr);
 		g_free(dev);
-		devices = g_slist_remove(devices, dev);
+		llist_remove(devices(), dev);
 	}
 }
 
@@ -192,28 +219,40 @@ static void add_device(usb_phdc_device *impl)
 		return;
 	}
 
-	devices = g_slist_prepend(devices, dev);
+	llist_add(devices(), dev);
 }
 
+static int cmp_channel_object(void *arg, void *nodeElement)
+{
+	usb_phdc_device *impl = (usb_phdc_device *) arg;
+	channel_object *m = (channel_object *) nodeElement;
+
+	if(m->impl == impl) {
+		return 1;
+	}
+	return 0;
+}
 
 /**
  * Fetch channel struct from list
  */
 static channel_object *get_channel(const usb_phdc_device *impl)
 {
-	GSList *i;
-	channel_object *m;
-
-	for (i = channels; i; i = i->next) {
-		m = i->data;
-
-		if (m->impl == impl)
-			return m;
-	}
-
-	return NULL;
-
+	return (channel_object *) llist_search_first(channels(), (void*) impl, cmp_channel_object);
 }
+
+
+static int cmp_channel_by_handle(void *arg, void *nodeElement)
+{
+	guint64 handle = *(guint64 *) arg;
+	channel_object *m = (channel_object *) nodeElement;
+
+	if(m->handle == handle) {
+		return 1;
+	}
+	return 0;
+}
+
 
 
 /**
@@ -221,17 +260,18 @@ static channel_object *get_channel(const usb_phdc_device *impl)
  */
 static channel_object *get_channel_by_handle(guint64 handle)
 {
-	GSList *i;
-	channel_object *m;
+	return (channel_object *) llist_search_first(channels(), &handle, cmp_channel_by_handle);
+}
 
-	for (i = channels; i; i = i->next) {
-		m = i->data;
+static int cmp_unlisten_fd (void *arg, void *nodeElement)
+{
+	int fd = *((int*) arg);
+	GIOChannel *gio = (GIOChannel *) nodeElement;
 
-		if (m->handle == handle)
-			return m;
+	if (g_io_channel_unix_get_fd(gio) == fd) {
+		return 1;
 	}
-
-	return NULL;
+	return 0;
 }
 
 /**
@@ -239,16 +279,12 @@ static channel_object *get_channel_by_handle(guint64 handle)
  */
 static void unlisten_fd(int fd)
 {
-	GSList *i;
+	GIOChannel *gio = (GIOChannel *) llist_search_first(gios(), &fd, cmp_unlisten_fd);
 
-	for (i = gios; i; i = i->next) {
-		GIOChannel *gio = i->data;
-		if (g_io_channel_unix_get_fd(gio) == fd) {
-			g_io_channel_unref(gio);
-			gios = g_slist_remove(gios, gio);
-			DEBUG("\tunlistened fd %d", fd);
-			break;
-		}
+	if (gio) {
+		g_io_channel_unref(gio);
+		llist_remove(gios(), gio);
+		DEBUG("\tunlistened fd %d", fd);
 	}
 }
 
@@ -263,8 +299,11 @@ static void removed_fd(int fd, void *user_data)
 
 static void unlisten_all_fds()
 {
-	while (gios)
-		unlisten_fd(g_io_channel_unix_get_fd(gios->data));
+	while (gios()->first) {
+		unlisten_fd(g_io_channel_unix_get_fd(gios()->first->element));
+	}
+	llist_destroy(gios(), NULL);
+	_gios = NULL;
 }
 
 static gboolean usb_event_received(GIOChannel *gio, GIOCondition cond, gpointer dev);
@@ -291,7 +330,7 @@ static void added_fd(int fd, short events, void *user_data)
 		usb_event_received,
 		NULL);
 
-	gios = g_slist_prepend(gios, gio);
+	llist_add(gios(), gio);
 
 	DEBUG("added_fd %d %d", fd, events);
 }
@@ -305,7 +344,7 @@ static void remove_channel(const usb_phdc_device *impl)
 
 	if (c) {
 		g_free(c);
-		channels = g_slist_remove(channels, c);
+		llist_remove(channels(), c);
 	}
 }
 
@@ -380,7 +419,7 @@ static guint64 add_channel(usb_phdc_device *impl, usb_phdc_device *device)
 	c->device = device;
 	c->handle = ++last_handle;
 
-	channels = g_slist_prepend(channels, c);
+	llist_add(channels(), c);
 
 	return c->handle;
 }
@@ -419,10 +458,12 @@ static void disconnect_all_channels()
 {
 	channel_object *chan;
 
-	while (channels) {
-		chan = channels->data;
+	while (channels()->first) {
+		chan = channels()->first->element;
 		disconnect_channel(chan->handle);
 	}
+	llist_destroy(channels(), NULL);
+	_channels = NULL;
 }
 
 static void channel_connected(usb_phdc_device *dev, usb_phdc_device *impl);
