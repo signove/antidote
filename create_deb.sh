@@ -1,10 +1,6 @@
 #!/bin/sh
 
-rm -rfv build
-./autogen.sh && \
-./configure && \
-make && \
-dpkg-buildpackage -rfakeroot -tc $*
+dpkg-buildpackage -rfakeroot -tc -uc -us $*
 
 GEN_STATUS=$?
 

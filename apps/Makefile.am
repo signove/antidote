@@ -46,6 +46,8 @@ healthd_LDADD = \
              @DBUS_GLIB_LIBS@ \
 	     @USB1_LIBS@
 
-install-data-local: healthd.conf
+install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/etc/dbus-1/system.d
-	$(INSTALL_DATA) $(srcdir)/healthd.conf $(DESTDIR)/etc/dbus-1/system.d/
+	$(mkinstalldirs) $(DESTDIR)/usr/share/dbus-1/system-services
+	$(INSTALL_DATA) $(srcdir)/resources/healthd.conf $(DESTDIR)/etc/dbus-1/system.d/
+	$(INSTALL_DATA) $(srcdir)/resources/com.signove.health.service $(DESTDIR)/usr/share/dbus-1/system-services/
