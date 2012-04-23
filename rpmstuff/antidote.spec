@@ -56,14 +56,6 @@ rm -rf %{buildroot}
 # >> install pre
 # << install pre
 
-mkdir -p %{buildroot}/etc/dbus-1/system.d/
-mkdir -p %{buildroot}/usr/share/dbus-1/system-services/
-mkdir -p %{buildroot}%{_docdir}/antidote/
-
-cp apps/healthd.conf %{buildroot}/etc/dbus-1/system.d/
-cp rpmstuff/com.signove.health.service  %{buildroot}/usr/share/dbus-1/system-services/
-cp -a doc/html %{buildroot}%{_docdir}/antidote/
-
 %make_install
 
 # >> install post
