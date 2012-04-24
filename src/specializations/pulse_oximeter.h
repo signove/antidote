@@ -38,6 +38,10 @@
 #define MDC_PULS_OXIM_PULS_RATE 18458
 #define MDC_DIM_BEAT_PER_MIN 2720
 
+#define MDC_MODALITY_FAST 19508
+#define MDC_MODALITY_SLOW 19512
+#define MDC_MODALITY_SPOT 19516
+
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0190();
 
 struct StdConfiguration *pulse_oximeter_create_std_config_ID0191();

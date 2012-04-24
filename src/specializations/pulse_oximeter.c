@@ -209,6 +209,137 @@ static ConfigObjectList *pulse_oximeter_get_config_ID0190()
 }
 
 /**
+ *  Creates the standard configuration for <em>Pulse Oximeter</em> specialization (0191).
+ *
+ *  \return an StdConfiguration struct that represents the standard configuration (a StdConfiguration instance)
+ *  for <em>Pulse Oximeter Monitor</em> specialization.
+ */
+static ConfigObjectList *pulse_oximeter_get_config_ID0191()
+{
+	ConfigObjectList *std_object_list = malloc(sizeof(ConfigObjectList));
+	std_object_list->count = 2;
+	std_object_list->length = 88 + 12 + 12;
+	std_object_list->value = malloc(sizeof(ConfigObject)*2);
+	std_object_list->value[0].obj_class = MDC_MOC_VMO_METRIC_NU;
+
+	std_object_list->value[0].obj_handle = 1;
+	AttributeList *attr_list1 = malloc(sizeof(AttributeList));
+	attr_list1->count = 5;
+	attr_list1->length = 36 + 12;
+	attr_list1->value = malloc(attr_list1->count * sizeof(AVA_Type));
+
+	attr_list1->value[0].attribute_id = MDC_ATTR_ID_TYPE;
+	attr_list1->value[0].attribute_value.length = 4;
+
+	ByteStreamWriter *bsw = byte_stream_writer_instance(4);
+	write_intu16(bsw, MDC_PART_SCADA);
+	write_intu16(bsw, MDC_PULS_OXIM_SAT_O2);
+	attr_list1->value[0].attribute_value.value = bsw->buffer;
+
+	attr_list1->value[1].attribute_id = MDC_ATTR_METRIC_SPEC_SMALL;
+	attr_list1->value[1].attribute_value.length = 2;
+
+	free(bsw);
+	bsw = byte_stream_writer_instance(2);
+	write_intu16(bsw, 0x4040); // 0x40 0x40 avail-stored-data, acc-agent-init, measured
+	attr_list1->value[1].attribute_value.value = bsw->buffer;
+
+	attr_list1->value[2].attribute_id = MDC_ATTR_UNIT_CODE;
+	attr_list1->value[2].attribute_value.length = 2;
+
+	free(bsw);
+	bsw = byte_stream_writer_instance(2);
+	write_intu16(bsw, MDC_DIM_PERCENT);
+	attr_list1->value[2].attribute_value.value = bsw->buffer;
+
+	attr_list1->value[3].attribute_id = MDC_ATTR_ATTRIBUTE_VAL_MAP;
+	attr_list1->value[3].attribute_value.length = 12;
+	free(bsw);
+	bsw = byte_stream_writer_instance(12);
+	write_intu16(bsw, 2); // AttrValMap.count = 2
+	write_intu16(bsw, 8); // AttrValMap.length = 8 
+	write_intu16(bsw, MDC_ATTR_NU_VAL_OBS_BASIC);
+	write_intu16(bsw, 2); // value length = 2
+	write_intu16(bsw, MDC_ATTR_TIME_STAMP_ABS);
+	write_intu16(bsw, 8); // value length = 8
+	attr_list1->value[3].attribute_value.value = bsw->buffer;
+
+	attr_list1->value[4].attribute_id = MDC_ATTR_SUPPLEMENTAL_TYPES;
+	attr_list1->value[4].attribute_value.length = 8;
+	free(bsw);
+	bsw = byte_stream_writer_instance(8);
+	write_intu16(bsw, 1); // SupplementalTypeList.count = 1
+	write_intu16(bsw, 4); // SupplementalTypeList.length = 4
+	write_intu16(bsw, MDC_PART_SCADA);
+	write_intu16(bsw, MDC_MODALITY_SPOT); 
+	attr_list1->value[4].attribute_value.value = bsw->buffer;
+
+	std_object_list->value[1].obj_class = MDC_MOC_VMO_METRIC_NU;
+	std_object_list->value[1].obj_handle = 10;
+	AttributeList *attr_list2 = malloc(sizeof(AttributeList));
+	attr_list2->count = 5;
+	attr_list2->length = 36 + 12;
+	attr_list2->value = malloc(attr_list2->count * sizeof(AVA_Type));
+
+	attr_list2->value[0].attribute_id = MDC_ATTR_ID_TYPE;
+	attr_list2->value[0].attribute_value.length = 4;
+	free(bsw);
+	bsw = byte_stream_writer_instance(4);
+	write_intu16(bsw, MDC_PART_SCADA);
+	write_intu16(bsw, MDC_PULS_OXIM_PULS_RATE);
+	attr_list2->value[0].attribute_value.value = bsw->buffer;
+
+	attr_list2->value[1].attribute_id = MDC_ATTR_METRIC_SPEC_SMALL;
+	attr_list2->value[1].attribute_value.length = 2;
+	free(bsw);
+	bsw = byte_stream_writer_instance(2);
+	write_intu16(bsw, 0x4040); // 0x40 0x40 avail-stored-data, acc-agent-init, measured
+	attr_list2->value[1].attribute_value.value = bsw->buffer;
+
+	attr_list2->value[2].attribute_id = MDC_ATTR_UNIT_CODE;
+	attr_list2->value[2].attribute_value.length = 2;
+	free(bsw);
+	bsw = byte_stream_writer_instance(2);
+	write_intu16(bsw, MDC_DIM_BEAT_PER_MIN);
+	attr_list2->value[2].attribute_value.value = bsw->buffer;
+
+	attr_list2->value[3].attribute_id = MDC_ATTR_ATTRIBUTE_VAL_MAP;
+	attr_list2->value[3].attribute_value.length = 12;
+	free(bsw);
+	bsw = byte_stream_writer_instance(12);
+	write_intu16(bsw, 2); // AttrValMap.count = 2
+	write_intu16(bsw, 8); // AttrValMap.length = 8
+	write_intu16(bsw, MDC_ATTR_NU_VAL_OBS_BASIC);
+	write_intu16(bsw, 2); // value length = 2
+	// I think Nonin 9560 sends wrong value when the manager does not
+	// know the oximeter standard config. It sends MDC_ATTR_TIME_ABS.
+	// (This is not a problem if the manager implements the specialization
+	// and knows the config 0x0191, as we do.)
+	write_intu16(bsw, MDC_ATTR_TIME_STAMP_ABS);
+	write_intu16(bsw, 8); // value length = 8
+	attr_list2->value[3].attribute_value.value = bsw->buffer;
+
+	attr_list2->value[4].attribute_id = MDC_ATTR_SUPPLEMENTAL_TYPES;
+	attr_list2->value[4].attribute_value.length = 8;
+	free(bsw);
+	bsw = byte_stream_writer_instance(8);
+	write_intu16(bsw, 1); // SupplementalTypeList.count = 1
+	write_intu16(bsw, 4); // SupplementalTypeList.length = 4
+	write_intu16(bsw, MDC_PART_SCADA);
+	write_intu16(bsw, MDC_MODALITY_SPOT);
+	attr_list2->value[4].attribute_value.value = bsw->buffer;
+	free(bsw);
+
+	std_object_list->value[0].attributes = *attr_list1;
+	std_object_list->value[1].attributes = *attr_list2;
+
+	free(attr_list1);
+	free(attr_list2);
+
+	return std_object_list;
+}
+
+/**
  * Populates an event report APDU. 
  */
 
@@ -321,7 +452,7 @@ struct StdConfiguration *pulse_oximeter_create_std_config_ID0191()
 {
 	struct StdConfiguration *result = malloc(sizeof(struct StdConfiguration));
 	result->dev_config_id = 0x0191;
-	result->configure_action = &pulse_oximeter_get_config_ID0190;
+	result->configure_action = &pulse_oximeter_get_config_ID0191;
 	result->event_report = &pulse_oximeter_populate_event_report;
 	return result;
 }
