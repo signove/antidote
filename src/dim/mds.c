@@ -1452,6 +1452,8 @@ void mds_set_attribute(MDS *mds, AVA_Type *attribute)
 		free(stream);
 	}
 	break;
+	default:
+		DEBUG("MDS attribute unknown: %d", attribute->attribute_id);
 	}
 }
 
