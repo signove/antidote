@@ -370,6 +370,7 @@ int main(int argc, char **argv)
 		sensor_page = argv[4];
 		if (strstr(argv[4], "PulseOximeter") != 0) {
 			event_report_cb = oximeter_event_report_cb;
+			// change to 0x0191 if you want timestamps
 			specialization = 0x0190;
 		} else if (strstr(argv[4], "BloodPressure") != 0) {
 			event_report_cb = blood_pressure_event_report_cb;

@@ -47,6 +47,7 @@
  * \cond Undocumented
  */
 
+// change to 0x0191 if you want timestamps
 static int oximeter_specialization = 0x0190;
 guint16 hdp_data_types[] = {0x1004, 0x00};
 

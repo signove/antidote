@@ -15,6 +15,7 @@
 static const intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 		0xbb, 0xdd, 0xff};
 
+// change to 0x0191 if you want timestamps
 static int oximeter_specialization = 0x0190;
 guint16 hdp_data_types[] = {0x1004, 0x00};
 

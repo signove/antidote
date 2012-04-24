@@ -228,6 +228,7 @@ int main(int argc, char **argv)
 	} else { /* Default Pulse Oximeter */
 		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
+		// change to 0x0191 if you want timestamps
 		specialization = 0x0190;
 	}
 

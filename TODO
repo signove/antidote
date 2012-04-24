@@ -1,6 +1,11 @@
 Roadmap/TODO
 ------------
 
+mds_populate_attributes: add all 17 attributes, not only the
+current 6 ones (that leave out current time, among others).
+Population should be only of attributes that actually are
+present at agent side.
+
 ROER and RORJ
 	- pmstore
 	- get mds attributes
