@@ -180,6 +180,9 @@ int dimutil_fill_metric_attr(struct Metric *metric, OID_Type attr_id,
 			result = 0;
 			break;
 		}
+		data_set_attribute_supplemental_types(data_entry,
+						"Supplemental-Types",
+						&metric->supplemental_types);
 		break;
 	case MDC_ATTR_METRIC_SPEC_SMALL:
 		del_metricspecsmall(&metric->metric_spec_small);

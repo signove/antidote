@@ -107,6 +107,7 @@ void data_set_sa_specification(DataEntry *data, char *att_name,
 
 void data_set_oid_type(DataEntry *data, char *att_name, OID_Type *type);
 void data_set_handle(DataEntry *data, char *att_name, ASN1_HANDLE *handle);
+void data_set_attribute_supplemental_types(DataEntry *data, char *att_name, SupplementalTypeList *supp);
 void data_set_attribute_metric_spec_small(DataEntry *data, char *att_name, MetricSpecSmall *spec_small);
 void data_set_attribute_metric_structure_small(DataEntry *data, char *att_name, MetricStructureSmall *struct_small);
 void data_set_attribute_value_map(DataEntry *data, char *att_name, AttrValMap *val_map);

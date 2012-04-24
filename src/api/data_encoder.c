@@ -968,6 +968,27 @@ void data_set_attribute_value_map(DataEntry *data, char *att_name, AttrValMap *v
  *
  * @param data entry
  * @param att_name the name of DIM attribute
+ * @param supp the SupplementalTypeList value
+ */
+void data_set_attribute_supplemental_types(DataEntry *data, char *att_name, SupplementalTypeList *supp)
+{
+	if (data == NULL)
+		return;
+
+	set_cmp(data, data_strcp(att_name), supp->count);
+	int i;
+
+	for (i = 0; i < supp->count; i++) {
+		DataEntry *attr_entry = &data->u.compound.entries[i];
+		data_set_type(attr_entry, "Type", &supp->value[i]);
+	}
+}
+
+/**
+ * Sets data entry with passed type.
+ *
+ * @param data entry
+ * @param att_name the name of DIM attribute
  * @param list the MetricIdList value
  */
 void data_set_metric_id_list(DataEntry *data, char *att_name, MetricIdList *list)
