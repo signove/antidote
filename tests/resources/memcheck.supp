@@ -598,3 +598,19 @@
    ...
    fun:g_type_register_fundamental
 }
+
+{
+   dbus_20120424
+   Memcheck:Leak
+   fun:realloc
+   obj:/lib/i386-linux-gnu/libglib-2.0.so.0.3000.0
+   fun:g_realloc
+   fun:g_realloc_n
+   fun:g_type_set_qdata
+   fun:set_type_metadata
+   fun:_dbus_g_value_types_init
+   fun:dbus_g_bus_get
+   fun:init
+   fun:communication_network_start
+   fun:(below main)
+}
