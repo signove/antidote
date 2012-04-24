@@ -265,6 +265,7 @@ class DeviceAttributes(object):
 		self.handlers["System-Model"] = self.system_model
 		self.handlers["System-Id"] = self.system_id
 		self.handlers["System-Type-Spec-List"] = self.system_type
+		self.handlers["Dev-Configuration-Id"] = self.dev_config_id
 
 	def system_model(self,  e):
 		print "Manufacturer:", e.entries_map["manufacturer"].value,
@@ -272,6 +273,9 @@ class DeviceAttributes(object):
 
 	def system_id(self, e):
 		print "System ID", e.value,
+
+	def dev_config_id(self, e):
+		print "Device config ID", e.value,
 
 	def system_type(self, e):
 		if e.entries:
