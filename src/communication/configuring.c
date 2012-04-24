@@ -388,7 +388,8 @@ static ConfigResult configuring_evaluate_configuration_validity(
 	} else if (config_report->config_obj_list.count == 0) {
 		return STANDARD_CONFIG_UNKNOWN;
 	} else {
-		return ACCEPTED_CONFIG; // TODO CHECK UNSUPPORTED_CONFIG
+		// could be UNSUPPORTED_CONFIG if we don't like extended configs
+		return ACCEPTED_CONFIG;
 	}
 
 }
