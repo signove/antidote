@@ -384,7 +384,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	if (sk == NULL)
 		return TCP_ERROR;
 
-	int written = 0;
+	unsigned int written = 0;
 
 	while (written < stream->size) {
 		int to_send = stream->size - written;

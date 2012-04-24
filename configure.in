@@ -59,7 +59,7 @@ PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
 #usb libraries
 PKG_CHECK_MODULES(USB1, libusb-1.0)
 
-CFLAGS="$CFLAGS $CUNIT_CFLAGS -Isrc -g -pthread -Wall -Werror -fPIC"
+CFLAGS="$CFLAGS $CUNIT_CFLAGS -Isrc -g -pthread -Wall -Wextra -Wno-unused-parameter -Werror -fPIC"
 LIBS="$LIBS -lm $CUNIT_LIBS"
 
 AC_CONFIG_FILES([Makefile \

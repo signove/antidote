@@ -222,7 +222,7 @@ gboolean srv_configurepassive(Serv *obj, gchar *agent,
 			      DBusGMethodInvocation *call)
 {
 	gchar *sender;
-	int i;
+	unsigned int i;
 	guint16 *hdp_data_types;
 
 	DEBUG("Agent: %s", agent);

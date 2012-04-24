@@ -452,7 +452,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	if (conn != NULL && g_socket_is_connected(conn->socket)) {
 		DEBUG(" glib socket: sending APDU...");
 
-		int written = 0;
+		unsigned int written = 0;
 
 		while (written < stream->size) {
 			GError *error = NULL;

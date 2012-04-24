@@ -278,7 +278,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
  */
 static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
-	int written = 0;
+	unsigned int written = 0;
 
 	while (written < stream->size) {
 		int to_send = stream->size - written;

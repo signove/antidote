@@ -161,7 +161,7 @@ void test_encoder_h212_apdu_encoder()
 
 	encode_apdu(stream_writer, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h212_size; ++i) {
 		CU_ASSERT_EQUAL(stream_writer->buffer[i], h212_buffer[i]);
@@ -210,7 +210,7 @@ void test_encoder_h222_apdu_encoder()
 
 	encode_apdu(stream_writer2, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h222_size; ++i) {
 		CU_ASSERT_EQUAL(stream_writer2->buffer[i], h222_buffer[i]);
@@ -242,7 +242,7 @@ void test_encoder_h232_apdu_encoder()
 
 	encode_apdu(stream_writer, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h232_size; ++i) {
 		CU_ASSERT_EQUAL(stream_writer->buffer[i], h232_buffer[i]);
@@ -276,7 +276,7 @@ void test_encoder_h242_apdu_encoder()
 
 	encode_apdu(stream_writer, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h242_size; ++i) {
 
@@ -323,7 +323,7 @@ void test_encoder_h243_apdu_encoder(void)
 
 	encode_apdu(stream_writer, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h243_size; ++i) {
 
@@ -378,7 +378,7 @@ void test_encoder_h243_apdu_encoder_open(void)
 
 	encode_apdu(stream_writer, &apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h243_size; ++i) {
 
@@ -400,7 +400,7 @@ void test_enconder_byte_stream_writer()
 	ByteStreamWriter *stream_writer = byte_stream_writer_instance(h243_size);
 	CU_ASSERT_PTR_NOT_NULL(stream_writer);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < h243_size; i++) {
 		intu8 data = read_intu8(stream, NULL);
@@ -431,7 +431,7 @@ void test_enconder_byte_stream_writer()
 		write_intu16(stream_writer2, data);
 	}
 
-	int size_to_count = (h243_size / 2) * 2;
+	unsigned int size_to_count = (h243_size / 2) * 2;
 
 	for (i = 0; i < size_to_count; ++i) {
 
@@ -599,7 +599,7 @@ void test_encoder_data_apdu_encoder_1(void)
 
 	encode_data_apdu(stream_writer, &data_apdu);
 
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < data_apdu1_size; ++i) {
 		printf("\n%X\t%X", stream_writer->buffer[i], data_apdu1_buffer[i]);
@@ -642,7 +642,7 @@ void test_encoder_data_apdu_encoder_2(void)
 	CU_ASSERT_PTR_NOT_NULL(stream_writer);
 	encode_data_apdu(stream_writer, &data_apdu);
 
-	int i;
+	unsigned int i;
 	for (i = 0; i < data_apdu1_size; ++i) {
 		printf("\n%X\t%X", stream_writer->buffer[i], data_apdu1_buffer[i]);
 		CU_ASSERT_EQUAL(stream_writer->buffer[i], data_apdu1_buffer[i]);
@@ -719,7 +719,7 @@ void test_encoder_data_apdu_encoder_3(void)
 
 	/* Disabling outputs
 	intu8* buffer = stream_writer2->buffer;
-	int i;
+	unsigned int i;
 	for (i = 0; i < 16; ++i) {
 		printf("%X\t", buffer[i]);
 	}

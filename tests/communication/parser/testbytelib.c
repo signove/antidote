@@ -144,7 +144,7 @@ void test_read_intu8_many()
 void test_write_intu8_many()
 {
 	int error = 0;
-	int size = 10;
+	unsigned int size = 10;
 	intu8 data[10] = {0xF0, 0xda, 0x53, 0x00, 0x51, 0x73, 0x1a, 0x70, 0xff, 0x00};
 	intu8 trash[3] = {0x00, 0x00, 0x00};
 
@@ -155,7 +155,7 @@ void test_write_intu8_many()
 	CU_ASSERT_TRUE(error);
 
 	CU_ASSERT_EQUAL(stream->size, size);
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < size; i++) {
 		CU_ASSERT_EQUAL(data[i], stream->buffer[i]);

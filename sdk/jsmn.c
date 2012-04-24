@@ -170,7 +170,7 @@ jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, jsmntok_t *tokens,
 	jsmntok_t *token;
 
 	/* initialize the rest of tokens (they could be reallocated) */
-	for (i = parser->toknext; i < num_tokens; i++) {
+	for (i = parser->toknext; i < (signed) num_tokens; i++) {
 		jsmn_fill_token(&tokens[i], JSMN_PRIMITIVE, -1, -1);
 	}
 

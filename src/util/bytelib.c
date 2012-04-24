@@ -55,7 +55,7 @@ typedef enum {
 	MDER_RESERVED_VALUE = 0x00800001,
 	MDER_NEGATIVE_INFINITY = 0x00800002
 } ReservedFloatValues;
-static const intu32 FIRST_RESERVED_VALUE = MDER_POSITIVE_INFINITY;
+static const int32 FIRST_RESERVED_VALUE = MDER_POSITIVE_INFINITY;
 
 // (2 ** 23 - 3)
 #define MDER_FLOAT_MANTISSA_MAX 0x007FFFFD
@@ -168,7 +168,7 @@ intu8 read_intu8(ByteStreamReader *stream, int *error)
  */
 void read_intu8_many(ByteStreamReader *stream, intu8 *buf, int len, int *error)
 {
-	if (stream && stream->unread_bytes >= len) {
+	if (stream && stream->unread_bytes >= (unsigned) len) {
 		memcpy(buf, stream->buffer_cur, len);
 		stream->buffer_cur += len;
 		stream->unread_bytes -= len;
@@ -348,7 +348,7 @@ ByteStreamWriter *open_stream_writer(intu32 hint)
  */
 static int check_writer(ByteStreamWriter *stream, int need)
 {
-	if ((stream->size + need) <= stream->buffer_size) {
+	if ((signed) (stream->size + need) <= stream->buffer_size) {
 		return 1;
 	}
 
@@ -508,7 +508,7 @@ intu32 write_sfloat(ByteStreamWriter *stream, SFLOAT_Type data)
 
 	double sgn = data > 0 ? +1 : -1;
 	double mantissa = fabs(data);
-	intu8 exponent = 0; // Note: 10**x exponent, not 2**x
+	int exponent = 0; // Note: 10**x exponent, not 2**x
 
 	// scale up if number is too big
 	while (mantissa > MDER_SFLOAT_MANTISSA_MAX) {
@@ -583,7 +583,7 @@ intu32 write_float(ByteStreamWriter *stream, FLOAT_Type data)
 
 	double sgn = data > 0 ? +1 : -1;
 	double mantissa = fabs(data);
-	intu8 exponent = 0; // Note: 10**x exponent, not 2**x
+	int exponent = 0; // Note: 10**x exponent, not 2**x
 
 	// scale up if number is too big
 	while (mantissa > MDER_FLOAT_MANTISSA_MAX) {

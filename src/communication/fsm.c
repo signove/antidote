@@ -479,7 +479,7 @@ char *fsm_get_current_state_name(FSM *fsm)
  */
 char *fsm_state_to_string(fsm_states state)
 {
-	if (state >= fsm_state_disconnected && state < fsm_state_size) {
+	if ((int) state >= fsm_state_disconnected && state < fsm_state_size) {
 		return fsm_state_strings[state];
 	}
 
@@ -494,7 +494,7 @@ char *fsm_state_to_string(fsm_states state)
 char *fsm_event_to_string(fsm_events evt)
 {
 
-	if (evt >= fsm_evt_ind_transport_connection && evt < fsm_evt_size) {
+	if ((int) evt >= fsm_evt_ind_transport_connection && evt < fsm_evt_size) {
 		return fsm_event_strings[evt];
 	}
 

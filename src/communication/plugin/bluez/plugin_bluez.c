@@ -862,7 +862,7 @@ static void connect_adapter(const char *adapter)
 	GValue *devlist;
 	GError *error = NULL;
 	GPtrArray *array;
-	int i;
+	unsigned int i;
 
 	DEBUG("connecting adapter: %s", adapter);
 
@@ -1173,7 +1173,7 @@ static void find_current_adapters()
 	GError *error = NULL;
 	GValue *gv;
 	GPtrArray *array;
-	int i;
+	unsigned int i;
 
 	if (!dbus_g_proxy_call(manager, "GetProperties", &error,
 			       G_TYPE_INVALID,
@@ -1449,7 +1449,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 
 	int ret = send_data(ctx->id.connid, stream->buffer, stream->size);
 
-	if (ret != stream->size) {
+	if ((ret < 0) || ((unsigned) ret != stream->size)) {
 		DEBUG("Error sending APDU. %d bytes sent. Should have sent %d.",
 		      ret, stream->size);
 		return NETWORK_ERROR;

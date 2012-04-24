@@ -180,7 +180,7 @@ char *call_Emulator(char *host, char* page)
 	char *get = build_get_query(host, page);
 
 	//Send the query to the server
-	int sent = 0;
+	unsigned int sent = 0;
 	while (sent < strlen(get)) {
 		tmpres = send(sock, get + sent, strlen(get) - sent, 0);
 		if (tmpres == -1) {

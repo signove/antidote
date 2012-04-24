@@ -155,7 +155,7 @@ static int communication_fire_transport_disconnect_evt(Context *ctx);
  */
 unsigned int communication_plugin_id(CommunicationPlugin *plugin)
 {
-	int i;
+	unsigned int i;
 	for (i = 1; i <= plugin_count; ++i) {
 		if (comm_plugins[i] == plugin) {
 			return i;
@@ -255,7 +255,7 @@ int communication_force_disconnect(Context *ctx)
  */
 void communication_finalize()
 {
-	int i;
+	unsigned int i;
 	DEBUG(" communication: Finalizing. ");
 
 	// Reset all timeouts
@@ -368,7 +368,7 @@ void communication_remove_connection_listeners()
 void communication_network_start()
 {
 	if (network_status == NETWORK_STATUS_NOT_INITIALIZED) {
-		int i;
+		unsigned int i;
 
 		for (i = 1; i <= plugin_count; ++i) {
 			CommunicationPlugin *comm_plugin = comm_plugins[i];
@@ -424,7 +424,7 @@ int communication_network_stop()
 {
 	DEBUG("communication: shutting down network.");
 
-	int i;
+	unsigned int i;
 
 	for (i = 1; i <= plugin_count; ++i) {
 		CommunicationPlugin *comm_plugin = comm_plugins[i];

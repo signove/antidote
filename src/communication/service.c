@@ -415,7 +415,7 @@ void service_request_retired(Context *ctx, DATA_apdu *response_apdu)
 {
 	Service *service = ctx->service;
 
-	if (response_apdu->invoke_id < 0 || response_apdu->invoke_id > 15) {
+	if (response_apdu->invoke_id > 15) {
 		DEBUG("APDU invoke id out of rante");
 		return;
 	}

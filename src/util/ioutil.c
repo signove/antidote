@@ -94,7 +94,7 @@ intu8 *ioutil_buffer_from_file(const char *file_path,
 	*buffer_size = fileLen;
 
 	// Read file contents into buffer_cur
-	if (fread(buffer, 1, fileLen, file) != fileLen) {
+	if (fread(buffer, 1, fileLen, file) != (unsigned) fileLen) {
 		ERROR("Could not read %ld bytes from file %s", fileLen, file_path);
 		free(buffer);
 		buffer = NULL;
