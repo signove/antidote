@@ -610,10 +610,12 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			break;
 		}
 		case MDC_MOC_SCAN:
-			// TODO: need to add scanner to scanner_object list?
+			// superclass, should not be used
+			WARNING("MDC_MOC_SCAN in config");
 			break;
 		case MDC_MOC_SCAN_CFG:
-			// TODO: need to add cfg_scanner to cfg_scanner_object list?
+			// superclass, should not be used
+			WARNING("MDC_MOC_SCAN_CFG in config");
 			break;
 		case MDC_MOC_SCAN_CFG_EPI: {
 			object.choice = MDS_OBJ_SCANNER;

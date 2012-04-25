@@ -707,7 +707,6 @@ void operating_set_scanner_response(Context *ctx, fsm_events evt, FSMEventData *
 				OperationalState state = read_intu16(stream, NULL);
 				free(stream);
 
-				// TODO need to add the cases cfg_scanner and scanner?
 				switch (scanner->choice) {
 				case EPI_CFG_SCANNER: {
 					struct EpiCfgScanner *scan = &scanner->u.epi_cfg_scanner;
