@@ -78,7 +78,7 @@ cp -a doc/html %{buildroot}%{_docdir}/antidote/
 
 %exclude %{_bindir}/ieee_manager
 %exclude %{_bindir}/ieee_agent
-%exclude %{_bindir}/simple_main
+# %exclude %{_bindir}/simple_main
 %exclude %{_bindir}/sample_bt_agent
 %exclude %{_bindir}/ieee_manager_console
 %exclude %{_bindir}/main_test_suite
