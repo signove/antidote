@@ -495,9 +495,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 		attr_list_size = cfgObj->attributes.count;
 
 		switch (cfgObj->obj_class) {
-			// TODO remove metric case
 		case MDC_MOC_VMO_METRIC:
-			// TODO: need to add metric to metric_object list?
+			// superclass, should not be used
+			WARNING("MDC_MOC_VMO_METRIC in config");
 			break;
 		case MDC_MOC_VMO_METRIC_NU: {
 			object.choice = MDS_OBJ_METRIC;
@@ -597,9 +597,9 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			object.choice = MDS_OBJ_PMSTORE;
 
 			for (j = 0; j < attr_list_size; ++j) {
-				// TODO: check if data can come aggregated
-				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
-							   cfgObj->attributes.value[j].attribute_value.length);
+				ByteStreamReader *stream = byte_stream_reader_instance(
+						cfgObj->attributes.value[j].attribute_value.value,
+						cfgObj->attributes.value[j].attribute_value.length);
 				pmstore_set_attribute(&(object.u.pmstore),
 						      cfgObj->attributes.value[j].attribute_id,
 						      stream);
@@ -672,7 +672,7 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			break;
 		}
 		default:
-			// TODO: error handling
+			WARNING("Unknown obj class in config: %d", cfgObj->obj_class);
 			break;
 		}
 	}
@@ -937,7 +937,6 @@ struct MDS_object *mds_get_object_by_handle(MDS *mds, ASN1_HANDLE obj_handle)
  */
 void mds_event_report_dynamic_data_update_var(Context *ctx, ScanReportInfoVar *info_var)
 {
-	// TODO Metric_object must have been created before, in requisition step
 	int info_size = info_var->obs_scan_var.count;
 	DataList *data_list = data_list_new(info_size);
 
@@ -945,12 +944,12 @@ void mds_event_report_dynamic_data_update_var(Context *ctx, ScanReportInfoVar *i
 		int i;
 
 		for (i = 0; i < info_size; ++i) {
-			dimutil_update_mds_from_obs_scan(ctx->mds, &info_var->obs_scan_var.value[i], &data_list->values[i]);
+			dimutil_update_mds_from_obs_scan(ctx->mds,
+						&info_var->obs_scan_var.value[i],
+						&data_list->values[i]);
 		}
 
 		manager_notify_evt_measurement_data_updated(ctx, data_list);
-	} else {
-		// TODO Error Condition
 	}
 }
 
@@ -984,8 +983,6 @@ void mds_event_report_dynamic_data_update_fixed(Context *ctx, ScanReportInfoFixe
 		}
 
 		manager_notify_evt_measurement_data_updated(ctx, data_list);
-	} else {
-		// TODO Error Condition
 	}
 }
 
@@ -1018,8 +1015,6 @@ void mds_event_report_dynamic_data_update_mp_var(Context *ctx,
 			}
 
 			manager_notify_evt_measurement_data_updated(ctx, data_list);
-		} else {
-			// TODO Error Condition
 		}
 	}
 }
@@ -1054,8 +1049,6 @@ void mds_event_report_dynamic_data_update_mp_fixed(Context *ctx,
 			}
 
 			manager_notify_evt_measurement_data_updated(ctx, data_list);
-		} else {
-			// TODO Error Condition
 		}
 	}
 }

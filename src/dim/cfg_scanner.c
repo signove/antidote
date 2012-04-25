@@ -206,8 +206,6 @@ void cfg_scanner_event_report_scan_report_mp_grouped(Context *ctx, struct CfgSca
 			}
 
 			manager_notify_evt_measurement_data_updated(ctx, data_list);
-		} else {
-			// TODO Error Condition
 		}
 
 		free(stream);

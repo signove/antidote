@@ -1210,7 +1210,6 @@ void dimutil_update_mds_from_obs_scan(struct MDS *mds, ObservationScan *var_obs,
 			intu16 length = attr_list.value[j].attribute_value.length;
 			intu8 *value = attr_list.value[j].attribute_value.value;
 
-			// TODO: check if data can come aggregated
 			ByteStreamReader *stream = byte_stream_reader_instance(value, length);
 			pmstore_set_attribute(pmstore, attr_id, stream);
 			free(stream);
