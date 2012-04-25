@@ -617,8 +617,8 @@ void communication_process_input_data(Context *ctx, ByteStreamReader *stream)
 		APDU apdu;
 		decode_apdu(stream, &apdu, &error);
 		if (error) {
-			// TODO abort association
-			DEBUG("Invalid APDU, ignoring");
+			DEBUG("Invalid APDU, firing abort");
+			communication_fire_evt(ctx, fsm_evt_req_assoc_abort, NULL);
 			return;
 		}
 
