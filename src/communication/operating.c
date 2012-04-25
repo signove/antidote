@@ -1289,9 +1289,10 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 		break;
 	case MDC_NOTI_SCAN_REPORT_MP_VAR:
 		decode_scanreportinfompvar(event_info_stream, &info_mp_var, &error);
-		/* TODO: send to DIM
-		 * mds_event_report_dynamic_data_update_mp_var(MDS *self, ScanReportInfoMPVar info_mp_var);
-		 */
+		if (! error) {
+			mds_event_report_dynamic_data_update_mp_var(ctx, &info_mp_var);
+		}
+		del_scanreportinfompvar(&info_mp_var);
 		break;
 	default:
 		//error = NO_SUCH_ACTION;
@@ -1349,7 +1350,6 @@ void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_
 	free(event_info_stream);
 
 	if (error) {
-		// TODO abort?
 		DEBUG("Error decoding segment info");
 		return;
 	}
@@ -1389,7 +1389,6 @@ void operating_decode_trig_segment_data_xfer_response(struct MDS *mds, Any *even
 	free(event_data_stream);
 
 	if (error) {
-		// TODO abort?
 		DEBUG("Error decoding trig segment response");
 		return;
 	}
@@ -1427,7 +1426,7 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, A
 	free(event_data_stream);
 
 	if (error) {
-		// TODO abort?
+		// TODO return error to return RORJ malformed apdu
 		DEBUG("Error decoding segment data evt");
 		return;
 	}

@@ -380,7 +380,6 @@ static void ext_configurations_write_file(octet_string *system_id,
 	file_path = NULL;
 
 	if (err) {
-		// TODO Check Error condition
 		ERROR("error writing ext config file");
 	}
 }
@@ -447,7 +446,6 @@ void ext_configurations_register_conf(octet_string *system_id,
 	cfg->obj_size = stream->size;
 
 	if (ext_configuration_list == NULL) {
-		// TODO Check Error condition
 		ERROR("ext configuration list is null");
 	}
 
@@ -531,7 +529,6 @@ ConfigObjectList *ext_configurations_get_configuration_attributes(
 	if (config != NULL) {
 		ConfigId selected_cfg_id = config->config_id;
 		octet_string selected_sys_id = config->system_id;
-		// TODO: Check this type conversion
 		unsigned long size = config->obj_size;
 
 		char *file_path = ext_configurations_get_file_name(

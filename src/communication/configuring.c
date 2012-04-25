@@ -563,7 +563,7 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 	free(config_stream);
 
 	if (error) {
-		// TODO abort?
+		// TODO rorj BADLY_STRUCTURED_APDU
 		DEBUG("bad config report, not responding");
 		return;
 	}
