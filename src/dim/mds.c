@@ -390,7 +390,6 @@ Request *mds_service_action_data_request(Context *ctx, DataReqMode data_req_mode
 
 		return NULL;
 	} else {
-		// TODO Error Condition
 		return NULL;
 	}
 

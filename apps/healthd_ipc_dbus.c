@@ -395,7 +395,9 @@ static const char *get_device_object(const char *low_addr, ContextId conn_handle
 		device->addr = g_strdup(low_addr);
 		if (asprintf(&(device->path), "%s/%ld",
 				DEVICE_OBJECT_PATH, ++dev_counter) < 0) {
-			// TODO handle error;
+			g_free(device->addr);
+			g_object_unref(device);
+			return NULL;
 		}
 		DEBUG("Create device object in %s", device->path);
 		dbus_g_connection_register_g_object(bus, device->path,

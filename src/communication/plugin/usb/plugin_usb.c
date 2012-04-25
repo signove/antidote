@@ -165,7 +165,7 @@ static char *get_device_addr(const usb_phdc_device *impl)
 	int res = asprintf(&sn, "%04x:%04x:%s", impl->vendor_id,
 				impl->product_id, impl->serial_number);
 	if (res < 0) {
-		// TODO handle error
+		return 0;
 	}
 	return sn;
 }
@@ -185,6 +185,12 @@ static void add_device(usb_phdc_device *impl)
 	dev = g_new(device_object, 1);
 	dev->addr = get_device_addr(impl);
 	dev->impl = impl;
+
+	if (!dev->addr) {
+		// low memory condition
+		g_free(dev);
+		return;
+	}
 
 	devices = g_slist_prepend(devices, dev);
 }

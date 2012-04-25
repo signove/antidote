@@ -1180,7 +1180,6 @@ void dimutil_update_mds_from_obs_scan(struct MDS *mds, ObservationScan *var_obs,
 
 	obj_handle = var_obs->obj_handle;
 
-	// TODO: refactor
 	object = mds_get_object_by_handle(mds, obj_handle);
 
 	if (object != NULL) {
@@ -1348,7 +1347,6 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 	cmp_entry->entries = calloc(val_map->count, sizeof(DataEntry));
 
 	if (val_map->count > 0) {
-
 		if (obj->u.metric.choice == METRIC_NUMERIC) {
 			cmp_entry->name = data_strcp("Numeric");
 		} else if (obj->u.metric.choice == METRIC_ENUM) {
@@ -1368,8 +1366,8 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 							       stream, &cmp_entry->entries[k]);
 
 			if (!result) {
-				// TODO: Make a better error handling
-				ERROR("Attribute id not found");
+				ERROR("numeric attribute id %d not found",
+					val_map->value[k].attribute_id);
 			}
 		}
 		break;
@@ -1379,8 +1377,8 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 					stream, &cmp_entry->entries[k]);
 
 			if (!result) {
-				// TODO: Make a better error handling
-				ERROR("Attribute id not found");
+				ERROR("enum attribute id %d not found",
+					val_map->value[k].attribute_id);
 			}
 		}
 		break;
@@ -1391,8 +1389,8 @@ void dimutil_update_mds_from_grouped_observations(struct MDS *mds, ByteStreamRea
 					     stream, &cmp_entry->entries[k]);
 
 			if (!result) {
-				// TODO: Make a better error handling
-				ERROR("Attribute id not found");
+				ERROR("rtsa attribute id %d not found",
+					val_map->value[k].attribute_id);
 			}
 		}
 		break;

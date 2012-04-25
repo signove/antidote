@@ -691,14 +691,18 @@ static void communication_process_apdu_agent(Context *ctx, APDU *apdu)
 		disassociating_process_apdu_agent(ctx, apdu);
 		break;
 	case fsm_state_config_sending:
+		// only agent uses this
 		configuring_agent_config_sending_process_apdu(ctx, apdu);
 		break;
 	case fsm_state_waiting_approval:
+		// only agent uses this
 		configuring_agent_waiting_approval_process_apdu(ctx, apdu);
 		break;
 	default:
-		// TODO error handling
 		ERROR(" service error: Invalid machine state ");
+		// put in an acceptable state and then disconnect
+		ctx->fsm->state = fsm_state_unassociated;
+		communication_fire_transport_disconnect_evt(ctx);
 	}
 }
 
@@ -727,8 +731,10 @@ static void communication_process_apdu_manager(Context *ctx, APDU *apdu)
 		configuring_waiting_state_process_apdu(ctx, apdu);
 		break;
 	default:
-		// TODO error handling
 		ERROR(" service error: Invalid machine state ");
+		// put in an acceptable state and then disconnect
+		ctx->fsm->state = fsm_state_unassociated;
+		communication_fire_transport_disconnect_evt(ctx);
 	}
 }
 
