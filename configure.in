@@ -48,7 +48,7 @@ AC_ARG_ENABLE([coverage], \
     
 if test "$enable_coverage" = "yes"; then 
 	AC_MSG_NOTICE([ -- Code coverage enabled.])
-	CFLAGS="$CFLAGS  -fprofile-arcs -ftest-coverage -lgcov"
+	CFLAGS="$CFLAGS  -fprofile-arcs -ftest-coverage -lgcov -O0"
 fi
 
 #Enabling D-BUS network module

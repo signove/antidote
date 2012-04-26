@@ -60,7 +60,7 @@ build ()
 	if [ "$OPT_NO_BUILD" -eq "0" ]; then
 		echo "Building project \n"
 	   ./autogen.sh
-	   ./configure --enable-coverage=yes
+	   ./configure --enable-coverage=yes --disable-shared
 	   make clean
 	   make
 	   STATUS=$?
@@ -105,6 +105,7 @@ gen_test_reports()
 coverage_phase_pre_execution()
 {
   lcov -q --directory src --zerocounters
+  lcov -q --directory apps --zerocounters
 }
 
 gen_coverage_reports()
