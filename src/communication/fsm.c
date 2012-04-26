@@ -185,6 +185,7 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_operating,		fsm_evt_rx_abrt,						fsm_state_unassociated,		NULL}, // 8.18
 	{fsm_state_operating,		fsm_evt_rx_roiv_confirmed_event_report,				fsm_state_operating,		&operating_event_report}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_roiv_event_report,					fsm_state_operating,		&operating_event_report}, // 8.21
+	{fsm_state_operating,		fsm_evt_rx_roiv_all_except_confirmed_event_report,		fsm_state_operating,		&operating_roiv_non_event_report}, // 8.21
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_event_report,				fsm_state_operating,		NULL}, // 8.26 - remark on page 149
 	{fsm_state_operating,		fsm_evt_rx_rors_get,						fsm_state_operating,		&operating_get_response}, // 8.26 - remark on page 149
 	{fsm_state_operating,		fsm_evt_rx_rors_confirmed_set,					fsm_state_operating,		&operating_set_scanner_response}, // 8.26 - remark on page 149

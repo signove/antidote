@@ -74,6 +74,8 @@ Request *operating_action_set_time(Context *ctx, SetTimeInvoke *time, intu32 tim
 
 void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data);
 
+void operating_roiv_non_event_report(Context *ctx, fsm_events evt, FSMEventData *data);
+
 void operating_event_report_response_tx(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 					RelativeTime currentTime, OID_Type event_type,
 					Any event_reply_info);

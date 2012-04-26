@@ -329,8 +329,9 @@ void communication_process_roiv(Context *ctx, APDU *apdu)
 				       &data);
 		break;
 	default:
-		//reject_result.problem = UNRECOGNIZED_OPERATION;
-		// TODO: communication_send_rorj(rejectResult)
+		data.received_apdu = apdu;
+		communication_fire_evt(ctx, fsm_evt_rx_roiv_all_except_confirmed_event_report,
+				       &data);
 		break;
 	}
 }
@@ -446,6 +447,20 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 
 		service_request_retired(ctx, data_apdu);
 	}
+}
+
+/**
+ * Send reject to ROIV that is not an event report
+ *
+ * @param ctx context
+ * @param evt
+ * @param data
+ */
+void operating_roiv_non_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
+{
+	data->choice = FSM_EVT_DATA_REJECT_RESULT;
+	data->u.reject_result.problem = UNRECOGNIZED_OPERATION;
+	communication_rorj_tx(ctx, evt, data);
 }
 
 /**
