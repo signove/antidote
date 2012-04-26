@@ -135,6 +135,7 @@ typedef enum {
 	FSM_EVT_DATA_RELEASE_RESPONSE_REASON,
 	FSM_EVT_DATA_CONFIGURATION_RESULT,
 	FSM_EVT_DATA_ERROR_RESULT,
+	FSM_EVT_DATA_REJECT_RESULT,
 	FSM_SVT_PHD_ASSOC_INFORMATION
 } FSMEventData_choice_values;
 
@@ -170,6 +171,7 @@ typedef struct FSMEventData {
 		Release_response_reason release_response_reason;
 		ConfigResult configuration_result;
 		ErrorResult error_result;
+		RejectResult reject_result;
 		PhdAssociationInformation assoc_information;
 	} u;
 } FSMEventData;

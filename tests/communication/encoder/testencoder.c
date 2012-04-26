@@ -119,6 +119,12 @@ void testencoder_add_suite()
 
 	CU_add_test(suite, "test_encoder_data_apdu_encoder_3",
 		    test_encoder_data_apdu_encoder_3);
+
+	CU_add_test(suite, "test_encoder_data_apdu_roer",
+		    test_encoder_data_apdu_roer);
+
+	CU_add_test(suite, "test_encoder_data_apdu_rorj",
+		    test_encoder_data_apdu_rorj);
 	/* Add tests here - End */
 }
 
@@ -728,6 +734,38 @@ void test_encoder_data_apdu_encoder_3(void)
 
 	del_byte_stream_writer(stream_writer, 1);
 	del_byte_stream_writer(stream_writer2, 1);
+}
+
+void test_encoder_data_apdu_rorj(void)
+{
+	APDU apdu;
+	DATA_apdu data_apdu;
+	RejectResult err;
+
+	err.problem = 321;
+	
+	fill_rorj_apdu(&apdu, &data_apdu, 123, &err);
+
+	ByteStreamWriter *w = byte_stream_writer_instance(14);
+	CU_ASSERT_TRUE(encode_apdu(w, &apdu));
+	del_byte_stream_writer(w, 1);
+}
+
+void test_encoder_data_apdu_roer(void)
+{
+	APDU apdu;
+	DATA_apdu data_apdu;
+	ErrorResult err;
+
+	err.error_value = 321;
+	err.parameter.length = 0;
+	err.parameter.value = 0;
+	
+	fill_roer_apdu(&apdu, &data_apdu, 123, &err);
+
+	ByteStreamWriter *w = byte_stream_writer_instance(16);
+	CU_ASSERT_TRUE(encode_apdu(w, &apdu));
+	del_byte_stream_writer(w, 1);
 }
 
 #endif

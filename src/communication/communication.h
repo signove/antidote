@@ -113,9 +113,13 @@ void communication_check_invoke_id_abort_tx(Context *ctx, fsm_events evt,
 void communication_disconnect_tx(Context *ctx, fsm_events evt,
 				 FSMEventData *data);
 
-void communication_send_roer(Context *ctx, InvokeIDType invoke_id, ErrorResult *error);
+void fill_roer_apdu(APDU *apdu, DATA_apdu *data_apdu, InvokeIDType invoke_id, ErrorResult *error);
+
+void fill_rorj_apdu(APDU *apdu, DATA_apdu *data_apdu, InvokeIDType invoke_id, RejectResult *error);
 
 void communication_roer_tx(Context *ctx, fsm_events evt, FSMEventData *data);
+
+void communication_rorj_tx(Context *ctx, fsm_events evt, FSMEventData *data);
 
 int communication_is_roiv_type(DATA_apdu *data);
 

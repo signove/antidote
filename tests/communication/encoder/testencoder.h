@@ -41,6 +41,8 @@ void test_encoder_h243_apdu_encoder_open();
 void test_encoder_data_apdu_encoder_1();
 void test_encoder_data_apdu_encoder_2();
 void test_encoder_data_apdu_encoder_3();
+void test_encoder_data_apdu_roer();
+void test_encoder_data_apdu_rorj();
 
 void test_enconder_byte_stream_writer();
 

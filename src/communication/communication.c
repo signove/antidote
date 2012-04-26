@@ -904,6 +904,32 @@ void communication_disconnect_tx(Context *ctx, fsm_events evt,
 }
 
 /**
+ * fill ROER APDU
+ */
+void fill_roer_apdu(APDU *apdu, DATA_apdu *data_apdu, InvokeIDType invoke_id, ErrorResult *error)
+{
+	apdu->choice = PRST_CHOSEN;
+
+	data_apdu->invoke_id = invoke_id;
+	data_apdu->message.choice = ROER_CHOSEN;
+
+	data_apdu->message.u.roer = *error;
+
+	data_apdu->message.length = data_apdu->message.u.roer.parameter.length +
+				   	sizeof(intu16) +	// parameter.length
+					sizeof(intu16);		// ERROR
+
+	apdu->u.prst.length = data_apdu->message.length +
+				sizeof(intu16) +		// message.length
+			     	sizeof(DATA_apdu_choice) +	// message.choice
+				sizeof(InvokeIDType);		// invoke id
+
+	apdu->length = apdu->u.prst.length + sizeof(intu16);
+
+	encode_set_data_apdu(&apdu->u.prst, data_apdu);
+}
+
+/**
  * Send error message to Agent.
  * This method locks the communication layer thread.
  *
@@ -911,30 +937,87 @@ void communication_disconnect_tx(Context *ctx, fsm_events evt,
  * @param invoke_id invoke_id of the original apdu.
  * @param error contain the error type and its arguments
  */
-void communication_send_roer(Context *ctx, InvokeIDType invoke_id, ErrorResult *error)
+static void communication_send_roer(Context *ctx, InvokeIDType invoke_id, ErrorResult *error)
 {
 	// thread-safe block - start
 	communication_lock(ctx);
 
 	APDU apdu;
-	apdu.choice = PRST_CHOSEN;
-
 	DATA_apdu data_apdu;
-	data_apdu.invoke_id = invoke_id;
-	data_apdu.message.choice = ROER_CHOSEN;
-
-	data_apdu.message.u.roer = *error;
-
-	data_apdu.message.length = data_apdu.message.u.roer.parameter.length
-				   + sizeof(ERROR);
-
-	apdu.u.prst.length = data_apdu.message.length
-			     + sizeof(DATA_apdu_choice) + sizeof(InvokeIDType);
-	apdu.length = apdu.u.prst.length + sizeof(intu16);
-
-	encode_set_data_apdu(&apdu.u.prst, &data_apdu);
+	fill_roer_apdu(&apdu, &data_apdu, invoke_id, error);
 
 	communication_send_apdu(ctx, &apdu);
+
+	communication_unlock(ctx);
+	// thread-safe block - end
+}
+
+/**
+ * fill RORJ APDU
+ */
+void fill_rorj_apdu(APDU *apdu, DATA_apdu *data_apdu, InvokeIDType invoke_id, RejectResult *error)
+{
+	apdu->choice = PRST_CHOSEN;
+
+	data_apdu->invoke_id = invoke_id;
+	data_apdu->message.choice = RORJ_CHOSEN;
+
+	data_apdu->message.u.rorj = *error;
+
+	data_apdu->message.length = sizeof(RorjProblem);
+
+	apdu->u.prst.length = data_apdu->message.length +
+				sizeof(intu16) +		// message.length
+			     	sizeof(DATA_apdu_choice) +	// message.choice
+				sizeof(InvokeIDType);		// invoke id
+
+	apdu->length = apdu->u.prst.length + sizeof(intu16);	// prst.length
+
+	encode_set_data_apdu(&apdu->u.prst, data_apdu);
+}
+
+/**
+ * Send reject message to Agent.
+ * This method locks the communication layer thread.
+ *
+ * @param ctx current context
+ * @param invoke_id invoke_id of the original apdu.
+ * @param error contain the error type and its arguments
+ */
+static void communication_send_rorj(Context *ctx, InvokeIDType invoke_id, RejectResult *error)
+{
+	// thread-safe block - start
+	communication_lock(ctx);
+
+	APDU apdu;
+	DATA_apdu data_apdu;
+	fill_rorj_apdu(&apdu, &data_apdu, invoke_id, error);
+
+	communication_send_apdu(ctx, &apdu);
+
+	communication_unlock(ctx);
+	// thread-safe block - end
+}
+
+/**
+ * Send error message to Agent.
+ * This method locks the communication layer thread.
+ *
+ * @param ctx context
+ * @param evt input event
+ * @param data Contains event data which in this case is the structure ErrorResult
+ */
+void communication_rorj_tx(Context *ctx, fsm_events evt, FSMEventData *data)
+{
+	// thread-safe block - start
+	communication_lock(ctx);
+
+	if (data != NULL && data->choice == FSM_EVT_DATA_REJECT_RESULT) {
+		DATA_apdu *input_data_apdu = encode_get_data_apdu(
+						     &data->received_apdu->u.prst);
+		communication_send_rorj(ctx, input_data_apdu->invoke_id,
+					&data->u.reject_result);
+	}
 
 	communication_unlock(ctx);
 	// thread-safe block - end
