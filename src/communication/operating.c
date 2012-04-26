@@ -386,17 +386,6 @@ static void communication_process_rors(Context *ctx, APDU *apdu)
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
-		case ROIV_CMIP_EVENT_REPORT_CHOSEN:
-			data.received_apdu = apdu;
-			communication_fire_evt(ctx, fsm_evt_rx_roiv_event_report,
-					       &data);
-			break;
-		case ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:
-			data.received_apdu = apdu;
-			communication_fire_evt(ctx,
-					       fsm_evt_rx_roiv_confirmed_event_report,
-					       &data);
-			break;
 		case RORS_CMIP_GET_CHOSEN: // 8.26
 			data.received_apdu = apdu;
 			communication_fire_evt(ctx, fsm_evt_rx_rors_get, &data);
@@ -412,8 +401,8 @@ static void communication_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			//reject_result.problem = UNRECOGNIZED_OPERATION;
-			// TODO: communication_send_rorj(rejectResult)
+			DEBUG("Unknown received RORS choice: %d",
+				data_apdu->message.choice);
 			break;
 		}
 
@@ -450,8 +439,8 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			//reject_result.problem = UNRECOGNIZED_OPERATION;
-			// TODO: communication_send_rorj(rejectResult)
+			DEBUG("Received RORS with invalid choice %d",
+						data_apdu->message.choice);
 			break;
 		}
 
