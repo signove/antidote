@@ -85,7 +85,7 @@ void operating_segment_data_event_response_tx(Context *ctx, InvokeIDType invoke_
 
 void operating_assoc_release_req_tx(Context *ctx, fsm_events evt, FSMEventData *data);
 
-void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
+int operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
 
 void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r,
 					int errtype, int err);

@@ -492,7 +492,13 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 	}
 
 	if (handle == 0) {
-		operating_decode_mds_event(ctx, type, &event);
+		if (!operating_decode_mds_event(ctx, type, &event)) {
+			data->choice = FSM_EVT_DATA_ERROR_RESULT;
+			data->u.error_result.error_value = NO_SUCH_ACTION;
+			data->u.error_result.parameter.length = 0;
+			data->u.error_result.parameter.value = 0;
+			communication_roer_tx(ctx, evt, data);
+		}
 	} else {
 		struct MDS_object *obj = mds_get_object_by_handle(ctx->mds, handle);
 
@@ -980,6 +986,7 @@ void operating_rors_confirmed_action_tx(Context *ctx,
 		event.length = response.event_info.length;
 		event.value = response.event_info.value;
 
+		// ignore result because it is RORS
 		operating_decode_mds_event(ctx, type, &event);
 
 
@@ -1259,10 +1266,12 @@ void operating_decode_epi_scan_event(Context *ctx, struct EpiCfgScanner *scanner
  * \param ctx
  * \param event_type
  * \param event
+ * \return success status
  */
-void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
+int operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 {
 	int error = 0;
+	int ret = 1;
 
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
@@ -1303,12 +1312,13 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event)
 		del_scanreportinfompvar(&info_mp_var);
 		break;
 	default:
-		//error = NO_SUCH_ACTION;
-		// TODO: communication_send_roer(error)
+		ret = 0;
 		break;
 	}
 
 	free(event_info_stream);
+
+	return ret;
 }
 
 /**
