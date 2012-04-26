@@ -298,8 +298,8 @@ void operating_process_apdu_agent(Context *ctx, APDU *apdu)
 		break;
 	}
 	default:
-		//reject_result.problem = UNRECOGNIZED_APDU;
-		// TODO: communication_send_rorj(rejectResult)
+		DEBUG("Unknown APDU type %d, aborting", apdu->choice);
+		communication_fire_evt(ctx, fsm_evt_req_assoc_abort, NULL);
 		break;
 	}
 }
