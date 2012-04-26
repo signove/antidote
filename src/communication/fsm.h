@@ -72,6 +72,7 @@ typedef enum {
 	fsm_evt_req_assoc_abort,
 	fsm_evt_req_agent_supplied_unknown_configuration,
 	fsm_evt_req_agent_supplied_known_configuration,
+	fsm_evt_req_agent_supplied_bad_configuration,
 
 	// REQ - Agent requests
 	fsm_evt_req_send_config,

@@ -50,6 +50,9 @@ void configuring_agent_waiting_approval_process_apdu(Context *ctx, APDU *apdu);
 void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 		FSMEventData *data);
 
+void configuring_configuration_rorj_tx(Context *ctx, fsm_events evt,
+		FSMEventData *data);
+
 void configuring_new_measurements_response_tx(Context *ctx, fsm_events evt,
 		FSMEventData *event_data);
 

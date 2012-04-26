@@ -70,6 +70,7 @@ static char *fsm_event_strings[] = {
 	"fsm_evt_req_assoc_abort",
 	"fsm_evt_req_agent_supplied_unknown_configuration",
 	"fsm_evt_req_agent_supplied_known_configuration",
+	"fsm_evt_req_agent_supplied_bad_configuration",
 	"fsm_evt_req_send_config",
 	"fsm_evt_req_send_event",
 	"fsm_evt_req_assoc",
@@ -170,6 +171,7 @@ static FsmTransitionRule IEEE11073_20601_manager_state_table[] = {
 	{fsm_state_checking_config,	fsm_evt_rx_rorj,						fsm_state_checking_config,	NULL}, // 7.26
 	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_unknown_configuration,		fsm_state_waiting_for_config,	&configuring_configuration_response_tx}, // 7.31
 	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_known_configuration,			fsm_state_operating,		&configuring_configuration_response_tx}, // 7.32
+	{fsm_state_checking_config,	fsm_evt_req_agent_supplied_bad_configuration,			fsm_state_waiting_for_config,	&configuring_configuration_rorj_tx}, // 7.32
 
 
 	{fsm_state_operating,		fsm_evt_ind_transport_disconnect,				fsm_state_disconnected,		NULL}, // 8.2

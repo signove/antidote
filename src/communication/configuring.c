@@ -201,7 +201,6 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 {
 	DATA_apdu *data_apdu = encode_get_data_apdu(&apdu->u.prst);
 	FSMEventData data;
-	//RejectResult reject_result;
 
 	if (service_check_known_invoke_id(ctx, data_apdu)) {
 		switch (data_apdu->message.choice) {
@@ -226,7 +225,6 @@ static void communication_agent_process_rors(Context *ctx, APDU *apdu)
 					       &data);
 			break;
 		default:
-			// TODO reject_result.problem = UNRECOGNIZED_OPERATION;
 			break;
 		}
 
@@ -505,6 +503,9 @@ void configuring_perform_configuration(Context *ctx, fsm_events evt,
 
 	if (!error) {
 		configuring_perform_configuration_in(ctx, config_report, apdu, 0);
+	} else {
+		communication_fire_evt(ctx, fsm_evt_req_agent_supplied_bad_configuration,
+					event_data);
 	}
 
 	free(config_stream);
@@ -529,13 +530,27 @@ void configuring_new_measurements_response_tx(Context *ctx, fsm_events evt,
 	if (args.event_type == MDC_NOTI_CONFIG) {
 		communication_abort_undefined_reason_tx(ctx, evt, event_data);
 	} else {
-		FSMEventData data;
-		data.received_apdu = apdu;
-		data.choice = FSM_EVT_DATA_ERROR_RESULT;
-		data.u.error_result.error_value = NO_SUCH_OBJECT_INSTANCE;
-		data.u.error_result.parameter.length = 0;
-		communication_roer_tx(ctx, evt, &data);
+		event_data->choice = FSM_EVT_DATA_ERROR_RESULT;
+		event_data->u.error_result.error_value = NO_SUCH_OBJECT_INSTANCE;
+		event_data->u.error_result.parameter.length = 0;
+		communication_roer_tx(ctx, evt, event_data);
 	}
+}
+
+/**
+ * Send rejection message with the configuration result
+ *
+ * @param *ctx connection context
+ * @param evt input event
+ * @param *event_data Contains event data which in this case is the structure ConfigResult
+ */
+void configuring_configuration_rorj_tx(Context *ctx, fsm_events evt,
+						FSMEventData *event_data)
+{
+	// related with event ..._supplied_bad_configuration
+	event_data->choice = FSM_EVT_DATA_REJECT_RESULT;
+	event_data->u.reject_result.problem = BADLY_STRUCTURED_APDU;
+	communication_rorj_tx(ctx, evt, event_data);
 }
 
 /**
@@ -563,8 +578,7 @@ void configuring_configuration_response_tx(Context *ctx, fsm_events evt,
 	free(config_stream);
 
 	if (error) {
-		// TODO rorj BADLY_STRUCTURED_APDU
-		DEBUG("bad config report, not responding");
+		DEBUG("bad config report (should not happen here), not responding");
 		return;
 	}
 

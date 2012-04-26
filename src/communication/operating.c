@@ -1114,7 +1114,6 @@ void operating_decode_peri_scan_event(Context *ctx, struct PeriCfgScanner *scann
 {
 	int error = 0;
 
-	// TODO Change notify event
 	ScanReportInfoFixed info_fixed;
 	ScanReportInfoVar info_var;
 	ScanReportInfoGrouped info_grouped;
