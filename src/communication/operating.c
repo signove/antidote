@@ -477,18 +477,19 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 	Any event;
 	OID_Type type;
 	ASN1_HANDLE handle;
+	RelativeTime time;
 
 	if (data_apdu->message.choice == ROIV_CMIP_EVENT_REPORT_CHOSEN) {
 		DEBUG(" operating_event_report ");
-		event.value = data_apdu->message.u.roiv_cmipEventReport.event_info.value;
-		event.length = data_apdu->message.u.roiv_cmipEventReport.event_info.length;
+		event = data_apdu->message.u.roiv_cmipEventReport.event_info;
 		type = data_apdu->message.u.roiv_cmipEventReport.event_type;
 		handle = data_apdu->message.u.roiv_cmipEventReport.obj_handle;
+		time = data_apdu->message.u.roiv_cmipEventReport.event_time;
 	} else {
-		event.value = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info.value;
-		event.length = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info.length;
+		event = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info;
 		type = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type;
 		handle = data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle;
+		time = data_apdu->message.u.roiv_cmipConfirmedEventReport.event_time;
 	}
 
 	if (handle == 0) {
@@ -514,11 +515,9 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 	// If confirmed event report, send the confirmation
 	if (data_apdu->message.choice == ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN) {
 		if (data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type == MDC_NOTI_SEGMENT_DATA) {
+			// segment data event is always confirmed
 			if (!operating_decode_segment_data_event(ctx, data_apdu->invoke_id,
-					data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle,
-					data_apdu->message.u.roiv_cmipConfirmedEventReport.event_time,
-					data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type,
-					&(data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info))) {
+					handle, time, type, &event)) {
 				// could not decode due to bad contents
 				data->choice = FSM_EVT_DATA_REJECT_RESULT;
 				data->u.reject_result.problem = BADLY_STRUCTURED_APDU;
@@ -529,11 +528,7 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 			memset(&event_reply_info, 0, sizeof(Any));
 			event_reply_info.length = 0;
 			operating_event_report_response_tx(ctx, data_apdu->invoke_id,
-							   data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle,
-							   data_apdu->message.u.roiv_cmipConfirmedEventReport.event_time,
-							   data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type,
-							   event_reply_info);
-
+				handle, time, type, event_reply_info);
 		}
 	}
 }
