@@ -1165,7 +1165,7 @@ static void stop()
 	g_object_unref(srvObj);
 	dbus_g_connection_unref(bus);
 
-	dbus_shutdown();
+	// dbus_shutdown();
 }
 
 static void start()

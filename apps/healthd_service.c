@@ -282,6 +282,7 @@ int main(int argc, char *argv[])
 	DEBUG("Main loop stopped");
 	manager_finalize();
 	app_clean_up();
+	DEBUG("Stopped.");
 
 	return 0;
 }
