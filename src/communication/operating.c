@@ -504,11 +504,16 @@ void operating_event_report(Context *ctx, fsm_events evt, FSMEventData *data)
 	// If confirmed event report, send the confirmation
 	if (data_apdu->message.choice == ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN) {
 		if (data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type == MDC_NOTI_SEGMENT_DATA) {
-			operating_decode_segment_data_event(ctx, data_apdu->invoke_id,
-							    data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle,
-							    data_apdu->message.u.roiv_cmipConfirmedEventReport.event_time,
-							    data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type,
-							    &(data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info));
+			if (!operating_decode_segment_data_event(ctx, data_apdu->invoke_id,
+					data_apdu->message.u.roiv_cmipConfirmedEventReport.obj_handle,
+					data_apdu->message.u.roiv_cmipConfirmedEventReport.event_time,
+					data_apdu->message.u.roiv_cmipConfirmedEventReport.event_type,
+					&(data_apdu->message.u.roiv_cmipConfirmedEventReport.event_info))) {
+				// could not decode due to bad contents
+				data->choice = FSM_EVT_DATA_REJECT_RESULT;
+				data->u.reject_result.problem = BADLY_STRUCTURED_APDU;
+				communication_rorj_tx(ctx, evt, data);
+			}
 		} else {
 			Any event_reply_info;
 			memset(&event_reply_info, 0, sizeof(Any));
@@ -1409,8 +1414,9 @@ finally:
  * \param currentTime
  * \param event_type
  * \param event
+ * \return success
  */
-void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
+int operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event)
 {
 	int error = 0;
@@ -1425,9 +1431,8 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, A
 	free(event_data_stream);
 
 	if (error) {
-		// TODO return error to return RORJ malformed apdu
 		DEBUG("Error decoding segment data evt");
-		return;
+		return 0;
 	}
 
 	result.segm_data_event_descr = segm_data_event.segm_data_event_descr;
@@ -1446,5 +1451,7 @@ void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, A
 
 	operating_segment_data_event_response_tx(ctx, invoke_id, obj_handle,
 			currentTime, event_type, result);
+
+	return 1;
 }
 /** @} */

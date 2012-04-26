@@ -88,7 +88,7 @@ void operating_decode_mds_event(Context *ctx, OID_Type event_type, Any *event);
 void operating_decode_segment_info(struct MDS *mds, Any *event, ASN1_HANDLE obj_handle, Request *r,
 					int errtype, int err);
 
-void operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
+int operating_decode_segment_data_event(Context *ctx, InvokeIDType invoke_id, ASN1_HANDLE obj_handle,
 		RelativeTime currentTime, OID_Type event_type, Any *event);
 
 void operating_rors_confirmed_action_tx(Context *ctx, fsm_events evt, FSMEventData *data);
