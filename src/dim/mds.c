@@ -590,8 +590,19 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 		}
 		case MDC_MOC_VMO_PMSTORE: {
 			object.obj_handle = cfgObj->obj_handle;
-			object.u.pmstore.handle = cfgObj->obj_handle;
 			object.choice = MDS_OBJ_PMSTORE;
+
+			{
+				struct Metric *metric = metric_instance();
+				struct PMStore *store = pmstore_instance(metric);
+
+				object.u.pmstore = *store;
+
+				free(store);
+				free(metric);
+			}
+
+			object.u.pmstore.handle = cfgObj->obj_handle;
 
 			for (j = 0; j < attr_list_size; ++j) {
 				ByteStreamReader *stream = byte_stream_reader_instance(
@@ -1506,9 +1517,7 @@ void mds_destroy(MDS *mds)
 				if (mds->objects_list[i].choice == MDS_OBJ_PMSTORE) {
 					pmstore_destroy(
 						&(mds->objects_list[i].u.pmstore));
-				} else if (mds->objects_list[i].choice
-					   == MDS_OBJ_METRIC) {
-
+				} else if (mds->objects_list[i].choice == MDS_OBJ_METRIC) {
 
 					switch (mds->objects_list[i].u.metric.choice) {
 					case METRIC_NUMERIC:
