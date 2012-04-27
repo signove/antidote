@@ -49,9 +49,14 @@ typedef struct PMStoreGetRet {
 	int handle;
 
 	/**
-	 * 11073-level response code. 0 = ok
+	 * 11073-level response code. 0 = ok, 1=roer, 2=rorj, 3=other
 	 */
-	int response;
+	int error;
+
+	/**
+	 * 11073-level specific response code for rorj/roer
+	 */
+	int error_detail;
 } PMStoreGetRet;
 
 /**
@@ -75,9 +80,15 @@ typedef struct PMStoreGetSegmDataRet {
 	int inst;
 
 	/**
-	 * 11073-level response code. 0 = ok
+	 * 11073-level response code. 0 = ok, 1=roer, 2=rorj, 3=other
 	 */
-	int response; 
+	int error;
+
+	/**
+	 * 11073-level specific response code for rorj/roer
+	 */
+	int error_detail;
+
 } PMStoreGetSegmDataRet;
 
 /**
@@ -96,9 +107,15 @@ typedef struct PMStoreGetSegmInfoRet {
 	int handle;
 
 	/**
-	 * 11073-level response code. 0 = ok
+	 * 11073-level response code. 0 = ok, 1=roer, 2=rorj, 3=other
 	 */
-	int response;
+	int error;
+
+	/**
+	 * 11073-level specific response code for rorj/roer
+	 */
+	int error_detail;
+
 } PMStoreGetSegmInfoRet;
 
 /**
@@ -122,9 +139,14 @@ typedef struct PMStoreClearSegmRet {
 	int inst;
 
 	/**
-	 * 11073-level response code. 0 = ok
+	 * 11073-level response code. 0 = ok, 1=roer, 2=rorj, 3=other
 	 */
-	int response;
+	int error;
+
+	/**
+	 * 11073-level specific response code for rorj/roer
+	 */
+	int error_detail;
 
 	/**
 	 * Segment selection originally requested

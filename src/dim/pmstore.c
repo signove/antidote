@@ -315,7 +315,8 @@ void pmstore_clear_segment_result(struct PMStore *pmstore, struct RequestRet *re
 {
 	PMStoreClearSegmRet *rs = (PMStoreClearSegmRet*) ret_data;
 	if (errtype) {
-		rs->response = (err ? err : errtype);
+		rs->error = errtype;
+		rs->error_detail = err;
 	} else {
 		pmstore_service_action_clear_segments(pmstore, rs->segm_selection);
 	}
@@ -460,7 +461,8 @@ void pmstore_get_data_result(struct PMStore *pm_store,
 	rd = calloc(1, sizeof(PMStoreGetRet));
 	*ret_data = (struct RequestRet *) rd;
 	rd->handle = pm_store->handle;
-	rd->response = (err ? err : errtype);
+	rd->error = errtype;
+	rd->error_detail = err;
 }
 
 /**
@@ -486,10 +488,12 @@ void pmstore_get_segmentinfo_result(struct PMStore *pm_store,
 	rd = calloc(1, sizeof(PMStoreGetSegmInfoRet));
 	*ret_data = (struct RequestRet *) rd;
 	rd->handle = pm_store->handle;
-	rd->response = 0;
+	rd->error = 0;
+	rd->error_detail = 0;
 
 	if (errtype) {
-		rd->response = (err ? err : errtype);
+		rd->error = errtype;
+		rd->error_detail = err;
 		return;
 	}
 
@@ -600,12 +604,12 @@ void pmstore_trig_segment_data_xfer_response(struct PMStore *pm_store,
 
 	ret->handle = pm_store->handle;
 	ret->inst = trig_rsp.seg_inst_no;
-	// TODO error a bit ambiguous. This structure probably needs
-	// two error fields.
 	if (errtype) {
-		ret->response = (err ? err : errtype);
-	} else {
-		ret->response = trig_rsp.trig_segm_xfer_rsp;
+		ret->error = errtype;
+		ret->error_detail = err;
+	} else if (trig_rsp.trig_segm_xfer_rsp) {
+		ret->error = 3;
+		ret->error_detail = trig_rsp.trig_segm_xfer_rsp;
 	}
 }
 

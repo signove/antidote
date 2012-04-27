@@ -340,7 +340,7 @@ static void device_get_pmstore_cb(Context *ctx, Request *r, DATA_apdu *response_
 	if (!ret)
 		return;
 
-	if (ret->response) {
+	if (ret->error) {
 		// some error
 		ipc.call_agent_pmstoredata(ctx->id, ret->handle, "");
 		return;
@@ -412,7 +412,7 @@ static void device_get_segmdata_cb(Context *ctx, Request *r, DATA_apdu *response
 	if (!ret)
 		return;
 
-	ipc.call_agent_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->response);
+	ipc.call_agent_segmentdataresponse(ctx->id, ret->handle, ret->inst, ret->error);
 }
 
 /**
@@ -429,7 +429,7 @@ static void device_clear_segm_cb(Context *ctx, Request *r, DATA_apdu *response_a
 	if (!ret)
 		return;
 
-	ipc.call_agent_segmentcleared(ctx->id, ret->handle, ret->inst, ret->response);
+	ipc.call_agent_segmentcleared(ctx->id, ret->handle, ret->inst, ret->error);
 }
 
 /**
