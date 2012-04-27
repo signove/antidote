@@ -51,10 +51,11 @@
  *
  * \return a pointer to METRIC_RTSA struct.
  */
-static struct RTSA *new_instance()
+struct RTSA *rtsa_instance(struct Metric *metric)
 {
 	struct RTSA *rtsa = calloc(1, sizeof(struct RTSA));
 	rtsa->dim.id = rtsa_get_nomenclature_code();
+	rtsa->metric = *metric;
 	return rtsa;
 }
 
@@ -75,8 +76,7 @@ struct RTSA *rtsa_instance_spec8(struct Metric *metric,
 				 ScaleRangeSpec8 scale_and_range_specification_8,
 				 SaSpec sa_specification)
 {
-	struct RTSA *rtsa = new_instance();
-	rtsa->metric = *metric;
+	struct RTSA *rtsa = rtsa_instance(metric);
 	rtsa->sample_period = sample_period;
 	rtsa->simple_sa_observed_value = simple_sa_observed_value;
 	rtsa->scale_and_range_specification_8 = scale_and_range_specification_8;
@@ -101,8 +101,7 @@ struct RTSA *rtsa_instance_spec16(struct Metric *metric,
 				  ScaleRangeSpec16 scale_and_range_specification_16,
 				  SaSpec sa_specification)
 {
-	struct RTSA *rtsa = new_instance();
-	rtsa->metric = *metric;
+	struct RTSA *rtsa = rtsa_instance(metric);
 	rtsa->sample_period = sample_period;
 	rtsa->simple_sa_observed_value = simple_sa_observed_value;
 	rtsa->scale_and_range_specification_16
@@ -128,8 +127,7 @@ struct RTSA *rtsa_instance_spec32(struct Metric *metric,
 				  ScaleRangeSpec32 scale_and_range_specification_32,
 				  SaSpec sa_specification)
 {
-	struct RTSA *rtsa = new_instance();
-	rtsa->metric = *metric;
+	struct RTSA *rtsa = rtsa_instance(metric);
 	rtsa->sample_period = sample_period;
 	rtsa->simple_sa_observed_value = simple_sa_observed_value;
 	rtsa->scale_and_range_specification_32

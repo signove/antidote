@@ -112,6 +112,8 @@ struct RTSA {
 	SaSpec sa_specification;
 };
 
+struct RTSA *rtsa_instance(struct Metric *metric);
+
 struct RTSA *rtsa_instance_spec8(struct Metric *metric,
 				 RelativeTime sample_period,
 				 octet_string simple_sa_observed_value,

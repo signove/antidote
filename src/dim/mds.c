@@ -561,16 +561,13 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			break;
 		}
 		case MDC_MOC_VMO_METRIC_SA_RT: {
-			// TODO: verify rtsa_instance
-			/*
-			object.choice = METRIC;
+			object.choice = MDS_OBJ_METRIC;
 			struct Metric_object *metric_obj = &(object.u.metric);
 			metric_obj->choice = METRIC_RTSA;
 			object.obj_handle = cfgObj->obj_handle;
 
-
 			struct Metric *metric = metric_instance();
-			struct METRIC_RTSA *rtsa = rtsa(metric);
+			struct RTSA *rtsa = rtsa_instance(metric);
 
 			metric_obj->u.rtsa = *rtsa;
 
@@ -582,13 +579,13 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 			for (j = 0; j < attr_list_size; ++j) {
 				ByteStreamReader *stream = byte_stream_reader_instance(cfgObj->attributes.value[j].attribute_value.value,
 								cfgObj->attributes.value[j].attribute_value.length);
-				result = mds_fill_metric_attr(&(object.u.metric.u.rtsa.metric),
+				dimutil_fill_rtsa_attr(&(object.u.metric.u.rtsa),
 						cfgObj->attributes.value[j].attribute_id,
-						stream);
+						stream, NULL);
 				free(stream);
 			}
-			mds_add_object(object);
-			*/
+			object.u.metric.u.rtsa.metric.handle = cfgObj->obj_handle;
+			mds_add_object(mds, object);
 			break;
 		}
 		case MDC_MOC_VMO_PMSTORE: {
