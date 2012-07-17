@@ -410,6 +410,7 @@ static void remove_channel(const char *path, int passive)
 		}
 
 		if (d && !passive) {
+			DEBUG("Destroying channel %s", path);
 			if (!dbus_g_proxy_call(d->proxy, "DestroyChannel",
 						&error,
 						DBUS_TYPE_G_OBJECT_PATH,
@@ -635,21 +636,19 @@ static void channel_deleted(DBusGProxy *proxy, const char *path, gpointer user_d
  */
 static int disconnect_channel(guint64 handle, int passive)
 {
-	channel_object *c = get_channel_by_handle(handle);
+	channel_object *c;
 
-	if (c) {
+	while ((c = get_channel_by_handle(handle))) {
 		DEBUG("removing channel");
 		remove_channel(c->path, passive);
-		return 1;
-	} else {
-		DEBUG("unknown handle/channel");
-		return 0;
 	}
+
+	return 1;
 }
 
 
 /**
- * Forces closure of a channel
+ * Forces closure of a channel -- called by higher layer
  */
 static int force_disconnect_channel(Context *c)
 {
@@ -1452,6 +1451,7 @@ static int send_apdu_stream(struct Context *ctx, ByteStreamWriter *stream)
 	if ((ret < 0) || ((unsigned) ret != stream->size)) {
 		DEBUG("Error sending APDU. %d bytes sent. Should have sent %d.",
 		      ret, stream->size);
+		force_disconnect_channel(ctx);
 		return NETWORK_ERROR;
 	}
 
@@ -1471,6 +1471,7 @@ static int send_data(uint64_t connid, unsigned char *data, int len)
 	int sent, just_sent;
 	channel_object *c;
 
+	// gets first channel because it is the first on list
 	c = get_channel_by_handle(connid);
 
 	if (!c) {
