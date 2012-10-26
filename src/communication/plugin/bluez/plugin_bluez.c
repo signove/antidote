@@ -82,6 +82,7 @@ typedef struct channel_object {
 	DBusGProxy *proxy;
 	int first;
 	int fd;
+	int initiated_by_us;
 	guint64 handle;
 } channel_object;
 
@@ -440,7 +441,8 @@ static void remove_channel(const char *path, int passive)
 /**
  * Add channel into channel proxy list
  */
-static guint64 add_channel(const char *path, const char *device, int fd)
+static guint64 add_channel(const char *path, const char *device, int fd,
+						gboolean initiated_by_us)
 {
 	DBusGProxy *proxy;
 	GIOChannel *gio;
@@ -463,6 +465,7 @@ static guint64 add_channel(const char *path, const char *device, int fd)
 	c->device = g_strdup(device);
 	c->proxy = proxy;
 	c->fd = fd;
+	c->initiated_by_us = initiated_by_us;
 
 	llist_add(channels(), c);
 
@@ -547,6 +550,14 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 	device_object *dev;
 	const char *device_path;
 
+	channel_object *c = get_channel(path);
+	if (c) {
+		if (c->initiated_by_us && c->fd >= 0) {
+			DEBUG("initiated channel already connected: %s", path);
+			return;
+		}
+	}
+
 	DEBUG("channel connected: %s", path);
 
 	// Need to use non-GLib code here because GLib still does not have
@@ -601,7 +612,7 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 	DEBUG("File descriptor: %d", fd);
 
 	device_path = dbus_g_proxy_get_path(proxy);
-	handle = add_channel(path, device_path, fd);
+	handle = add_channel(path, device_path, fd, user_data != NULL);
 
 	if (!handle) {
 		// channel already known, reconnected
@@ -1527,7 +1538,7 @@ void plugin_bluez_connect_cb(DBusGProxy *dev_proxy, DBusGProxyCall *id,
 		return;
 	}
 
-	channel_connected(dev_proxy, channel_path, NULL);
+	channel_connected(dev_proxy, channel_path, "initiated");
 	g_free(channel_path);
 }
 
