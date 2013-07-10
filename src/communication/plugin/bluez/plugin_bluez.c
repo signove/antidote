@@ -588,7 +588,6 @@ static void channel_connected(DBusGProxy *proxy, const char *path, gpointer user
 		if (dbus_error_is_set(&err)) {
 			ERROR("%s", err.message);
 			dbus_error_free(&err);
-			dbus_message_unref(reply);
 			return;
 		}
 	}
