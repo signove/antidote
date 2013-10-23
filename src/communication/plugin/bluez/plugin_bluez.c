@@ -1541,6 +1541,65 @@ void plugin_bluez_connect_cb(DBusGProxy *dev_proxy, DBusGProxyCall *id,
 	g_free(channel_path);
 }
 
+/**
+ * Rediscover device to make sure we see HDP profile.
+ * This is important e.g. when we are an agent and the manager
+ * was not running HDP app at the moment of pairing. BlueZ does
+ * not expose Health API interface for devices that don't implement
+ * the HDP profile, and this information is cached, so we may need
+ * to rediscover. (This might be the case when the manager takes
+ * the initiative of connection, but generally the agents are 
+ * specialized devices that run HDP all the time, and profiles
+ * discovered at pairing never change, so rediscovery in this
+ * case is hardly ever necessary. If you do need to rediscover
+ * ad hoc, see the script sdk/rediscover.py in source tree.)
+ */
+int plugin_bluez_discover(const char *btaddr)
+{
+	int retstatus = 1;
+	char *addr = g_ascii_strdown(btaddr, -1);
+	DBusGProxy *proxy = NULL;
+
+	{
+		struct device_object *dev = get_device_object_by_addr(addr);
+		if (!dev) {
+			DEBUG("Device %s unknown by BlueZ", btaddr);
+			goto finally;
+		}
+
+		proxy = dbus_g_proxy_new_for_name(conn, "org.bluez",
+					dev->path, "org.bluez.Device");
+	}
+
+	if (!proxy) {
+		ERROR("Can't get org.bluez.Device interface");
+		goto finally;
+	}
+
+	GError *error = NULL;
+
+	if (dbus_g_proxy_call(proxy, "DiscoverServices",
+					&error,
+					G_TYPE_STRING, "",
+					G_TYPE_INVALID,
+					G_TYPE_INVALID)) {
+		if (error) {
+			DEBUG("Error discovering %s: %s", btaddr, error->message);
+			g_error_free(error);
+		} else {
+			DEBUG("Unknown error discovering %s:", btaddr);
+		}
+	}
+
+	retstatus = 0;
+
+finally:
+	if (proxy) {
+		g_object_unref(proxy);
+	}
+	g_free(addr);
+	return retstatus;
+}
 
 /**
  * Take the initiative of a connection. Actual connection establishment

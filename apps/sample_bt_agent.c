@@ -47,10 +47,6 @@
  * \cond Undocumented
  */
 
-// change to 0x0191 if you want timestamps
-static int oximeter_specialization = 0x0190;
-guint16 hdp_data_types[] = {0x1004, 0x00};
-
 /**
  * Plugin definition
  */
@@ -227,12 +223,40 @@ static void device_disconnected(Context *ctx, const char *addr)
  */
 int main(int argc, char **argv)
 {
-	g_type_init();
+	// g_type_init();
 
 	comm_plugin = communication_plugin();
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: sample_bt_agent <bdaddr>\n");
+	if (argc < 2) {
+		fprintf(stderr, "Usage: sample_bt_agent [type] <bdaddr>\n");
+		fprintf(stderr, "       'type' is oxi, glu, bpm, weg, Default: oxi\n");
+		exit(1);
+	}
+
+	guint16 hdp_data_types[] = {0x0, 0x00};
+	void *event_report_cb = 0;
+	int configuration;
+
+	if (argc == 2 || strcmp(argv[1], "oxi") == 0) {
+		event_report_cb = oximeter_event_report_cb;
+		configuration = 0x0191;
+		hdp_data_types[0] = 0x1004;
+		// change to 0x0190 if you don't want timestamps
+	} else if (strcmp(argv[1], "bpm") == 0) {
+		event_report_cb = blood_pressure_event_report_cb;
+		configuration = 0x02BC;
+		hdp_data_types[0] = 0x1007;
+	} else if (strcmp(argv[1], "weg") == 0) {
+		event_report_cb = weightscale_event_report_cb;
+		configuration = 0x05DC;
+		hdp_data_types[0] = 0x100f;
+	} else if (strcmp(argv[1], "glu") == 0) {
+		event_report_cb = glucometer_event_report_cb;
+		configuration = 0x06A4;
+		hdp_data_types[0] = 0x1011;
+	} else {
+		fprintf(stderr, "Usage: sample_bt_agent [type] <bdaddr>\n");
+		fprintf(stderr, "       'type' is oxi, glu, bpm, weg, Default: oxi\n");
 		exit(1);
 	}
 
@@ -245,8 +269,8 @@ int main(int argc, char **argv)
 
 	plugin_bluez_setup(&comm_plugin);
 
-	agent_init(plugins, oximeter_specialization,
-			oximeter_event_report_cb, mds_data_cb);
+	agent_init(plugins, configuration,
+			event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;
@@ -260,7 +284,21 @@ int main(int argc, char **argv)
 
 	plugin_bluez_update_data_types(FALSE, hdp_data_types); // FALSE=source
 
-	if (!plugin_bluez_connect(argv[1], hdp_data_types[0], HDP_CHANNEL_RELIABLE)) {
+	const char *addr;
+	if (argc == 2) {
+		addr = argv[1];
+	} else {
+		addr = argv[2];
+	}
+
+	if (plugin_bluez_discover(addr)) {
+		fprintf(stderr, "Could not rediscover device\n");
+		exit(1);
+	} else {
+		fprintf(stderr, "*** Device rediscovered\n");
+	}
+
+	if (!plugin_bluez_connect(addr, hdp_data_types[0], HDP_CHANNEL_RELIABLE)) {
 		exit(1);
 	}
 

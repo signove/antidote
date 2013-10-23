@@ -33,6 +33,7 @@ void plugin_bluez_setup(CommunicationPlugin *plugin);
 gboolean plugin_bluez_update_data_types(gboolean is_sink, guint16 data_types[]);
 gboolean plugin_bluez_connect(const char *btaddr, guint16 data_type,
 				int reliability);
+int plugin_bluez_discover(const char *btaddr);
 
 #define HDP_CHANNEL_RELIABLE 1
 #define HDP_CHANNEL_STREAMING 2
