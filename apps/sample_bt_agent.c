@@ -223,7 +223,7 @@ static void device_disconnected(Context *ctx, const char *addr)
  */
 int main(int argc, char **argv)
 {
-	// g_type_init();
+	g_type_init();
 
 	comm_plugin = communication_plugin();
 
