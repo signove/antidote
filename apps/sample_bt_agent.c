@@ -223,7 +223,9 @@ static void device_disconnected(Context *ctx, const char *addr)
  */
 int main(int argc, char **argv)
 {
-	g_type_init();
+	#if !GLIB_CHECK_VERSION(2, 35, 0)
+		g_type_init();
+	#endif
 
 	comm_plugin = communication_plugin();
 

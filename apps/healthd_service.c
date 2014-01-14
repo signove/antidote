@@ -179,7 +179,9 @@ static void app_setup_signals()
 int main(int argc, char *argv[])
 {
 	app_setup_signals();
-	g_type_init();
+	#if !GLIB_CHECK_VERSION(2, 35, 0)
+		g_type_init();
+	#endif
 
 	CommunicationPlugin bt_plugin;
 	CommunicationPlugin usb_plugin;
