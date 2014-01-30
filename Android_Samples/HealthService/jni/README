@@ -1,0 +1,3 @@
+Please checkout the Antidote C source tree here (branch ics), and
+compile it using NDK. See Android.mk to solve doubts about folder
+names etc.
