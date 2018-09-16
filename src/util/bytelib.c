@@ -539,14 +539,14 @@ intu32 write_sfloat(ByteStreamWriter *stream, SFLOAT_Type data)
 	// scale down if number needs more precision
 	double smantissa = round(mantissa * MDER_SFLOAT_PRECISION);
 	double rmantissa = round(mantissa) * MDER_SFLOAT_PRECISION;
-	double mdiff = abs(smantissa - rmantissa);
+	double mdiff = fabs(smantissa - rmantissa);
 	while (mdiff > 0.5 && exponent > MDER_SFLOAT_EXPONENT_MIN &&
 			(mantissa * 10) <= MDER_SFLOAT_MANTISSA_MAX) {
 		mantissa *= 10;
 		--exponent;
 		smantissa = round(mantissa * MDER_SFLOAT_PRECISION);
 		rmantissa = round(mantissa) * MDER_SFLOAT_PRECISION;
-		mdiff = abs(smantissa - rmantissa);
+		mdiff = fabs(smantissa - rmantissa);
 	}
 
 	intu16 int_mantissa = (int) round(sgn * mantissa);
@@ -614,14 +614,14 @@ intu32 write_float(ByteStreamWriter *stream, FLOAT_Type data)
 	// scale down if number needs more precision
 	double smantissa = round(mantissa * MDER_FLOAT_PRECISION);
 	double rmantissa = round(mantissa) * MDER_FLOAT_PRECISION;
-	double mdiff = abs(smantissa - rmantissa);
+	double mdiff = fabs(smantissa - rmantissa);
 	while (mdiff > 0.5 && exponent > MDER_FLOAT_EXPONENT_MIN &&
 			(mantissa * 10) <= MDER_FLOAT_MANTISSA_MAX) {
 		mantissa *= 10;
 		--exponent;
 		smantissa = round(mantissa * MDER_FLOAT_PRECISION);
 		rmantissa = round(mantissa) * MDER_FLOAT_PRECISION;
-		mdiff = abs(smantissa - rmantissa);
+		mdiff = fabs(smantissa - rmantissa);
 	}
 
 	intu32 int_mantissa = (int) round(sgn * mantissa);
