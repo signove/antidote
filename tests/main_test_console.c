@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <unistd.h>
-#include <dbus/dbus.h>
+// #include <dbus/dbus.h>
 #include <pthread.h>
 #include "src/manager_p.h"
 #include "src/communication/communication.h"
