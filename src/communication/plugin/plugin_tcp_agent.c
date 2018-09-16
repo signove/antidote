@@ -60,7 +60,7 @@ unsigned int plugin_id = 0;
 
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
-static const int BACKLOG = 1;
+// static const int BACKLOG = 1;
 
 static int sk = -1;
 static int port = 0;
@@ -100,7 +100,7 @@ static int init_socket()
 	setsockopt(sk, SOL_SOCKET, SO_REUSEADDR, (char *) &opt,
 		   sizeof(opt));
 
-	connect(sk, &sa, sizeof(struct sockaddr_in));
+	connect(sk, (struct sockaddr *) &sa, sizeof(struct sockaddr_in));
 
 	if (error < 0) {
 		DEBUG(" network:tcp Error in connect");
