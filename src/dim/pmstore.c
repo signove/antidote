@@ -67,17 +67,17 @@
 /**
  * Time out (seconds) Confirm Action
  */
-static const intu32 PM_STORE_TO_CONFIRM_ACTION = 3;
+// static const intu32 PM_STORE_TO_CONFIRM_ACTION = 3;
 
 /**
  * Time out (seconds) Confirm GET
  */
-static const intu32 PM_STORE_TO_GET = 3;
+// static const intu32 PM_STORE_TO_GET = 3;
 
 /**
  * Time out (seconds) Confirm SET
  */
-static const intu32 PM_STORE_TO_CONFIRM_SET = 3;
+// static const intu32 PM_STORE_TO_CONFIRM_SET = 3;
 
 static int pmstore_fill_segment_attr(struct PMSegment *pm_segment,
 					OID_Type attr_id,
