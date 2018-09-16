@@ -224,7 +224,7 @@ char *ioutil_get_tmp()
  * @param mode Mode of the created dir.
  * @return -1 if error and 0 is success @see mkdir.
  */
-int mkdirp(const char *path, __mode_t mode)
+int mkdirp(const char *path, mode_t mode)
 {
 	int tmp_len = strlen(path);
 	char *tmp = calloc(tmp_len + 1, sizeof(char));

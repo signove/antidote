@@ -44,6 +44,6 @@ void ioutil_print_buffer(intu8 *buffer, int size);
 
 char *ioutil_get_tmp();
 
-int mkdirp(const char *path, __mode_t mode);
+int mkdirp(const char *path, mode_t mode);
 
 #endif /* IOUTIL_H_ */
