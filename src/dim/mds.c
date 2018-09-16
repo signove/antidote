@@ -78,12 +78,12 @@ static const intu32 MDS_TO_GET = 3;
 /**
  * Time out (seconds) Confirm Set
  */
-static const intu32 MDS_TO_CONFIRM_SET = 3;
+// static const intu32 MDS_TO_CONFIRM_SET = 3;
 
 /**
  * Time out (seconds) Inter Service
  */
-static const intu32 MDS_TO_INTER_SERVICE = 3;
+// static const intu32 MDS_TO_INTER_SERVICE = 3;
 
 /**
  * Returns a new instance of an MDS object, with an empty object list.
@@ -728,8 +728,8 @@ static void mds_populate_configuration_attributes(OID_Type supertype,
 	octet_string simple_sa_obs_value;
 	simple_sa_obs_value.length = 64;
 	simple_sa_obs_value.value = calloc(64, sizeof(intu8));
-	ScaleRangeSpec32 srs32;
-	SaSpec saspec;
+	ScaleRangeSpec32 srs32 = {0, 0, 0, 0};
+	SaSpec saspec = {0, {0, 0}, 0};
 	struct RTSA *sart = rtsa_instance_spec32(metric_s, 1, simple_sa_obs_value,
 							srs32, saspec);
 
