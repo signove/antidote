@@ -40,3 +40,11 @@ config.log
 config.status
 config.sub
 sdk/simulator_agent
+m4/*
+depcomp
+install-sh
+ltmain.sh
+compile
+config.guess
+config.sub
+INSTALL
