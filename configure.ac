@@ -69,7 +69,7 @@ fi
 
 if test "$build_linux" = "yes"; then
 	#Enabling D-BUS network module
-	PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.4.0])
+	PKG_CHECK_MODULES([DBUS], [dbus-1 >= 1.4.0])
 	PKG_CHECK_MODULES(GLIB, glib-2.0)
 	PKG_CHECK_MODULES(GIO, gio-2.0)
 	PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
