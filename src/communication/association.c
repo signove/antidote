@@ -54,12 +54,12 @@
 /**
  * Retry count association constant
  */
-static const intu32 ASSOCIATION_RC = 3;
+// static const intu32 ASSOCIATION_RC = 3;
 
 /**
  * Time out (seconds) association constant
  */
-static const intu32 ASSOCIATION_TO = 10;
+// static const intu32 ASSOCIATION_TO = 10;
 
 static int association_check_config_id(PhdAssociationInformation *info);
 
