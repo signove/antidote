@@ -56,7 +56,7 @@
 /**
  * Retry count configuration constant
  */
-static const intu32 CONFIGURING_RC = 0;
+// static const intu32 CONFIGURING_RC = 0;
 /**
  * Time out (seconds) configuration constant
  */
