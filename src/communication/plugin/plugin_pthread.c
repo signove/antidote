@@ -42,6 +42,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define MUTEX_TYPE PTHREAD_MUTEX_RECURSIVE
+#else
+#define MUTEX_TYPE PTHREAD_MUTEX_RECURSIVE_NP
+#endif
+
 /**
  * Global stack lock, named "GIL" after Python :)
  * GIL is used when the stack needs a global protection
@@ -83,7 +89,7 @@ static void plugin_pthread_ctx_init(Context *ctx)
 	// Initialize communication mutex
 	pthread_mutexattr_init(&thread_ctx->mutex_attr);
 	pthread_mutexattr_settype(&thread_ctx->mutex_attr,
-				  PTHREAD_MUTEX_RECURSIVE_NP);
+				  MUTEX_TYPE);
 	pthread_mutex_init(&thread_ctx->mutex, &thread_ctx->mutex_attr);
 }
 
@@ -272,7 +278,7 @@ void plugin_pthread_setup(CommunicationPlugin *plugin)
 
 	// Initialize GIL
 	pthread_mutexattr_init(&gil_attr);
-	pthread_mutexattr_settype(&gil_attr, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutexattr_settype(&gil_attr, MUTEX_TYPE);
 	pthread_mutex_init(&gil, &gil_attr);
 }
 
