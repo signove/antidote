@@ -194,7 +194,8 @@ intu16 read_intu16(ByteStreamReader *stream, int *error)
 	intu16 ret = 0;
 
 	if (stream && stream->unread_bytes > 1) {
-		ret = ntohs(*((uint16_t *) stream->buffer_cur));
+		memcpy(&ret, stream->buffer_cur, 2);
+		ret = ntohs(ret);
 
 		stream->buffer_cur += 2;
 		stream->unread_bytes -= 2;
@@ -221,7 +222,8 @@ intu32 read_intu32(ByteStreamReader *stream, int *error)
 	intu32 ret = 0;
 
 	if (stream && stream->unread_bytes > 3) {
-		ret = ntohl(*((uint32_t *) stream->buffer_cur));
+		memcpy(&ret, stream->buffer_cur, 4);
+		ret = ntohl(ret);
 		stream->buffer_cur += 4;
 		stream->unread_bytes -= 4;
 	} else {
@@ -421,7 +423,8 @@ intu32 write_intu8_many(ByteStreamWriter *stream, intu8 *data, int len, int *err
 intu32 write_intu16(ByteStreamWriter *stream, intu16 data)
 {
 	if (check_writer(stream, 2)) {
-		*((uint16_t *) (stream->buffer + stream->size)) = htons(data);
+		data = htons(data);
+		memcpy(stream->buffer + stream->size, &data, 2);
 		stream->size += 2;
 		return 2; // true
 	} else {
@@ -441,7 +444,8 @@ intu32 reserve_intu16(ByteStreamWriter *stream, int* position)
 {
 	if (check_writer(stream, 2)) {
 		*position = stream->size;
-		*((uint16_t *) (stream->buffer + stream->size)) = 0;
+		int zero = 0;
+		memcpy(stream->buffer + stream->size, &zero, 2);
 		stream->size += 2;
 		return 2; // true
 	} else {
@@ -459,7 +463,8 @@ intu32 reserve_intu16(ByteStreamWriter *stream, int* position)
  */
 void commit_intu16(ByteStreamWriter *stream, int position, intu16 data)
 {
-	*((uint16_t *) (stream->buffer + position)) = htons(data);
+	data = htons(data);
+	memcpy(stream->buffer + position, &data, 2);
 }
 
 /**
@@ -472,7 +477,8 @@ void commit_intu16(ByteStreamWriter *stream, int position, intu16 data)
 intu32 write_intu32(ByteStreamWriter *stream, intu32 data)
 {
 	if (check_writer(stream, 4)) {
-		*((uint32_t *) (stream->buffer + stream->size)) = htonl(data);
+		data = htonl(data);
+		memcpy(stream->buffer + stream->size, &data, 4);
 		stream->size += 4;
 		return 4; // true
 	} else {
