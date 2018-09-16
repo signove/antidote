@@ -1,7 +1,11 @@
 INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
 
+if BUILD_LINUX
+	MAYBE_BIN = sample_bt_agent healthd
+endif
+
 #Bin Programs
-bin_PROGRAMS = ieee_manager ieee_agent sample_bt_agent healthd
+bin_PROGRAMS = ieee_manager ieee_agent $(MAYBE_BIN)
 
 # Minimal sample app to use the IEEE protocol facade
 ieee_manager_SOURCES = sample_manager.c

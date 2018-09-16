@@ -1,4 +1,7 @@
-SUBDIRS = usb bluez trans
+if BUILD_LINUX
+	MAYBE_OPT = usb bluez trans
+endif
+SUBDIRS = $(MAYBE_OPT)
 
 INCLUDES =  -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/src -I$(top_srcdir)/src
 

@@ -16,6 +16,22 @@ AM_PROG_CC_C_O
 
 AC_CHECK_HEADER([stdio.h])
 
+build_linux=no
+build_mac=no
+
+# Detect the target system
+case "${host_os}" in
+    linux*)
+        build_linux=yes
+        ;;
+    darwin*)
+        build_mac=yes
+        ;;
+    *)
+        AC_MSG_ERROR(["OS $host_os is not supported"])
+        ;;
+esac
+
 AC_ARG_ENABLE([tests], \
               [AS_HELP_STRING([--enable-tests], \
               [Enable tests compilation, \
@@ -51,16 +67,21 @@ if test "$enable_coverage" = "yes"; then
 	CFLAGS="$CFLAGS  -fprofile-arcs -ftest-coverage -lgcov -O0"
 fi
 
-#Enabling D-BUS network module
-PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.4.0])
-PKG_CHECK_MODULES(GLIB, glib-2.0)
-PKG_CHECK_MODULES(GIO, gio-2.0)
-PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
-#usb libraries
-PKG_CHECK_MODULES(USB1, libusb-1.0)
+if test "$build_linux" = "yes"; then
+	#Enabling D-BUS network module
+	PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.4.0])
+	PKG_CHECK_MODULES(GLIB, glib-2.0)
+	PKG_CHECK_MODULES(GIO, gio-2.0)
+	PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
+	#usb libraries
+	PKG_CHECK_MODULES(USB1, libusb-1.0)
+fi
 
 CFLAGS="$CFLAGS $CUNIT_CFLAGS -Isrc -g -pthread -Wall -Wextra -Wno-unused-parameter -Werror -fPIC"
 LIBS="$LIBS -lm $CUNIT_LIBS"
+
+AM_CONDITIONAL([BUILD_LINUX], [test "x$build_linux" = xyes])
+AM_CONDITIONAL([BUILD_MAC], [test "x$build_mac" = xyes])
 
 AC_CONFIG_FILES([Makefile \
           apps/Makefile \
@@ -70,12 +91,8 @@ AC_CONFIG_FILES([Makefile \
           src/util/Makefile \
           src/communication/Makefile \
           src/communication/plugin/Makefile \
-          src/communication/plugin/bluez/Makefile \
-          src/communication/plugin/usb/Makefile \
-          src/communication/plugin/trans/Makefile \
           src/communication/parser/Makefile \
 	  src/trans/Makefile \
-	  src/trans/plugin/Makefile \
           src/specializations/Makefile \
           src/antidote.pc \
           sdk/Makefile \
@@ -87,5 +104,13 @@ AC_CONFIG_FILES([Makefile \
           tests/communication/encoder/Makefile \
           tests/functional_test_cases/Makefile] \
           )
+
+AM_COND_IF([BUILD_LINUX],
+	[AC_CONFIG_FILES([
+          src/communication/plugin/bluez/Makefile \
+          src/communication/plugin/usb/Makefile \
+          src/communication/plugin/trans/Makefile \
+	  src/trans/plugin/Makefile \
+          ])])
 
 AC_OUTPUT
