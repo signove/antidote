@@ -594,7 +594,7 @@ void mds_configure_operating(Context *ctx, ConfigObjectList *config_obj_list,
 
 			{
 				struct Metric *metric = metric_instance();
-				struct PMStore *store = pmstore_instance(metric);
+				struct PMStore *store = pmstore_instance();
 
 				object.u.pmstore = *store;
 
