@@ -143,12 +143,14 @@ int ioutil_buffer_to_file(const char *file_path,
  */
 void ioutil_print_buffer(intu8 *buffer, int size)
 {
-	char  *str = calloc(size*4, sizeof(char));
+	char *str = calloc(size*4, sizeof(char));
+	char *currentStr = calloc(4, sizeof(char));
 
 	int i;
 
-	for (i = 0; i < size; i++) {
-		sprintf(str, "%s%.2X ", str, buffer[i]);
+	for (i = 0; i < size; i++) {	
+		sprintf(currentStr, "%.2X", buffer[i]);
+		strcat(str, currentStr);
 	}
 
 	DEBUG("%s", str);
