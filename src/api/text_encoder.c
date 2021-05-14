@@ -147,15 +147,18 @@ char *intu32_2str(intu32 value)
 char *intu16list_2str(intu16 *list, int size)
 {
 	char *result = calloc(MAX_INT_STR * (size+1), sizeof(char));
+	char *current_result = calloc(MAX_INT_STR, sizeof(char));
 
 	if (size > 0) {
 		int i = 0;
 
 		for (i = 0; i < size-1; i++) {
-			sprintf(result, "%s%d,", result, list[i]);
+			sprintf(current_result, "%d", list[i]);
+			strcat(result, current_result);
 		}
 
-		sprintf(result, "%s%d", result, list[size-1]);
+		sprintf(current_result, "%d", list[size-1]);
+		strcat(result, current_result);
 	}
 
 	return result;
@@ -183,11 +186,12 @@ char *float2str(float value)
 char *octet_string2str(octet_string *str)
 {
 	char *result = calloc(str->length + 1, sizeof(char));
-
+	char *current_result = calloc(4, sizeof(char));
 	int i = 0;
 
 	for (i = 0; i < str->length; i++) {
-		sprintf(result, "%s%c", result, str->value[i]);
+		sprintf(current_result, "%c", str->value[i]);
+		strcat(result, current_result);
 	}
 
 	result[str->length] = '\0';
@@ -205,10 +209,13 @@ char *octet_string2hex(octet_string *str)
 {
 	int size = str->length*2;
 	char *result = calloc(size+1, sizeof(char));
+	char *current_result = calloc(4, sizeof(char));
+
 	int i = 0;
 
 	for (i = 0; i < str->length; i++) {
-		sprintf(result, "%s%.2X", result, str->value[i]);
+		sprintf(current_result, "%.2X", str->value[i]);
+		strcat(result, current_result);
 	}
 
 	result[size] = '\0';
@@ -227,10 +234,12 @@ char *high_res_relative_time2hex(HighResRelativeTime *time)
 	int time_length = 8;
 	int size = time_length*2;
 	char *result = calloc(size+1, sizeof(char));
+	char *current_result = calloc(4, sizeof(char));
 	int i = 0;
 
 	for (i = 0; i < time_length; i++) {
-		sprintf(result, "%s%.2X", result, time->value[i]);
+		sprintf(result, "%.2X", time->value[i]);
+		strcat(result, current_result);
 	}
 
 	result[size] = '\0';

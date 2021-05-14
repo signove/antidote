@@ -170,14 +170,18 @@ static char *ext_configurations_get_file_name(octet_string *system_id,
 	length = length + 1; // "\0"
 
 	char *file_path = calloc(length, sizeof(char));
+	char *current_file_path = calloc(4, sizeof(char));
 	sprintf(file_path, "%s", config_path);
 	int i;
 
-	for (i = 0; i < system_id->length; i++) {
-		sprintf(file_path, "%s%.2x", file_path, system_id->value[i]);
+	for (i = 0; i < system_id->length; i++) { 
+		sprintf(current_file_path, "%.2x", system_id->value[i]);
+		strcat(file_path, current_file_path);
 	}
 
-	sprintf(file_path, "%s-%.4x.bin", file_path, config_id);
+	sprintf(file_path, "-%.4x.bin", config_id);
+	strcat(file_path, current_file_path);
+
 	free(config_path);
 	return file_path;
 }
