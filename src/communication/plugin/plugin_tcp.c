@@ -524,7 +524,7 @@ int plugin_network_tcp_setup(CommunicationPlugin *plugin, int numberOfPorts,
 
 	if (sockets) {
 		// plugin was already initialized once
-		llist_destroy(sockets, (llist_handle_element) free);
+		llist_destroy(sockets, (llist_handle_element)(int *) free);
 		sockets = NULL;
 	}
 

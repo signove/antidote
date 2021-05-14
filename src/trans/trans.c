@@ -239,12 +239,12 @@ static void unregister_plugin(TransPlugin *plugin)
 void trans_finalize()
 {
 	if (_plugins) {
-		llist_destroy(_plugins, (llist_handle_element) unregister_plugin);
+		llist_destroy(_plugins, (llist_handle_element)(int *) unregister_plugin);
 		_plugins = NULL;
 	}
 
 	if (_devices) {
-		llist_destroy(_devices, (llist_handle_element) destroy_device);
+		llist_destroy(_devices, (llist_handle_element)(int *) destroy_device);
 		_devices = NULL;
 	}
 	
